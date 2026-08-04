@@ -5,19 +5,10 @@ import { prisma } from '@/lib/prisma'
 import { logAudit } from '@/lib/audit'
 import { can } from '@/lib/permissions'
 import { getEmailProvider, volunteerInviteTemplate } from '@/lib/email'
+import { DEFAULT_PIPELINE_STAGES } from '@/lib/constants'
 import bcrypt from 'bcryptjs'
 import { v4 as uuid } from 'uuid'
 import { z } from 'zod'
-
-const STAGE_ORDER = [
-  'APPLICATION',
-  'DOCUMENT_VERIFICATION',
-  'INTERVIEW',
-  'TRAINING',
-  'APPROVED',
-] as const
-
-type StageType = (typeof STAGE_ORDER)[number]
 
 const StageUpdateSchema = z.object({
   stage: z.enum(['APPLICATION', 'DOCUMENT_VERIFICATION', 'INTERVIEW', 'TRAINING', 'APPROVED', 'REJECTED']),
@@ -36,9 +27,23 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     where: { id: params.id },
     include: {
       stages: { orderBy: { createdAt: 'asc' } },
-      hoursLogs: { orderBy: { date: 'desc' }, take: 10 },
+      hoursLogs: { orderBy: { date: 'desc' }, take: 20 },
       eventAssignments: { include: { event: true } },
-      user: { select: { id: true, email: true, isActive: true, lastLoginAt: true } },
+      user: {
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          isActive: true,
+          lastLoginAt: true,
+          createdAt: true,
+          inviteTokens: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+          },
+        },
+      },
     },
   })
 
@@ -48,7 +53,26 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   if (session.user.isVolunteer && session.user.volunteerId !== params.id)
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  return NextResponse.json(volunteer)
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  let latestInviteUrl = null
+  let latestInviteToken = null
+  if (volunteer.user?.inviteTokens && volunteer.user.inviteTokens.length > 0) {
+    const latest = volunteer.user.inviteTokens[0]
+    if (new Date(latest.expiresAt) > new Date() && !latest.usedAt) {
+      latestInviteToken = latest.token
+      latestInviteUrl = `${appUrl}/auth/setup-password?token=${latest.token}`
+    }
+  }
+
+  return NextResponse.json({
+    ...volunteer,
+    credentials: {
+      hasAccount: !!volunteer.userId,
+      user: volunteer.user,
+      latestInviteUrl,
+      latestInviteToken,
+    },
+  })
 }
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
@@ -82,6 +106,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     entity: 'Volunteer',
     entityId: volunteer.id,
     entityName: volunteer.name,
+    diff: { after: body },
   })
 
   return NextResponse.json(volunteer)
@@ -128,8 +153,27 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     },
   })
 
+  // Get active configured pipeline stages
+  const stagesSetting = await prisma.orgSetting.findUnique({
+    where: { key: 'volunteer_pipeline_stages' },
+  })
+  let activeStages: string[] = DEFAULT_PIPELINE_STAGES.filter((s) => s.enabled).map((s) => s.key)
+  if (stagesSetting?.value) {
+    try {
+      const parsedStages = JSON.parse(stagesSetting.value)
+      if (Array.isArray(parsedStages) && parsedStages.length > 0) {
+        activeStages = parsedStages.filter((s: any) => s.enabled !== false).map((s: any) => s.key)
+      }
+    } catch (e) {
+      console.error('Failed to parse configured volunteer pipeline stages', e)
+    }
+  }
+  if (!activeStages.includes('APPROVED')) {
+    activeStages.push('APPROVED')
+  }
+
   // Determine new currentStage
-  let newStage: StageType | 'REJECTED' = stage as StageType | 'REJECTED'
+  let newStage: string = stage
 
   if (status === 'FAILED' || stage === 'REJECTED') {
     // Reject the volunteer
@@ -143,20 +187,20 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     })
     newStage = 'REJECTED'
   } else if (status === 'PASSED') {
-    const currentIdx = STAGE_ORDER.indexOf(stage as StageType)
-    const nextStage = STAGE_ORDER[currentIdx + 1] as StageType | undefined
+    const currentIdx = activeStages.indexOf(stage)
+    const nextStage = currentIdx !== -1 ? activeStages[currentIdx + 1] : undefined
 
-    if (nextStage) {
+    if (nextStage && nextStage !== 'APPROVED') {
       // Create next stage record
       await prisma.volunteerStage.upsert({
-        where: { volunteerId_stage: { volunteerId: params.id, stage: nextStage } },
-        create: { volunteerId: params.id, stage: nextStage, status: 'PENDING' },
+        where: { volunteerId_stage: { volunteerId: params.id, stage: nextStage as any } },
+        create: { volunteerId: params.id, stage: nextStage as any, status: 'PENDING' },
         update: {},
       })
-      await prisma.volunteer.update({ where: { id: params.id }, data: { currentStage: nextStage } })
+      await prisma.volunteer.update({ where: { id: params.id }, data: { currentStage: nextStage as any } })
       newStage = nextStage
     } else {
-      // stage was APPROVED — create login account
+      // Stage was APPROVED (or final step passed) — finalize and create login account
       await prisma.volunteer.update({
         where: { id: params.id },
         data: { currentStage: 'APPROVED', approvedAt: new Date() },
@@ -164,17 +208,21 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
       // Check if user already exists
       if (!volunteer.userId) {
-        const tempPassword = Math.random().toString(36).slice(-10)
+        const tempPassword = Math.random().toString(36).slice(-8) + 'Fm1!'
         const passwordHash = await bcrypt.hash(tempPassword, 12)
 
-        const user = await prisma.user.create({
-          data: {
-            email: volunteer.email,
-            name: volunteer.name,
-            passwordHash,
-            role: 'VOLUNTEER',
-          },
-        })
+        let user = await prisma.user.findUnique({ where: { email: volunteer.email } })
+        if (!user) {
+          user = await prisma.user.create({
+            data: {
+              email: volunteer.email,
+              name: volunteer.name,
+              passwordHash,
+              role: 'VOLUNTEER',
+              isActive: true,
+            },
+          })
+        }
 
         await prisma.volunteer.update({
           where: { id: params.id },

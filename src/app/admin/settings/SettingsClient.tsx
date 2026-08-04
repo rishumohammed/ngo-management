@@ -3,9 +3,31 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import {
-  Box, Typography, TextField, Button, Grid, Card, CardContent, CardHeader,
-  Divider, Alert, CircularProgress, Select, MenuItem, FormControl, InputLabel,
-  Tab, Tabs, Chip, Autocomplete
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Grid,
+  Card,
+  CardContent,
+  CardHeader,
+  Divider,
+  Alert,
+  CircularProgress,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Tab,
+  Tabs,
+  Chip,
+  Autocomplete,
+  Switch,
+  FormControlLabel,
+  IconButton,
+  Tooltip,
+  Paper,
+  Stack,
 } from '@mui/material'
 import SaveIcon from '@mui/icons-material/Save'
 import BusinessIcon from '@mui/icons-material/Business'
@@ -13,8 +35,13 @@ import EmailIcon from '@mui/icons-material/Email'
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
 import TuneIcon from '@mui/icons-material/Tune'
 import RestartAltIcon from '@mui/icons-material/RestartAlt'
+import AccountTreeIcon from '@mui/icons-material/AccountTree'
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
+import LockIcon from '@mui/icons-material/Lock'
 import { can } from '@/lib/permissions'
-import { DEFAULT_INDIAN_STATES } from '@/lib/constants'
+import { DEFAULT_INDIAN_STATES, DEFAULT_PIPELINE_STAGES, PipelineStageConfig } from '@/lib/constants'
 
 const DEFAULT_SETTINGS: Record<string, string> = {
   org_name: 'Free Mind Foundation',
@@ -35,6 +62,7 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   volunteer_availabilities: '[]',
   volunteer_skills: '[]',
   volunteer_interests: '[]',
+  volunteer_pipeline_stages: JSON.stringify(DEFAULT_PIPELINE_STAGES),
 }
 
 export default function SettingsClient() {
@@ -50,21 +78,21 @@ export default function SettingsClient() {
 
   useEffect(() => {
     fetch('/api/settings')
-      .then(r => r.json())
-      .then(data => {
+      .then((r) => r.json())
+      .then((data) => {
         setSettings({ ...DEFAULT_SETTINGS, ...data })
         setLoading(false)
       })
   }, [])
 
-  const set = (key: string, value: string) => setSettings(prev => ({ ...prev, [key]: value }))
+  const set = (key: string, value: string) => setSettings((prev) => ({ ...prev, [key]: value }))
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       const formData = new FormData()
       formData.append('file', file)
-      
+
       setSaving(true)
       try {
         const res = await fetch('/api/upload', {
@@ -87,21 +115,63 @@ export default function SettingsClient() {
   }
 
   const handleSave = async () => {
-    setSaving(true); setMsg(null)
+    setSaving(true)
+    setMsg(null)
     try {
       const res = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
       })
-      setMsg(res.ok
-        ? { type: 'success', text: 'Settings saved successfully.' }
-        : { type: 'error', text: 'Failed to save settings.' })
-    } finally { setSaving(false) }
+      setMsg(
+        res.ok
+          ? { type: 'success', text: 'Settings saved successfully.' }
+          : { type: 'error', text: 'Failed to save settings.' }
+      )
+    } finally {
+      setSaving(false)
+    }
     setTimeout(() => setMsg(null), 5000)
   }
 
-  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}><CircularProgress /></Box>
+  // Pipeline stage helper methods
+  const getPipelineStages = (): PipelineStageConfig[] => {
+    try {
+      const parsed = JSON.parse(settings.volunteer_pipeline_stages || '[]')
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed
+      }
+    } catch (e) {}
+    return DEFAULT_PIPELINE_STAGES
+  }
+
+  const updatePipelineStages = (stages: PipelineStageConfig[]) => {
+    set('volunteer_pipeline_stages', JSON.stringify(stages))
+  }
+
+  const handleStageChange = (index: number, field: keyof PipelineStageConfig, value: any) => {
+    const current = [...getPipelineStages()]
+    current[index] = { ...current[index], [field]: value }
+    updatePipelineStages(current)
+  }
+
+  const moveStage = (index: number, direction: 'up' | 'down') => {
+    const current = [...getPipelineStages()]
+    const targetIdx = direction === 'up' ? index - 1 : index + 1
+    if (targetIdx < 0 || targetIdx >= current.length) return
+    // Prevent moving mandatory endpoints beyond boundary
+    const temp = current[index]
+    current[index] = current[targetIdx]
+    current[targetIdx] = temp
+    updatePipelineStages(current)
+  }
+
+  if (loading)
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+        <CircularProgress />
+      </Box>
+    )
 
   if (!isSuperAdmin) {
     return (
@@ -111,23 +181,42 @@ export default function SettingsClient() {
     )
   }
 
+  const pipelineStages = getPipelineStages()
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 3 }}>
         {canEdit && (
-          <Button id="save-settings-btn" variant="contained" startIcon={<SaveIcon />} onClick={handleSave} disabled={saving}>
+          <Button
+            id="save-settings-btn"
+            variant="contained"
+            startIcon={<SaveIcon />}
+            onClick={handleSave}
+            disabled={saving}
+          >
             {saving ? <CircularProgress size={20} color="inherit" /> : 'Save All Changes'}
           </Button>
         )}
       </Box>
 
-      {msg && <Alert severity={msg.type} sx={{ mb: 2 }} onClose={() => setMsg(null)}>{msg.text}</Alert>}
+      {msg && (
+        <Alert severity={msg.type} sx={{ mb: 2 }} onClose={() => setMsg(null)}>
+          {msg.text}
+        </Alert>
+      )}
 
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
+      <Tabs
+        value={tab}
+        onChange={(_, v) => setTab(v)}
+        sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
+        variant="scrollable"
+        scrollButtons="auto"
+      >
         <Tab icon={<BusinessIcon fontSize="small" />} iconPosition="start" label="Organization" />
         <Tab icon={<ReceiptLongIcon fontSize="small" />} iconPosition="start" label="Donations & 80G" />
         <Tab icon={<EmailIcon fontSize="small" />} iconPosition="start" label="Email" />
         <Tab icon={<TuneIcon fontSize="small" />} iconPosition="start" label="Form Options & States" />
+        <Tab icon={<AccountTreeIcon fontSize="small" />} iconPosition="start" label="Volunteer Pipeline" />
       </Tabs>
 
       {/* Organization Tab */}
@@ -138,12 +227,38 @@ export default function SettingsClient() {
           <CardContent>
             <Grid container spacing={2.5}>
               <Grid item xs={12}>
-                <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>Organization Logo</Typography>
+                <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
+                  Organization Logo
+                </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   {settings.org_logo ? (
-                    <Box component="img" src={settings.org_logo} alt="Logo" sx={{ width: 64, height: 64, objectFit: 'contain', border: '1px solid', borderColor: 'divider', borderRadius: 1 }} />
+                    <Box
+                      component="img"
+                      src={settings.org_logo}
+                      alt="Logo"
+                      sx={{
+                        width: 64,
+                        height: 64,
+                        objectFit: 'contain',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 1,
+                      }}
+                    />
                   ) : (
-                    <Box sx={{ width: 64, height: 64, bgcolor: 'grey.100', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed', borderColor: 'grey.400', borderRadius: 1 }}>
+                    <Box
+                      sx={{
+                        width: 64,
+                        height: 64,
+                        bgcolor: 'grey.100',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px dashed',
+                        borderColor: 'grey.400',
+                        borderRadius: 1,
+                      }}
+                    >
                       <BusinessIcon color="disabled" />
                     </Box>
                   )}
@@ -153,86 +268,115 @@ export default function SettingsClient() {
                       <input type="file" hidden accept="image/*" onChange={handleLogoUpload} />
                     </Button>
                   )}
-                  {settings.org_logo && canEdit && (
-                    <Button variant="text" color="error" size="small" onClick={() => set('org_logo', '')}>Remove</Button>
-                  )}
                 </Box>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField label="Organization Name" fullWidth value={settings.org_name} onChange={e => set('org_name', e.target.value)} disabled={!canEdit} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField label="PAN" fullWidth value={settings.org_pan} onChange={e => set('org_pan', e.target.value.toUpperCase())} disabled={!canEdit} />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField label="Registered Address" fullWidth multiline rows={3} value={settings.org_address} onChange={e => set('org_address', e.target.value)} disabled={!canEdit} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField label="80G Registration Number" fullWidth value={settings.eighty_g_number} onChange={e => set('eighty_g_number', e.target.value)} disabled={!canEdit} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
                 <TextField
-                  label="80G Validity (expiry date)"
-                  type="date"
+                  label="Organization Name"
                   fullWidth
-                  value={settings.eighty_g_validity}
-                  onChange={e => set('eighty_g_validity', e.target.value)}
+                  value={settings.org_name}
+                  onChange={(e) => set('org_name', e.target.value)}
                   disabled={!canEdit}
-                  InputLabelProps={{ shrink: true }}
-                  helperText="Dashboard shows warning 90 days before expiry"
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField label="FCRA Number" fullWidth value={settings.fcra_number} onChange={e => set('fcra_number', e.target.value)} disabled={!canEdit} />
+                <TextField
+                  label="Signatory / Trustee Name"
+                  fullWidth
+                  value={settings.signatory_name}
+                  onChange={(e) => set('signatory_name', e.target.value)}
+                  disabled={!canEdit}
+                  helperText="Printed on receipts & formal communications"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  label="Registered Address"
+                  fullWidth
+                  multiline
+                  rows={3}
+                  value={settings.org_address}
+                  onChange={(e) => set('org_address', e.target.value)}
+                  disabled={!canEdit}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField label="Authorized Signatory Name" fullWidth value={settings.signatory_name} onChange={e => set('signatory_name', e.target.value)} disabled={!canEdit} />
+                <TextField
+                  label="PAN Number"
+                  fullWidth
+                  value={settings.org_pan}
+                  onChange={(e) => set('org_pan', e.target.value.toUpperCase())}
+                  disabled={!canEdit}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="FCRA Registration Number"
+                  fullWidth
+                  value={settings.fcra_number}
+                  onChange={(e) => set('fcra_number', e.target.value)}
+                  disabled={!canEdit}
+                  helperText="Optional (if accepting foreign contributions)"
+                />
               </Grid>
             </Grid>
           </CardContent>
         </Card>
       )}
 
-      {/* Donations Tab */}
+      {/* Donations & 80G Tab */}
       {tab === 1 && (
         <Card>
-          <CardHeader title="Receipt Numbering" subheader="Controls how 80G receipt numbers are generated" />
+          <CardHeader
+            title="80G & Receipt Configuration"
+            subheader="Tax exemption registration & financial year settings"
+          />
           <Divider />
           <CardContent>
             <Grid container spacing={2.5}>
-              <Grid item xs={12} sm={4}>
+              <Grid item xs={12} sm={6}>
                 <TextField
-                  label="Receipt Prefix"
+                  label="80G Order / Registration Number"
                   fullWidth
-                  value={settings.receipt_prefix}
-                  onChange={e => set('receipt_prefix', e.target.value)}
+                  value={settings.eighty_g_number}
+                  onChange={(e) => set('eighty_g_number', e.target.value)}
                   disabled={!canEdit}
-                  helperText={`Example: ${settings.receipt_prefix}/2026-27/0001`}
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
-                <FormControl fullWidth>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="80G Validity / Period"
+                  fullWidth
+                  value={settings.eighty_g_validity}
+                  onChange={(e) => set('eighty_g_validity', e.target.value)}
+                  disabled={!canEdit}
+                  placeholder="e.g. AY 2024-25 to 2026-27 or Perpetual"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Receipt Number Prefix"
+                  fullWidth
+                  value={settings.receipt_prefix}
+                  onChange={(e) => set('receipt_prefix', e.target.value.toUpperCase())}
+                  disabled={!canEdit}
+                  helperText="Generated receipts will look like: FMF-2024-0001"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth disabled={!canEdit}>
                   <InputLabel>Financial Year Start Month</InputLabel>
                   <Select
                     label="Financial Year Start Month"
                     value={settings.fy_start_month}
-                    onChange={e => set('fy_start_month', e.target.value)}
-                    disabled={!canEdit}
+                    onChange={(e) => set('fy_start_month', e.target.value)}
                   >
-                    {Array.from({ length: 12 }, (_, i) => ({
-                      value: String(i + 1),
-                      label: new Date(2000, i, 1).toLocaleString('en', { month: 'long' }),
-                    })).map(({ value, label }) => (
-                      <MenuItem key={value} value={value}>{label}</MenuItem>
-                    ))}
+                    <MenuItem value="1">January (Calendar Year)</MenuItem>
+                    <MenuItem value="4">April (Indian Financial Year)</MenuItem>
+                    <MenuItem value="7">July</MenuItem>
+                    <MenuItem value="10">October</MenuItem>
                   </Select>
                 </FormControl>
-              </Grid>
-              <Grid item xs={12}>
-                <Alert severity="info">
-                  Receipt numbers reset to 0001 at the start of each financial year.
-                  Current format preview: <Chip label={`${settings.receipt_prefix}/2026-27/0001`} size="small" sx={{ ml: 1 }} />
-                </Alert>
               </Grid>
             </Grid>
           </CardContent>
@@ -243,60 +387,54 @@ export default function SettingsClient() {
       {tab === 2 && (
         <Card>
           <CardHeader
-            title="Email Provider Configuration"
-            subheader="Switch providers with a config change — no code changes required"
+            title="Email Provider Settings"
+            subheader="Configure transactional email delivery (Brevo / SendGrid / SMTP)"
           />
           <Divider />
           <CardContent>
             <Grid container spacing={2.5}>
-              <Grid item xs={12} sm={4}>
-                <FormControl fullWidth>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth disabled={!canEdit}>
                   <InputLabel>Email Provider</InputLabel>
                   <Select
                     label="Email Provider"
                     value={settings.email_provider}
-                    onChange={e => set('email_provider', e.target.value)}
-                    disabled={!canEdit}
+                    onChange={(e) => set('email_provider', e.target.value)}
                   >
-                    <MenuItem value="brevo">Brevo (300/day free)</MenuItem>
-                    <MenuItem value="resend">Resend (3,000/month free)</MenuItem>
+                    <MenuItem value="brevo">Brevo (formerly Sendinblue)</MenuItem>
+                    <MenuItem value="sendgrid">SendGrid</MenuItem>
+                    <MenuItem value="smtp">Custom SMTP</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={8}>
+              <Grid item xs={12} sm={6}>
                 <TextField
-                  label="API Key"
-                  fullWidth
+                  label="API Key / Password"
                   type="password"
+                  fullWidth
                   value={settings.email_api_key}
-                  onChange={e => set('email_api_key', e.target.value)}
+                  onChange={(e) => set('email_api_key', e.target.value)}
                   disabled={!canEdit}
-                  helperText="Stored securely. Get API key from provider dashboard."
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  label="From Email Address"
+                  label="From Email"
                   fullWidth
                   type="email"
                   value={settings.email_from}
-                  onChange={e => set('email_from', e.target.value)}
+                  onChange={(e) => set('email_from', e.target.value)}
                   disabled={!canEdit}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  label="From Name"
+                  label="From Sender Name"
                   fullWidth
                   value={settings.email_from_name}
-                  onChange={e => set('email_from_name', e.target.value)}
+                  onChange={(e) => set('email_from_name', e.target.value)}
                   disabled={!canEdit}
                 />
-              </Grid>
-              <Grid item xs={12}>
-                <Alert severity="info">
-                  Used for volunteer invite emails, 80G receipt delivery, and other notifications.
-                </Alert>
               </Grid>
             </Grid>
           </CardContent>
@@ -339,8 +477,8 @@ export default function SettingsClient() {
                   disabled={!canEdit}
                   renderTags={(value: readonly string[], getTagProps) =>
                     value.map((option: string, index: number) => {
-                      const { key, ...tagProps } = getTagProps({ index });
-                      return <Chip variant="outlined" color="primary" label={option} key={key} {...tagProps} />;
+                      const { key, ...tagProps } = getTagProps({ index })
+                      return <Chip variant="outlined" color="primary" label={option} key={key} {...tagProps} />
                     })
                   }
                   renderInput={(params) => (
@@ -361,7 +499,7 @@ export default function SettingsClient() {
               {/* Volunteer Options */}
               <Grid item xs={12}>
                 <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
-                  Volunteer Registration Options
+                  Volunteer Registration Form Dropdowns
                 </Typography>
               </Grid>
 
@@ -375,12 +513,17 @@ export default function SettingsClient() {
                   disabled={!canEdit}
                   renderTags={(value: readonly string[], getTagProps) =>
                     value.map((option: string, index: number) => {
-                      const { key, ...tagProps } = getTagProps({ index });
-                      return <Chip variant="outlined" label={option} key={key} {...tagProps} />;
+                      const { key, ...tagProps } = getTagProps({ index })
+                      return <Chip variant="outlined" label={option} key={key} {...tagProps} />
                     })
                   }
                   renderInput={(params) => (
-                    <TextField {...params} label="Availability Options" placeholder="Type and press enter" helperText="e.g. Weekends, Evenings, 5 hours/week" />
+                    <TextField
+                      {...params}
+                      label="Availability Options"
+                      placeholder="Type and press enter"
+                      helperText="e.g. Weekends, Evenings, 5 hours/week"
+                    />
                   )}
                 />
               </Grid>
@@ -394,12 +537,17 @@ export default function SettingsClient() {
                   disabled={!canEdit}
                   renderTags={(value: readonly string[], getTagProps) =>
                     value.map((option: string, index: number) => {
-                      const { key, ...tagProps } = getTagProps({ index });
-                      return <Chip variant="outlined" label={option} key={key} {...tagProps} />;
+                      const { key, ...tagProps } = getTagProps({ index })
+                      return <Chip variant="outlined" label={option} key={key} {...tagProps} />
                     })
                   }
                   renderInput={(params) => (
-                    <TextField {...params} label="Skills Options" placeholder="Type and press enter" helperText="e.g. Counselling, Social Media" />
+                    <TextField
+                      {...params}
+                      label="Skills Options"
+                      placeholder="Type and press enter"
+                      helperText="e.g. Counselling, Social Media, Field Operations"
+                    />
                   )}
                 />
               </Grid>
@@ -413,16 +561,201 @@ export default function SettingsClient() {
                   disabled={!canEdit}
                   renderTags={(value: readonly string[], getTagProps) =>
                     value.map((option: string, index: number) => {
-                      const { key, ...tagProps } = getTagProps({ index });
-                      return <Chip variant="outlined" label={option} key={key} {...tagProps} />;
+                      const { key, ...tagProps } = getTagProps({ index })
+                      return <Chip variant="outlined" label={option} key={key} {...tagProps} />
                     })
                   }
                   renderInput={(params) => (
-                    <TextField {...params} label="Interests Options" placeholder="Type and press enter" helperText="e.g. Youth Programs, Mental Health Awareness" />
+                    <TextField
+                      {...params}
+                      label="Interests Options"
+                      placeholder="Type and press enter"
+                      helperText="e.g. Youth Programs, Mental Health Awareness, Community Outreach"
+                    />
                   )}
                 />
               </Grid>
             </Grid>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Volunteer Pipeline Tab */}
+      {tab === 4 && (
+        <Card>
+          <CardHeader
+            title="Volunteer Onboarding Pipeline Management"
+            subheader="Customize the stages, titles, instructions, and order applicants progress through from application to approval"
+            action={
+              canEdit && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<RestartAltIcon />}
+                  onClick={() => updatePipelineStages(DEFAULT_PIPELINE_STAGES)}
+                  sx={{ mt: 1, mr: 1 }}
+                >
+                  Reset Default Stages
+                </Button>
+              )
+            }
+          />
+          <Divider />
+          <CardContent>
+            <Alert severity="info" sx={{ mb: 3 }}>
+              When a stage is passed by staff/admin, the applicant progresses to the next enabled stage in this list.
+              Upon reaching and passing the final <strong>Approved</strong> stage, portal credentials and invite tokens
+              are automatically generated.
+            </Alert>
+
+            <Stack spacing={2.5}>
+              {pipelineStages.map((stageItem, index) => {
+                const isFirst = index === 0
+                const isLast = index === pipelineStages.length - 1
+                const isMandatory = stageItem.key === 'APPLICATION' || stageItem.key === 'APPROVED'
+
+                return (
+                  <Paper
+                    key={stageItem.key}
+                    variant="outlined"
+                    sx={{
+                      p: 2.5,
+                      borderRadius: 2,
+                      bgcolor: stageItem.enabled ? '#FFFFFF' : '#F8FAFC',
+                      borderColor: stageItem.enabled ? 'divider' : '#E2E8F0',
+                      opacity: stageItem.enabled ? 1 : 0.75,
+                      boxShadow: stageItem.enabled ? '0 1px 4px rgba(0,0,0,0.03)' : 'none',
+                    }}
+                  >
+                    <Grid container spacing={2} alignItems="center">
+                      {/* Order & Status Badges */}
+                      <Grid item xs={12} sm={3}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Box
+                            sx={{
+                              width: 32,
+                              height: 32,
+                              borderRadius: '50%',
+                              bgcolor: stageItem.enabled ? '#12446A' : '#94A3B8',
+                              color: '#fff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontWeight: 700,
+                              fontSize: '0.875rem',
+                              flexShrink: 0,
+                            }}
+                          >
+                            {index + 1}
+                          </Box>
+                          <Box>
+                            <Typography variant="subtitle2" fontWeight={700} sx={{ color: '#1E293B' }}>
+                              {stageItem.key}
+                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
+                              {isMandatory ? (
+                                <Chip
+                                  icon={<LockIcon sx={{ fontSize: '13px !important' }} />}
+                                  label="Required"
+                                  size="small"
+                                  color="default"
+                                  sx={{ height: 20, fontSize: '0.7rem', fontWeight: 600 }}
+                                />
+                              ) : (
+                                <Chip
+                                  icon={stageItem.enabled ? <CheckCircleOutlineIcon sx={{ fontSize: '13px !important' }} /> : undefined}
+                                  label={stageItem.enabled ? 'Active' : 'Disabled / Skipped'}
+                                  size="small"
+                                  color={stageItem.enabled ? 'success' : 'default'}
+                                  sx={{ height: 20, fontSize: '0.7rem', fontWeight: 600 }}
+                                />
+                              )}
+                            </Box>
+                          </Box>
+                        </Box>
+                      </Grid>
+
+                      {/* Stage Label & Description */}
+                      <Grid item xs={12} sm={6}>
+                        <Stack spacing={1.5}>
+                          <TextField
+                            label="Display Label / Step Title"
+                            size="small"
+                            fullWidth
+                            value={stageItem.label}
+                            onChange={(e) => handleStageChange(index, 'label', e.target.value)}
+                            disabled={!canEdit}
+                          />
+                          <TextField
+                            label="Reviewer Guidelines & Description"
+                            size="small"
+                            fullWidth
+                            multiline
+                            rows={2}
+                            value={stageItem.description || ''}
+                            onChange={(e) => handleStageChange(index, 'description', e.target.value)}
+                            disabled={!canEdit}
+                            placeholder="What reviewers or coordinators should check in this stage"
+                          />
+                        </Stack>
+                      </Grid>
+
+                      {/* Controls (Toggle & Reorder) */}
+                      <Grid item xs={12} sm={3}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: { xs: 'flex-start', sm: 'flex-end' },
+                            gap: 1,
+                          }}
+                        >
+                          <FormControlLabel
+                            control={
+                              <Switch
+                                checked={stageItem.enabled}
+                                onChange={(e) => handleStageChange(index, 'enabled', e.target.checked)}
+                                disabled={!canEdit || isMandatory}
+                                color="primary"
+                              />
+                            }
+                            label={stageItem.enabled ? 'Enabled' : 'Disabled'}
+                            sx={{ mr: 0 }}
+                          />
+
+                          {canEdit && (
+                            <Box sx={{ display: 'flex', gap: 0.5 }}>
+                              <Tooltip title="Move Stage Up">
+                                <span>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => moveStage(index, 'up')}
+                                    disabled={isFirst || index === 1} // Keep APPLICATION at top
+                                  >
+                                    <ArrowUpwardIcon fontSize="small" />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                              <Tooltip title="Move Stage Down">
+                                <span>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => moveStage(index, 'down')}
+                                    disabled={isLast || index === pipelineStages.length - 2} // Keep APPROVED at bottom
+                                  >
+                                    <ArrowDownwardIcon fontSize="small" />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                            </Box>
+                          )}
+                        </Box>
+                      </Grid>
+                    </Grid>
+                  </Paper>
+                )
+              })}
+            </Stack>
           </CardContent>
         </Card>
       )}
