@@ -106,33 +106,78 @@ export default function HomePage() {
       {/* ── Main Hub Content ── */}
       <Container maxWidth="md" sx={{ py: { xs: 4, md: 6 }, flexGrow: 1 }}>
         {/* Title Banner */}
-        <Box sx={{ textAlign: 'center', mb: 5 }}>
-          <Chip
-            icon={<SecurityIcon sx={{ fontSize: '1rem !important', color: '#12446A' }} />}
-            label="Internal Management & Public Services"
-            size="small"
+        <Box
+          sx={{
+            textAlign: 'center',
+            mb: { xs: 4, sm: 5 },
+          }}
+        >
+          {/* Pill Badge */}
+          <Box
             sx={{
-              bgcolor: 'rgba(18, 68, 106, 0.08)',
-              color: '#12446A',
-              fontWeight: 600,
-              mb: 1.5,
-              borderRadius: '16px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 1.25,
+              px: 2,
+              py: 0.75,
+              bgcolor: '#FFFFFF',
+              border: '1px solid #E1E8F0',
+              borderRadius: '9999px',
+              boxShadow: '0 2px 8px rgba(18, 68, 106, 0.04)',
+              mb: 2.5,
             }}
-          />
+          >
+            <Box
+              sx={{
+                width: 7,
+                height: 7,
+                borderRadius: '50%',
+                bgcolor: '#22C55E',
+              }}
+            />
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: 700,
+                color: '#12446A',
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                fontSize: '0.725rem',
+              }}
+            >
+              Trust Management & Community Services
+            </Typography>
+          </Box>
+
+          {/* Main Title */}
           <Typography
-            variant="h4"
+            variant="h3"
             component="h1"
             sx={{
               fontWeight: 800,
+              fontSize: { xs: '1.75rem', sm: '2.35rem', md: '2.65rem' },
+              letterSpacing: '-0.025em',
+              lineHeight: 1.2,
               color: '#12446A',
-              letterSpacing: '-0.01em',
-              mb: 1,
+              mb: 1.5,
             }}
           >
             Management & Registration Portal
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ maxWidth: '580px', mx: 'auto' }}>
-            Official registration and management system for volunteers and members of Free Mind Foundation.
+
+          {/* Subtitle */}
+          <Typography
+            variant="body1"
+            sx={{
+              color: '#52657A',
+              fontSize: { xs: '0.95rem', sm: '1.05rem' },
+              lineHeight: 1.6,
+              maxWidth: '600px',
+              mx: 'auto',
+              fontWeight: 400,
+            }}
+          >
+            Official gateway for volunteer onboarding, member registration, and operational management for Free Mind Foundation.
           </Typography>
         </Box>
 

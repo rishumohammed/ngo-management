@@ -10,7 +10,7 @@ import { v4 as uuid } from 'uuid'
 import { z } from 'zod'
 
 const CredentialsActionSchema = z.object({
-  action: z.enum(['SET_PASSWORD', 'GENERATE_INVITE', 'CREATE_ACCOUNT', 'TOGGLE_ACTIVE']),
+  action: z.enum(['SET_PASSWORD', 'GENERATE_INVITE', 'CREATE_ACCOUNT', 'TOGGLE_ACTIVE', 'RESET_ACCOUNT']),
   password: z.string().min(6).optional(),
   sendEmail: z.boolean().optional().default(false),
 })
@@ -37,17 +37,127 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   let targetUserId = volunteer.userId
 
+  // Action: RESET_ACCOUNT
+  if (action === 'RESET_ACCOUNT') {
+    const newPassword = password || Math.random().toString(36).slice(-8) + 'Fm1!'
+    const passwordHash = await bcrypt.hash(newPassword, 12)
+
+    let user: any = null
+    if (targetUserId) {
+      user = await prisma.user.findUnique({ where: { id: targetUserId } })
+    }
+    if (!user) {
+      user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: volunteer.email },
+            { email: volunteer.email.toLowerCase().trim() },
+          ],
+        },
+      })
+    }
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email: volunteer.email.toLowerCase().trim(),
+          name: volunteer.name,
+          passwordHash,
+          role: 'VOLUNTEER',
+          isActive: true,
+        },
+      })
+    } else {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          email: volunteer.email.toLowerCase().trim(),
+          name: volunteer.name,
+          passwordHash,
+          role: 'VOLUNTEER',
+          isActive: true,
+        },
+      })
+    }
+
+    targetUserId = user.id
+
+    // Update volunteer record: link user and clear suspension
+    await prisma.volunteer.update({
+      where: { id: params.id },
+      data: {
+        userId: user.id,
+        isSuspended: false,
+        suspendedAt: null,
+        suspensionReason: null,
+      },
+    })
+
+    // Invalidate old tokens
+    await prisma.inviteToken.deleteMany({
+      where: { userId: user.id },
+    })
+
+    const token = uuid()
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000)
+    await prisma.inviteToken.create({
+      data: { token, userId: user.id, expiresAt },
+    })
+
+    const inviteUrl = `${appUrl}/auth/setup-password?token=${token}`
+
+    if (sendEmail) {
+      try {
+        const orgName = (await prisma.orgSetting.findUnique({ where: { key: 'org_name' } }))?.value || 'Free Mind Foundation'
+        const { subject, html, text } = volunteerInviteTemplate({ name: volunteer.name, inviteUrl, orgName })
+        await (await getEmailProvider()).send({ to: volunteer.email, subject, html, text })
+      } catch (err) {
+        console.error('Failed to send reset email:', err)
+      }
+    }
+
+    await logAudit({
+      userId: session.user.id,
+      userName: session.user.name || undefined,
+      action: 'UPDATE',
+      entity: 'User',
+      entityId: user.id,
+      entityName: volunteer.name,
+      diff: { after: { action: 'VOLUNTEER_ACCOUNT_RESET' } },
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: 'Volunteer account successfully reset and credentials generated',
+      credentials: {
+        email: volunteer.email,
+        password: newPassword,
+      },
+      inviteToken: token,
+      inviteUrl,
+      expiresAt,
+      emailSent: sendEmail,
+      isActive: true,
+    })
+  }
+
   // Action: CREATE_ACCOUNT
   if (action === 'CREATE_ACCOUNT') {
     if (!targetUserId) {
-      // Check if user with this email already exists
-      let user = await prisma.user.findUnique({ where: { email: volunteer.email } })
+      let user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: volunteer.email },
+            { email: volunteer.email.toLowerCase().trim() },
+          ],
+        },
+      })
       if (!user) {
         const initialPassword = password || Math.random().toString(36).slice(-10) + 'A1!'
         const passwordHash = await bcrypt.hash(initialPassword, 12)
         user = await prisma.user.create({
           data: {
-            email: volunteer.email,
+            email: volunteer.email.toLowerCase().trim(),
             name: volunteer.name,
             passwordHash,
             role: 'VOLUNTEER',
@@ -65,14 +175,20 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   // Ensure we have a user for other actions
   if (!targetUserId && action !== 'CREATE_ACCOUNT') {
-    // Automatically create user account
     const initialPassword = password || Math.random().toString(36).slice(-10) + 'A1!'
     const passwordHash = await bcrypt.hash(initialPassword, 12)
-    let user = await prisma.user.findUnique({ where: { email: volunteer.email } })
+    let user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: volunteer.email },
+          { email: volunteer.email.toLowerCase().trim() },
+        ],
+      },
+    })
     if (!user) {
       user = await prisma.user.create({
         data: {
-          email: volunteer.email,
+          email: volunteer.email.toLowerCase().trim(),
           name: volunteer.name,
           passwordHash,
           role: 'VOLUNTEER',

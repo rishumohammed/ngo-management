@@ -38,6 +38,8 @@ import {
   Snackbar,
   InputAdornment,
   Autocomplete,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
@@ -58,6 +60,11 @@ import RefreshIcon from '@mui/icons-material/Refresh'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import AddIcon from '@mui/icons-material/Add'
+import BlockIcon from '@mui/icons-material/Block'
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
+import WarningAmberIcon from '@mui/icons-material/WarningAmber'
+import RestartAltIcon from '@mui/icons-material/RestartAlt'
 import { can } from '@/lib/permissions'
 import { formatDate } from '@/lib/utils'
 import { DEFAULT_INDIAN_STATES, DEFAULT_PIPELINE_STAGES, PipelineStageConfig } from '@/lib/constants'
@@ -89,6 +96,7 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
   const { data: session } = useSession()
   const role = session?.user?.role || ''
   const canUpdate = can(role, 'volunteers', 'update')
+  const canDelete = can(role, 'volunteers', 'delete')
 
   const [volunteer, setVolunteer] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -124,6 +132,21 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
 
   // Notification Snackbar
   const [toastMessage, setToastMessage] = useState('')
+
+  // Suspend Dialog
+  const [suspendDialogOpen, setSuspendDialogOpen] = useState(false)
+  const [suspensionReason, setSuspensionReason] = useState('')
+  const [suspending, setSuspending] = useState(false)
+
+  // Reset Account Dialog
+  const [resetAccountDialogOpen, setResetAccountDialogOpen] = useState(false)
+  const [resetCustomPassword, setResetCustomPassword] = useState('')
+  const [resetSendEmail, setResetSendEmail] = useState(true)
+  const [showResetPassword, setShowResetPassword] = useState(false)
+
+  // Delete Dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const fetchVolunteer = useCallback(async () => {
     setLoading(true)
@@ -221,8 +244,8 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
     }
   }
 
-  // Handle Credentials Action (Direct Password Set / Generate Invite / Create Account)
-  const handleCredentialsAction = async (action: 'SET_PASSWORD' | 'GENERATE_INVITE' | 'CREATE_ACCOUNT' | 'TOGGLE_ACTIVE', sendEmail = false) => {
+  // Handle Credentials Action (Direct Password Set / Generate Invite / Create Account / Reset Account)
+  const handleCredentialsAction = async (action: 'SET_PASSWORD' | 'GENERATE_INVITE' | 'CREATE_ACCOUNT' | 'TOGGLE_ACTIVE' | 'RESET_ACCOUNT', sendEmail = false) => {
     setPasswordActionLoading(true)
     try {
       const res = await fetch(`/api/volunteers/${id}/credentials`, {
@@ -230,7 +253,7 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action,
-          password: newPassword || undefined,
+          password: (action === 'RESET_ACCOUNT' ? resetCustomPassword : newPassword) || undefined,
           sendEmail,
         }),
       })
@@ -240,13 +263,15 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
         return
       }
 
-      if (action === 'SET_PASSWORD' && data.credentials) {
+      if ((action === 'SET_PASSWORD' || action === 'RESET_ACCOUNT') && data.credentials) {
         setGeneratedSuccessData({
           email: data.credentials.email,
           password: data.credentials.password,
+          inviteUrl: data.inviteUrl,
         })
         setPasswordDialogOpen(false)
-        setToastMessage('Volunteer password updated successfully!')
+        setResetAccountDialogOpen(false)
+        setToastMessage(data.message || (action === 'RESET_ACCOUNT' ? 'Volunteer account successfully reset!' : 'Volunteer password updated successfully!'))
       } else if (action === 'GENERATE_INVITE') {
         setGeneratedSuccessData({
           email: volunteer.email,
@@ -319,6 +344,51 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
     }
   }
 
+  // Handle Suspend / Reactivate
+  const handleToggleSuspend = async (suspend: boolean) => {
+    setSuspending(true)
+    try {
+      const res = await fetch(`/api/volunteers/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: suspend ? 'SUSPEND' : 'REACTIVATE',
+          reason: suspend ? (suspensionReason || 'Suspended by administrator') : undefined,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setToastMessage(data.error || 'Failed to update volunteer status')
+        return
+      }
+      setSuspendDialogOpen(false)
+      setSuspensionReason('')
+      setToastMessage(suspend ? 'Volunteer suspended successfully' : 'Volunteer reactivated successfully')
+      fetchVolunteer()
+    } finally {
+      setSuspending(false)
+    }
+  }
+
+  // Handle Delete Volunteer
+  const handleDeleteVolunteer = async () => {
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/volunteers/${id}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        setToastMessage(data.error || 'Failed to delete volunteer')
+        return
+      }
+      setDeleteDialogOpen(false)
+      router.push('/admin/volunteers')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 12 }}>
@@ -359,6 +429,43 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
           Back to Volunteers List
         </Button>
 
+        {/* Suspended Alert Banner */}
+        {volunteer.isSuspended && (
+          <Alert
+            severity="warning"
+            sx={{
+              mb: 2,
+              border: '1px solid #FDE68A',
+              bgcolor: '#FFFBEB',
+              color: '#92400E',
+              alignItems: 'center',
+            }}
+            action={
+              canUpdate && (
+                <Button
+                  color="warning"
+                  size="small"
+                  variant="outlined"
+                  onClick={() => handleToggleSuspend(false)}
+                  disabled={suspending}
+                  sx={{ borderColor: '#F59E0B' }}
+                >
+                  Reactivate Volunteer
+                </Button>
+              )
+            }
+          >
+            <Typography variant="subtitle2" fontWeight={700}>
+              ⚠️ This volunteer is currently suspended.
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 0.5 }}>
+              {volunteer.suspensionReason ? `Reason: ${volunteer.suspensionReason}. ` : ''}
+              {volunteer.suspendedAt ? `(Suspended on ${formatDate(volunteer.suspendedAt)}) ` : ''}
+              Volunteer portal login is disabled and activity is paused.
+            </Typography>
+          </Alert>
+        )}
+
         <Box
           sx={{
             display: 'flex',
@@ -375,7 +482,7 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Avatar
               sx={{
-                bgcolor: isApproved ? 'success.main' : isRejected ? 'error.main' : 'primary.main',
+                bgcolor: volunteer.isSuspended ? '#F59E0B' : isApproved ? 'success.main' : isRejected ? 'error.main' : 'primary.main',
                 width: 60,
                 height: 60,
                 fontSize: '1.5rem',
@@ -389,12 +496,26 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                 <Typography variant="h5" fontWeight={800} color="#12446A">
                   {volunteer.name}
                 </Typography>
-                <Chip
-                  label={dynamicStageLabels[volunteer.currentStage] || volunteer.currentStage}
-                  color={STAGE_STATUS_COLORS[volunteer.currentStage] || 'default'}
-                  size="small"
-                  sx={{ fontWeight: 700 }}
-                />
+                {volunteer.isSuspended ? (
+                  <Chip
+                    label="Suspended"
+                    color="warning"
+                    size="small"
+                    sx={{
+                      fontWeight: 700,
+                      bgcolor: '#FEF3C7',
+                      color: '#92400E',
+                      border: '1px solid #FDE68A',
+                    }}
+                  />
+                ) : (
+                  <Chip
+                    label={dynamicStageLabels[volunteer.currentStage] || volunteer.currentStage}
+                    color={STAGE_STATUS_COLORS[volunteer.currentStage] || 'default'}
+                    size="small"
+                    sx={{ fontWeight: 700 }}
+                  />
+                )}
               </Stack>
               <Typography variant="body2" color="text.secondary">
                 Application ID: <code>{volunteer.id}</code> • Applied on {formatDate(volunteer.createdAt)}
@@ -402,37 +523,85 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
             </Box>
           </Box>
 
-          {canUpdate && (
-            <Stack direction="row" spacing={1.5} flexWrap="wrap">
+          <Stack direction="row" spacing={1.5} flexWrap="wrap">
+            {canUpdate && (
+              <>
+                <Button
+                  variant="outlined"
+                  startIcon={<EditIcon />}
+                  onClick={() => {
+                    setEditForm({
+                      name: volunteer.name,
+                      phone: volunteer.phone || '',
+                      address: volunteer.address || '',
+                      city: volunteer.city || '',
+                      state: volunteer.state || '',
+                      skills: Array.isArray(volunteer.skills) ? volunteer.skills.join(', ') : volunteer.skills || '',
+                      interests: Array.isArray(volunteer.interests) ? volunteer.interests.join(', ') : volunteer.interests || '',
+                      availability: volunteer.availability || '',
+                      motivation: volunteer.motivation || '',
+                    })
+                    setEditDialogOpen(true)
+                  }}
+                >
+                  Edit Details
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => setHoursDialogOpen(true)}
+                >
+                  Log Hours
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="info"
+                  startIcon={<RestartAltIcon />}
+                  onClick={() => {
+                    setResetCustomPassword('')
+                    setResetSendEmail(true)
+                    setResetAccountDialogOpen(true)
+                  }}
+                >
+                  Reset Account
+                </Button>
+                {volunteer.isSuspended ? (
+                  <Button
+                    variant="outlined"
+                    color="success"
+                    startIcon={<CheckCircleOutlineIcon />}
+                    onClick={() => handleToggleSuspend(false)}
+                    disabled={suspending}
+                  >
+                    Reactivate
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outlined"
+                    color="warning"
+                    startIcon={<BlockIcon />}
+                    onClick={() => {
+                      setSuspensionReason('')
+                      setSuspendDialogOpen(true)
+                    }}
+                  >
+                    Suspend
+                  </Button>
+                )}
+              </>
+            )}
+
+            {canDelete && (
               <Button
                 variant="outlined"
-                startIcon={<EditIcon />}
-                onClick={() => {
-                  setEditForm({
-                    name: volunteer.name,
-                    phone: volunteer.phone || '',
-                    address: volunteer.address || '',
-                    city: volunteer.city || '',
-                    state: volunteer.state || '',
-                    skills: Array.isArray(volunteer.skills) ? volunteer.skills.join(', ') : volunteer.skills || '',
-                    interests: Array.isArray(volunteer.interests) ? volunteer.interests.join(', ') : volunteer.interests || '',
-                    availability: volunteer.availability || '',
-                    motivation: volunteer.motivation || '',
-                  })
-                  setEditDialogOpen(true)
-                }}
+                color="error"
+                startIcon={<DeleteOutlineIcon />}
+                onClick={() => setDeleteDialogOpen(true)}
               >
-                Edit Details
+                Delete
               </Button>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => setHoursDialogOpen(true)}
-              >
-                Log Hours
-              </Button>
-            </Stack>
-          )}
+            )}
+          </Stack>
         </Box>
       </Box>
 
@@ -745,6 +914,19 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                         <>
                           <Button
                             variant="contained"
+                            color="info"
+                            startIcon={<RestartAltIcon />}
+                            onClick={() => {
+                              setResetCustomPassword('')
+                              setResetSendEmail(true)
+                              setResetAccountDialogOpen(true)
+                            }}
+                            disabled={passwordActionLoading}
+                          >
+                            Reset Account
+                          </Button>
+                          <Button
+                            variant="contained"
                             color="primary"
                             startIcon={<LockResetIcon />}
                             onClick={() => {
@@ -994,6 +1176,107 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                 )}
               </CardContent>
             </Card>
+
+            {/* 4. Danger Zone / Account & Status Actions */}
+            {(canUpdate || canDelete) && (
+              <Card elevation={0} sx={{ border: '1px solid #FCA5A5', borderRadius: 3, bgcolor: '#FFF5F5' }}>
+                <CardHeader
+                  avatar={<WarningAmberIcon color="error" />}
+                  title={
+                    <Typography variant="h6" fontWeight={700} color="error.main">
+                      Account & Status Actions
+                    </Typography>
+                  }
+                  subheader="Manage volunteer activity status or remove records"
+                />
+                <Divider sx={{ borderColor: '#FECACA' }} />
+                <CardContent sx={{ p: 3 }}>
+                  <Stack spacing={2}>
+                    {canUpdate && (
+                      <>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1.5 }}>
+                          <Box>
+                            <Typography variant="subtitle2" fontWeight={700} color="#1E293B">
+                              Reset Volunteer Account
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" display="block">
+                              Re-generate credentials, reactivate login access, and restore volunteer portal functionality.
+                            </Typography>
+                          </Box>
+                          <Button
+                            variant="contained"
+                            color="info"
+                            size="small"
+                            startIcon={<RestartAltIcon />}
+                            onClick={() => {
+                              setResetCustomPassword('')
+                              setResetSendEmail(true)
+                              setResetAccountDialogOpen(true)
+                            }}
+                            disabled={passwordActionLoading}
+                          >
+                            Reset Account
+                          </Button>
+                        </Box>
+                        <Divider sx={{ borderColor: '#FECACA' }} />
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1.5 }}>
+                          <Box>
+                            <Typography variant="subtitle2" fontWeight={700} color="#1E293B">
+                              {volunteer.isSuspended ? 'Reactivate Volunteer' : 'Suspend Volunteer'}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" display="block">
+                              {volunteer.isSuspended
+                                ? 'Restore login access and enable active participation.'
+                                : 'Pause volunteer assignments and disable portal login access.'}
+                            </Typography>
+                          </Box>
+                          <Button
+                            variant="outlined"
+                            color={volunteer.isSuspended ? 'success' : 'warning'}
+                            size="small"
+                            onClick={() => {
+                              if (volunteer.isSuspended) {
+                                handleToggleSuspend(false)
+                              } else {
+                                setSuspensionReason('')
+                                setSuspendDialogOpen(true)
+                              }
+                            }}
+                            disabled={suspending}
+                          >
+                            {volunteer.isSuspended ? 'Reactivate Volunteer' : 'Suspend Volunteer'}
+                          </Button>
+                        </Box>
+                      </>
+                    )}
+
+                    {canDelete && (
+                      <>
+                        <Divider sx={{ borderColor: '#FECACA' }} />
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1.5 }}>
+                          <Box>
+                            <Typography variant="subtitle2" fontWeight={700} color="error.main">
+                              Delete Volunteer
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" display="block">
+                              Permanently delete volunteer records, logged hours, and portal login account.
+                            </Typography>
+                          </Box>
+                          <Button
+                            variant="contained"
+                            color="error"
+                            size="small"
+                            onClick={() => setDeleteDialogOpen(true)}
+                          >
+                            Delete Volunteer
+                          </Button>
+                        </Box>
+                      </>
+                    )}
+                  </Stack>
+                </CardContent>
+              </Card>
+            )}
           </Stack>
         </Grid>
       </Grid>
@@ -1317,6 +1600,129 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
           <Button onClick={() => setHoursDialogOpen(false)} disabled={savingHours}>Cancel</Button>
           <Button variant="contained" onClick={handleAddHours} disabled={savingHours || !hoursForm.hours}>
             {savingHours ? <CircularProgress size={20} color="inherit" /> : 'Log Hours'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Dialog: Suspend Volunteer ── */}
+      <Dialog open={suspendDialogOpen} onClose={() => setSuspendDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#B45309' }}>
+          <BlockIcon color="warning" /> Suspend Volunteer
+        </DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Suspending <strong>{volunteer.name}</strong> will disable their login access to the volunteer portal and pause their participation.
+          </Typography>
+          <TextField
+            label="Suspension Reason"
+            fullWidth
+            multiline
+            rows={3}
+            value={suspensionReason}
+            onChange={(e) => setSuspensionReason(e.target.value)}
+            placeholder="e.g. Inactive for extended period / Policy violation"
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setSuspendDialogOpen(false)} disabled={suspending}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="warning"
+            onClick={() => handleToggleSuspend(true)}
+            disabled={suspending}
+          >
+            {suspending ? <CircularProgress size={20} color="inherit" /> : 'Confirm Suspension'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Dialog: Delete Volunteer ── */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'error.main' }}>
+          <WarningAmberIcon color="error" /> Delete Volunteer
+        </DialogTitle>
+        <DialogContent dividers>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            This action is permanent and cannot be undone!
+          </Alert>
+          <Typography variant="body2">
+            Are you sure you want to permanently delete <strong>{volunteer.name}</strong>? This will remove all associated records including logged hours, pipeline verification stages, event assignments, and their login account.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setDeleteDialogOpen(false)} disabled={deleting}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDeleteVolunteer}
+            disabled={deleting}
+          >
+            {deleting ? <CircularProgress size={20} color="inherit" /> : 'Delete Permanently'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Dialog: Reset Volunteer Account ── */}
+      <Dialog open={resetAccountDialogOpen} onClose={() => setResetAccountDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'info.main' }}>
+          <RestartAltIcon color="info" /> Reset Volunteer Account
+        </DialogTitle>
+        <DialogContent dividers>
+          <Alert severity="info" sx={{ mb: 2.5 }}>
+            Resetting the account will generate a new secure password, activate or re-link the volunteer portal user, and clear any suspensions.
+          </Alert>
+
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Target Volunteer: <strong>{volunteer.name}</strong> ({volunteer.email})
+          </Typography>
+
+          <TextField
+            label="Custom Password (Optional)"
+            type={showResetPassword ? 'text' : 'password'}
+            fullWidth
+            placeholder="Leave blank to auto-generate a strong password"
+            value={resetCustomPassword}
+            onChange={(e) => setResetCustomPassword(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={() => setShowResetPassword(!showResetPassword)}>
+                    {showResetPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            helperText="If blank, a secure random password will automatically be generated."
+            sx={{ mb: 2 }}
+          />
+
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={resetSendEmail}
+                onChange={(e) => setResetSendEmail(e.target.checked)}
+                color="primary"
+              />
+            }
+            label="Send login instructions and credentials email to volunteer"
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setResetAccountDialogOpen(false)} disabled={passwordActionLoading}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="info"
+            startIcon={<RestartAltIcon />}
+            onClick={() => handleCredentialsAction('RESET_ACCOUNT', resetSendEmail)}
+            disabled={passwordActionLoading}
+          >
+            {passwordActionLoading ? <CircularProgress size={20} color="inherit" /> : 'Confirm & Reset Account'}
           </Button>
         </DialogActions>
       </Dialog>

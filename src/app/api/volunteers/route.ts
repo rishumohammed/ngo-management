@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const search = searchParams.get('search') || ''
   const stage = searchParams.get('stage') || ''
+  const statusFilter = searchParams.get('status') || ''
   const page = parseInt(searchParams.get('page') || '1')
   const pageSize = parseInt(searchParams.get('pageSize') || '25')
 
@@ -40,6 +41,8 @@ export async function GET(req: NextRequest) {
     ]
   }
   if (stage) where.currentStage = stage
+  if (statusFilter === 'SUSPENDED') where.isSuspended = true
+  if (statusFilter === 'ACTIVE') where.isSuspended = false
 
   const [volunteers, total] = await Promise.all([
     prisma.volunteer.findMany({

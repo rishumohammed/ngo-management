@@ -126,6 +126,9 @@ model Volunteer {
   availability    String?       // free text or JSON
   motivation      String?       @db.Text
   currentStage    PipelineStage @default(APPLICATION)
+  isSuspended     Boolean       @default(false)
+  suspendedAt     DateTime?
+  suspensionReason String?      @db.Text
   rejectedAt      DateTime?
   rejectionReason String?       @db.Text
   approvedAt      DateTime?

@@ -8,6 +8,8 @@ type AuditAction =
   | 'LOGOUT'
   | 'STAGE_CHANGE'
   | 'STATUS_CHANGE'
+  | 'SUSPEND'
+  | 'REACTIVATE'
   | 'EMAIL_SENT'
   | 'PDF_GENERATED'
   | 'INVITE_SENT'

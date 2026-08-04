@@ -41,6 +41,7 @@ function LoginContent() {
     setError('')
     setLoading(true)
 
+    const trimmedEmail = email.trim()
     const providerId = portal === 'admin' ? 'admin-credentials' : 'volunteer-credentials'
     let targetCallback = callbackUrl || (portal === 'admin' ? '/admin/dashboard' : '/volunteer/dashboard')
     if (targetCallback === '/admin' || targetCallback === '/admin/') {
@@ -50,7 +51,7 @@ function LoginContent() {
     }
 
     const result = await signIn(providerId, {
-      email,
+      email: trimmedEmail,
       password,
       redirect: false,
       callbackUrl: targetCallback,
@@ -59,9 +60,22 @@ function LoginContent() {
     setLoading(false)
 
     if (result?.error) {
-      setError('Invalid email or password. Please try again.')
+      setError('Invalid email or password. Please verify your credentials or contact an administrator.')
     } else {
-      router.push(targetCallback)
+      // Check session to confirm appropriate portal destination
+      try {
+        const res = await fetch('/api/auth/session')
+        const sess = await res.json()
+        if (sess?.user?.isVolunteer || sess?.user?.role === 'VOLUNTEER') {
+          router.push('/volunteer/dashboard')
+        } else if (sess?.user?.role) {
+          router.push('/admin/dashboard')
+        } else {
+          router.push(targetCallback)
+        }
+      } catch {
+        router.push(targetCallback)
+      }
       router.refresh()
     }
   }

@@ -23,15 +23,47 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+        const rawEmail = credentials.email.trim()
+        const normalizedEmail = rawEmail.toLowerCase()
+
+        const user = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { email: { equals: rawEmail } },
+              { email: { equals: normalizedEmail } },
+            ],
+          },
+          include: { volunteer: true },
         })
 
         if (!user || !user.isActive) return null
-        if (user.role === 'VOLUNTEER') return null // volunteers use separate login
 
+        // Check password
         const valid = await bcrypt.compare(credentials.password, user.passwordHash)
         if (!valid) return null
+
+        // If user is a volunteer, check suspension and link if needed
+        let volunteer = user.volunteer
+        if (user.role === 'VOLUNTEER') {
+          if (!volunteer) {
+            volunteer = await prisma.volunteer.findFirst({
+              where: {
+                OR: [
+                  { userId: user.id },
+                  { email: user.email },
+                  { email: normalizedEmail },
+                ],
+              },
+            })
+            if (volunteer && !volunteer.userId) {
+              await prisma.volunteer.update({
+                where: { id: volunteer.id },
+                data: { userId: user.id },
+              })
+            }
+          }
+          if (volunteer?.isSuspended) return null
+        }
 
         // Update last login
         await prisma.user.update({
@@ -39,12 +71,15 @@ export const authOptions: NextAuthOptions = {
           data: { lastLoginAt: new Date() },
         })
 
+        const isVolunteer = user.role === 'VOLUNTEER'
+
         return {
           id: user.id,
           email: user.email,
           name: user.name,
           role: user.role,
-          isVolunteer: false,
+          isVolunteer,
+          volunteerId: volunteer?.id,
         }
       },
     }),
@@ -58,13 +93,43 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+        const rawEmail = credentials.email.trim()
+        const normalizedEmail = rawEmail.toLowerCase()
+
+        const user = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { email: { equals: rawEmail } },
+              { email: { equals: normalizedEmail } },
+            ],
+          },
           include: { volunteer: true },
         })
 
         if (!user || !user.isActive) return null
-        if (user.role !== 'VOLUNTEER') return null
+
+        // Link volunteer record if not already linked
+        let volunteer = user.volunteer
+        if (!volunteer) {
+          volunteer = await prisma.volunteer.findFirst({
+            where: {
+              OR: [
+                { userId: user.id },
+                { email: user.email },
+                { email: normalizedEmail },
+              ],
+            },
+          })
+          if (volunteer && !volunteer.userId) {
+            await prisma.volunteer.update({
+              where: { id: volunteer.id },
+              data: { userId: user.id },
+            })
+          }
+        }
+
+        // If volunteer is suspended, deny login
+        if (volunteer?.isSuspended) return null
 
         const valid = await bcrypt.compare(credentials.password, user.passwordHash)
         if (!valid) return null
@@ -74,13 +139,15 @@ export const authOptions: NextAuthOptions = {
           data: { lastLoginAt: new Date() },
         })
 
+        const isVolunteer = user.role === 'VOLUNTEER'
+
         return {
           id: user.id,
           email: user.email,
           name: user.name,
           role: user.role,
-          isVolunteer: true,
-          volunteerId: user.volunteer?.id,
+          isVolunteer,
+          volunteerId: volunteer?.id,
         }
       },
     }),

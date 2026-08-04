@@ -112,7 +112,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json(volunteer)
 }
 
-// Stage advancement / rejection
+// Stage advancement / rejection / suspension
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -120,6 +120,92 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const body = await req.json()
+
+  // Handle Suspend Action
+  if (body.action === 'SUSPEND' || body.isSuspended === true) {
+    const existing = await prisma.volunteer.findUnique({ where: { id: params.id } })
+    if (!existing) return NextResponse.json({ error: 'Volunteer not found' }, { status: 404 })
+
+    const reason = body.reason || body.suspensionReason || 'Suspended by administrator'
+    const updated = await prisma.volunteer.update({
+      where: { id: params.id },
+      data: {
+        isSuspended: true,
+        suspendedAt: new Date(),
+        suspensionReason: reason,
+      },
+      include: {
+        stages: true,
+        user: { select: { id: true, email: true, isActive: true } },
+      },
+    })
+
+    // If volunteer has an associated portal user, deactivate it
+    if (existing.userId) {
+      await prisma.user.update({
+        where: { id: existing.userId },
+        data: { isActive: false },
+      })
+    }
+
+    await logAudit({
+      userId: session.user.id,
+      userName: session.user.name || undefined,
+      action: 'SUSPEND',
+      entity: 'Volunteer',
+      entityId: params.id,
+      entityName: updated.name,
+      diff: {
+        before: { isSuspended: existing.isSuspended },
+        after: { isSuspended: true, suspensionReason: reason },
+      },
+    })
+
+    return NextResponse.json(updated)
+  }
+
+  // Handle Reactivate / Unsuspend Action
+  if (body.action === 'REACTIVATE' || body.action === 'UNSUSPEND' || body.isSuspended === false) {
+    const existing = await prisma.volunteer.findUnique({ where: { id: params.id } })
+    if (!existing) return NextResponse.json({ error: 'Volunteer not found' }, { status: 404 })
+
+    const updated = await prisma.volunteer.update({
+      where: { id: params.id },
+      data: {
+        isSuspended: false,
+        suspendedAt: null,
+        suspensionReason: null,
+      },
+      include: {
+        stages: true,
+        user: { select: { id: true, email: true, isActive: true } },
+      },
+    })
+
+    // If volunteer has an associated portal user, reactivate it
+    if (existing.userId) {
+      await prisma.user.update({
+        where: { id: existing.userId },
+        data: { isActive: true },
+      })
+    }
+
+    await logAudit({
+      userId: session.user.id,
+      userName: session.user.name || undefined,
+      action: 'REACTIVATE',
+      entity: 'Volunteer',
+      entityId: params.id,
+      entityName: updated.name,
+      diff: {
+        before: { isSuspended: existing.isSuspended, suspensionReason: existing.suspensionReason },
+        after: { isSuspended: false },
+      },
+    })
+
+    return NextResponse.json(updated)
+  }
+
   const parsed = StageUpdateSchema.safeParse(body)
   if (!parsed.success)
     return NextResponse.json({ error: 'Validation failed', details: parsed.error.errors }, { status: 400 })
@@ -270,4 +356,72 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     include: { stages: true },
   })
   return NextResponse.json(updated)
+}
+
+export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+  const session = await getServerSession(authOptions)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!can(session.user.role, 'volunteers', 'delete'))
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+  const volunteer = await prisma.volunteer.findUnique({
+    where: { id: params.id },
+    include: { user: true },
+  })
+  if (!volunteer) return NextResponse.json({ error: 'Volunteer not found' }, { status: 404 })
+
+  const targetUserId = volunteer.userId
+
+  // Safely cleanup all related records
+  await prisma.$transaction(async (tx) => {
+    // 1. Delete volunteer hours logs
+    await tx.volunteerHoursLog.deleteMany({ where: { volunteerId: params.id } })
+
+    // 2. Delete pipeline stages
+    await tx.volunteerStage.deleteMany({ where: { volunteerId: params.id } })
+
+    // 3. Delete event assignments
+    await tx.eventAssignment.deleteMany({ where: { volunteerId: params.id } })
+
+    // 4. Delete committee memberships
+    await tx.committeeMember.deleteMany({ where: { volunteerId: params.id } })
+
+    // 5. Unlink user before deleting volunteer
+    await tx.volunteer.update({
+      where: { id: params.id },
+      data: { userId: null },
+    })
+
+    // 6. Delete volunteer record
+    await tx.volunteer.delete({ where: { id: params.id } })
+
+    // 7. Delete user account if it was a dedicated VOLUNTEER user
+    if (targetUserId) {
+      await tx.inviteToken.deleteMany({ where: { userId: targetUserId } })
+      await tx.auditLog.updateMany({ where: { userId: targetUserId }, data: { userId: null } })
+      const u = await tx.user.findUnique({ where: { id: targetUserId } })
+      if (u && u.role === 'VOLUNTEER') {
+        await tx.user.delete({ where: { id: targetUserId } })
+      }
+    }
+  })
+
+  await logAudit({
+    userId: session.user.id,
+    userName: session.user.name || undefined,
+    action: 'DELETE',
+    entity: 'Volunteer',
+    entityId: params.id,
+    entityName: volunteer.name,
+    diff: {
+      before: {
+        name: volunteer.name,
+        email: volunteer.email,
+        currentStage: volunteer.currentStage,
+        isSuspended: volunteer.isSuspended,
+      },
+    },
+  })
+
+  return NextResponse.json({ success: true, message: 'Volunteer deleted successfully' })
 }
