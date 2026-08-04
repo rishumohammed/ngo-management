@@ -469,17 +469,18 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
         <Box
           sx={{
             display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
+            flexDirection: { xs: 'column', xl: 'row' },
             justifyContent: 'space-between',
-            alignItems: { xs: 'flex-start', sm: 'center' },
-            gap: 2,
+            alignItems: { xs: 'flex-start', xl: 'center' },
+            gap: 2.5,
             bgcolor: 'background.paper',
-            p: 3,
+            p: { xs: 2.5, sm: 3 },
             borderRadius: 3,
             border: '1px solid #E1E6EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
             <Avatar
               sx={{
                 bgcolor: volunteer.isSuspended ? '#F59E0B' : isApproved ? 'success.main' : isRejected ? 'error.main' : 'primary.main',
@@ -487,12 +488,13 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                 height: 60,
                 fontSize: '1.5rem',
                 fontWeight: 700,
+                flexShrink: 0,
               }}
             >
               {volunteer.name.charAt(0)}
             </Avatar>
-            <Box>
-              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 0.5 }}>
+            <Box sx={{ minWidth: 0 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', mb: 0.75 }}>
                 <Typography variant="h5" fontWeight={800} color="#12446A">
                   {volunteer.name}
                 </Typography>
@@ -516,19 +518,37 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                     sx={{ fontWeight: 700 }}
                   />
                 )}
-              </Stack>
-              <Typography variant="body2" color="text.secondary">
-                Application ID: <code>{volunteer.id}</code> • Applied on {formatDate(volunteer.createdAt)}
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+                <span>Application ID: <code style={{ backgroundColor: '#F1F5F9', padding: '2px 8px', borderRadius: 4, fontSize: '0.85rem' }}>{volunteer.id}</code></span>
+                <span>•</span>
+                <span>Applied on {formatDate(volunteer.createdAt)}</span>
               </Typography>
             </Box>
           </Box>
 
-          <Stack direction="row" spacing={1.5} flexWrap="wrap">
+          <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: 1.25,
+              mt: { xs: 1, xl: 0 },
+            }}
+          >
             {canUpdate && (
               <>
                 <Button
                   variant="outlined"
                   startIcon={<EditIcon />}
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    borderRadius: 2,
+                    px: 2,
+                    py: 0.75,
+                    height: 38,
+                  }}
                   onClick={() => {
                     setEditForm({
                       name: volunteer.name,
@@ -549,6 +569,16 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    borderRadius: 2,
+                    px: 2,
+                    py: 0.75,
+                    height: 38,
+                    bgcolor: '#12446A',
+                    '&:hover': { bgcolor: '#0d3250' },
+                  }}
                   onClick={() => setHoursDialogOpen(true)}
                 >
                   Log Hours
@@ -557,6 +587,14 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                   variant="outlined"
                   color="info"
                   startIcon={<RestartAltIcon />}
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    borderRadius: 2,
+                    px: 2,
+                    py: 0.75,
+                    height: 38,
+                  }}
                   onClick={() => {
                     setResetCustomPassword('')
                     setResetSendEmail(true)
@@ -570,6 +608,14 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                     variant="outlined"
                     color="success"
                     startIcon={<CheckCircleOutlineIcon />}
+                    sx={{
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      borderRadius: 2,
+                      px: 2,
+                      py: 0.75,
+                      height: 38,
+                    }}
                     onClick={() => handleToggleSuspend(false)}
                     disabled={suspending}
                   >
@@ -580,6 +626,17 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                     variant="outlined"
                     color="warning"
                     startIcon={<BlockIcon />}
+                    sx={{
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      borderRadius: 2,
+                      px: 2,
+                      py: 0.75,
+                      height: 38,
+                      borderColor: '#F59E0B',
+                      color: '#D97706',
+                      '&:hover': { borderColor: '#D97706', bgcolor: '#FFFBEB' },
+                    }}
                     onClick={() => {
                       setSuspensionReason('')
                       setSuspendDialogOpen(true)
@@ -596,12 +653,20 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                 variant="outlined"
                 color="error"
                 startIcon={<DeleteOutlineIcon />}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  borderRadius: 2,
+                  px: 2,
+                  py: 0.75,
+                  height: 38,
+                }}
                 onClick={() => setDeleteDialogOpen(true)}
               >
                 Delete
               </Button>
             )}
-          </Stack>
+          </Box>
         </Box>
       </Box>
 
@@ -898,13 +963,14 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
 
                 {/* Action Buttons */}
                 {canUpdate && (
-                  <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid #E1E6EB' }}>
-                    <Stack direction="row" spacing={1.5} flexWrap="wrap" gap={1}>
+                  <Box sx={{ mt: 3, pt: 2.5, borderTop: '1px solid #E1E6EB' }}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.25, alignItems: 'center' }}>
                       {!hasAccount ? (
                         <Button
                           variant="contained"
                           color="primary"
                           startIcon={<KeyIcon />}
+                          sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2, px: 2, py: 0.75, height: 38 }}
                           onClick={() => handleCredentialsAction('CREATE_ACCOUNT')}
                           disabled={passwordActionLoading}
                         >
@@ -916,6 +982,7 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                             variant="contained"
                             color="info"
                             startIcon={<RestartAltIcon />}
+                            sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2, px: 2, py: 0.75, height: 38 }}
                             onClick={() => {
                               setResetCustomPassword('')
                               setResetSendEmail(true)
@@ -929,6 +996,16 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                             variant="contained"
                             color="primary"
                             startIcon={<LockResetIcon />}
+                            sx={{
+                              textTransform: 'none',
+                              fontWeight: 600,
+                              borderRadius: 2,
+                              px: 2,
+                              py: 0.75,
+                              height: 38,
+                              bgcolor: '#12446A',
+                              '&:hover': { bgcolor: '#0d3250' },
+                            }}
                             onClick={() => {
                               generateStrongPassword()
                               setPasswordDialogOpen(true)
@@ -940,6 +1017,7 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                           <Button
                             variant="outlined"
                             startIcon={<RefreshIcon />}
+                            sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2, px: 2, py: 0.75, height: 38 }}
                             onClick={() => handleCredentialsAction('GENERATE_INVITE', false)}
                             disabled={passwordActionLoading}
                           >
@@ -948,6 +1026,7 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                           <Button
                             variant="outlined"
                             startIcon={<SendIcon />}
+                            sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2, px: 2, py: 0.75, height: 38 }}
                             onClick={() => handleCredentialsAction('GENERATE_INVITE', true)}
                             disabled={passwordActionLoading}
                           >
@@ -956,6 +1035,16 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                           <Button
                             variant="outlined"
                             color={userAccount?.isActive ? 'warning' : 'success'}
+                            sx={{
+                              textTransform: 'none',
+                              fontWeight: 600,
+                              borderRadius: 2,
+                              px: 2,
+                              py: 0.75,
+                              height: 38,
+                              borderColor: userAccount?.isActive ? '#F59E0B' : undefined,
+                              color: userAccount?.isActive ? '#D97706' : undefined,
+                            }}
                             onClick={() => handleCredentialsAction('TOGGLE_ACTIVE')}
                             disabled={passwordActionLoading}
                           >
@@ -963,7 +1052,7 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                           </Button>
                         </>
                       )}
-                    </Stack>
+                    </Box>
                   </Box>
                 )}
               </CardContent>
