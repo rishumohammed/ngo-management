@@ -1,0 +1,51 @@
+{
+  "name": "fmf-management",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "prisma:studio": "prisma studio",
+    "db:seed": "npx ts-node -e \"require('./prisma/seed')\"",
+    "db:seed:js": "node -r @swc-node/register prisma/seed.ts"
+  },
+  "dependencies": {
+    "next": "^14.2.29",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@mui/material": "^5.16.7",
+    "@mui/icons-material": "^5.16.7",
+    "@mui/x-data-grid": "^7.14.0",
+    "@mui/x-date-pickers": "^7.14.0",
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
+    "@emotion/server": "^11.11.0",
+    "@prisma/client": "^5.19.1",
+    "next-auth": "^4.24.8",
+    "bcryptjs": "^2.4.3",
+    "@react-pdf/renderer": "^3.4.5",
+    "recharts": "^2.12.7",
+    "nodemailer": "^7.0.7",
+    "zod": "^3.23.8",
+    "dayjs": "^1.11.13",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.2",
+    "@types/node": "^22.5.4",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/nodemailer": "^6.4.16",
+
+    "@types/uuid": "^10.0.0",
+    "prisma": "^5.19.1",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.29",
+    "ts-node": "^10.9.2"
+  }
+}
