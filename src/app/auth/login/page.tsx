@@ -42,21 +42,27 @@ function LoginContent() {
     setLoading(true)
 
     const providerId = portal === 'admin' ? 'admin-credentials' : 'volunteer-credentials'
-    const defaultCallback = portal === 'admin' ? '/admin/dashboard' : '/volunteer/dashboard'
+    let targetCallback = callbackUrl || (portal === 'admin' ? '/admin/dashboard' : '/volunteer/dashboard')
+    if (targetCallback === '/admin' || targetCallback === '/admin/') {
+      targetCallback = '/admin/dashboard'
+    } else if (targetCallback === '/volunteer' || targetCallback === '/volunteer/') {
+      targetCallback = '/volunteer/dashboard'
+    }
 
     const result = await signIn(providerId, {
       email,
       password,
       redirect: false,
-      callbackUrl: callbackUrl || defaultCallback,
+      callbackUrl: targetCallback,
     })
 
     setLoading(false)
 
     if (result?.error) {
       setError('Invalid email or password. Please try again.')
-    } else if (result?.url) {
-      router.push(result.url)
+    } else {
+      router.push(targetCallback)
+      router.refresh()
     }
   }
 
