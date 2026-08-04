@@ -11,8 +11,10 @@ import SaveIcon from '@mui/icons-material/Save'
 import BusinessIcon from '@mui/icons-material/Business'
 import EmailIcon from '@mui/icons-material/Email'
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
-import PeopleIcon from '@mui/icons-material/People'
+import TuneIcon from '@mui/icons-material/Tune'
+import RestartAltIcon from '@mui/icons-material/RestartAlt'
 import { can } from '@/lib/permissions'
+import { DEFAULT_INDIAN_STATES } from '@/lib/constants'
 
 const DEFAULT_SETTINGS: Record<string, string> = {
   org_name: 'Free Mind Foundation',
@@ -29,6 +31,7 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   email_api_key: '',
   email_from: 'no-reply@freemindfoundation.org.in',
   email_from_name: 'Free Mind Foundation',
+  form_states: JSON.stringify(DEFAULT_INDIAN_STATES),
   volunteer_availabilities: '[]',
   volunteer_skills: '[]',
   volunteer_interests: '[]',
@@ -103,7 +106,6 @@ export default function SettingsClient() {
   if (!isSuperAdmin) {
     return (
       <Box>
-        
         <Alert severity="warning">Settings are accessible to Super Admin only.</Alert>
       </Box>
     )
@@ -125,7 +127,7 @@ export default function SettingsClient() {
         <Tab icon={<BusinessIcon fontSize="small" />} iconPosition="start" label="Organization" />
         <Tab icon={<ReceiptLongIcon fontSize="small" />} iconPosition="start" label="Donations & 80G" />
         <Tab icon={<EmailIcon fontSize="small" />} iconPosition="start" label="Email" />
-        <Tab icon={<PeopleIcon fontSize="small" />} iconPosition="start" label="Volunteer Forms" />
+        <Tab icon={<TuneIcon fontSize="small" />} iconPosition="start" label="Form Options & States" />
       </Tabs>
 
       {/* Organization Tab */}
@@ -301,16 +303,68 @@ export default function SettingsClient() {
         </Card>
       )}
 
-      {/* Volunteer Forms Tab */}
+      {/* Form Options & States Tab */}
       {tab === 3 && (
         <Card>
           <CardHeader
-            title="Volunteer Form Options"
-            subheader="Manage the predefined options available on the public volunteer registration form"
+            title="Form Options & State Master"
+            subheader="Manage states dropdown and predefined options available across member & volunteer registration forms"
           />
           <Divider />
           <CardContent>
-            <Grid container spacing={2.5}>
+            <Grid container spacing={3}>
+              {/* States Management */}
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                  <Typography variant="subtitle1" fontWeight={600}>
+                    State & Union Territory Options
+                  </Typography>
+                  {canEdit && (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<RestartAltIcon />}
+                      onClick={() => set('form_states', JSON.stringify(DEFAULT_INDIAN_STATES))}
+                    >
+                      Reset to All 36 Indian States & UTs
+                    </Button>
+                  )}
+                </Box>
+                <Autocomplete
+                  multiple
+                  freeSolo
+                  options={DEFAULT_INDIAN_STATES}
+                  value={JSON.parse(settings.form_states || JSON.stringify(DEFAULT_INDIAN_STATES))}
+                  onChange={(_, newValue) => set('form_states', JSON.stringify(newValue))}
+                  disabled={!canEdit}
+                  renderTags={(value: readonly string[], getTagProps) =>
+                    value.map((option: string, index: number) => {
+                      const { key, ...tagProps } = getTagProps({ index });
+                      return <Chip variant="outlined" color="primary" label={option} key={key} {...tagProps} />;
+                    })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Available States & UTs"
+                      placeholder="Type state name and press Enter to add"
+                      helperText="Used in public Member & Volunteer registration forms, and admin management forms"
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Divider />
+              </Grid>
+
+              {/* Volunteer Options */}
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+                  Volunteer Registration Options
+                </Typography>
+              </Grid>
+
               <Grid item xs={12}>
                 <Autocomplete
                   multiple

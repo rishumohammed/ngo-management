@@ -23,6 +23,7 @@ import {
   Alert,
   CircularProgress,
   Stack,
+  Autocomplete,
 } from '@mui/material'
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid'
 import AddIcon from '@mui/icons-material/Add'
@@ -33,6 +34,7 @@ import PersonIcon from '@mui/icons-material/Person'
 import { can } from '@/lib/permissions'
 import { formatDate } from '@/lib/utils'
 import { downloadCSV } from '@/lib/csv'
+import { DEFAULT_INDIAN_STATES } from '@/lib/constants'
 
 const MEMBERSHIP_TYPE_LABELS: Record<string, string> = {
   GENERAL: 'General',
@@ -99,6 +101,18 @@ export default function MembersClient() {
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deletingMember, setDeletingMember] = useState<Member | null>(null)
+  const [statesList, setStatesList] = useState<string[]>(DEFAULT_INDIAN_STATES)
+
+  useEffect(() => {
+    fetch('/api/public/form-options')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.states && Array.isArray(data.states) && data.states.length > 0) {
+          setStatesList(data.states)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const fetchMembers = useCallback(async () => {
     setLoading(true)
@@ -374,11 +388,18 @@ export default function MembersClient() {
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                label="State"
-                fullWidth
-                value={formData.state}
-                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+              <Autocomplete
+                options={statesList}
+                value={formData.state || null}
+                onChange={(_, newValue) => setFormData({ ...formData, state: newValue || '' })}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="State / UT"
+                    placeholder="Select state"
+                    fullWidth
+                  />
+                )}
               />
             </Grid>
             <Grid item xs={12} sm={6}>

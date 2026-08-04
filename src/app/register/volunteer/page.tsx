@@ -21,6 +21,7 @@ import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import HomeIcon from '@mui/icons-material/Home';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { DEFAULT_INDIAN_STATES } from '@/lib/constants';
 
 export default function VolunteerRegistration() {
   const [formData, setFormData] = useState({
@@ -37,7 +38,8 @@ export default function VolunteerRegistration() {
   const [skills, setSkills] = useState<string[]>([]);
   const [interests, setInterests] = useState<string[]>([]);
   
-  const [options, setOptions] = useState<{ availabilities: string[], skills: string[], interests: string[] }>({
+  const [options, setOptions] = useState<{ states: string[], availabilities: string[], skills: string[], interests: string[] }>({
+    states: DEFAULT_INDIAN_STATES,
     availabilities: [],
     skills: [],
     interests: []
@@ -52,7 +54,14 @@ export default function VolunteerRegistration() {
     fetch('/api/public/volunteer-form-options')
       .then(res => res.json())
       .then(data => {
-        if (!data.error) setOptions(data);
+        if (!data.error) {
+          setOptions({
+            states: data.states && data.states.length > 0 ? data.states : DEFAULT_INDIAN_STATES,
+            availabilities: data.availabilities || [],
+            skills: data.skills || [],
+            interests: data.interests || []
+          });
+        }
         setOptionsLoading(false);
       })
       .catch(() => setOptionsLoading(false));
@@ -245,12 +254,21 @@ export default function VolunteerRegistration() {
               sx={{ gridColumn: '1 / -1' }}
             />
 
-            <TextField
-              label="State"
-              name="state"
-              value={formData.state}
-              onChange={handleChange}
-              fullWidth
+            <Autocomplete
+              options={options.states}
+              value={formData.state || null}
+              onChange={(_, newValue) => {
+                setFormData(prev => ({ ...prev, state: newValue || '' }));
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="State / UT"
+                  name="state"
+                  fullWidth
+                  placeholder="Select state"
+                />
+              )}
             />
             
             <FormControl fullWidth>

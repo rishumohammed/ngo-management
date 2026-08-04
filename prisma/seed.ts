@@ -12,6 +12,8 @@
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
+import { DEFAULT_INDIAN_STATES } from '../src/lib/constants'
+
 const prisma = new PrismaClient()
 
 async function main() {
@@ -52,6 +54,7 @@ async function main() {
     email_api_key: '',
     email_from: 'no-reply@freemindfoundation.org.in',
     email_from_name: 'Free Mind Foundation',
+    form_states: JSON.stringify(DEFAULT_INDIAN_STATES),
   }
 
   for (const [key, value] of Object.entries(defaults)) {

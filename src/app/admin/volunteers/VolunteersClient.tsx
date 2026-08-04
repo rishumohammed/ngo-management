@@ -6,7 +6,7 @@ import {
   Box, Button, Typography, TextField, Select, MenuItem, FormControl, InputLabel,
   Dialog, DialogTitle, DialogContent, DialogActions, Chip, IconButton, Tooltip,
   InputAdornment, Grid, Alert, CircularProgress, Stack, Stepper, Step, StepLabel,
-  StepContent, Drawer, Divider, Avatar, LinearProgress,
+  StepContent, Drawer, Divider, Avatar, LinearProgress, Autocomplete,
 } from '@mui/material'
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid'
 import AddIcon from '@mui/icons-material/Add'
@@ -19,6 +19,7 @@ import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism'
 import { can } from '@/lib/permissions'
 import { formatDate } from '@/lib/utils'
 import { downloadCSV } from '@/lib/csv'
+import { DEFAULT_INDIAN_STATES } from '@/lib/constants'
 
 const PIPELINE_STAGES = ['APPLICATION', 'DOCUMENT_VERIFICATION', 'INTERVIEW', 'TRAINING', 'APPROVED']
 const STAGE_LABELS: Record<string, string> = {
@@ -73,6 +74,18 @@ export default function VolunteersClient() {
 
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
+  const [statesList, setStatesList] = useState<string[]>(DEFAULT_INDIAN_STATES)
+
+  useEffect(() => {
+    fetch('/api/public/form-options')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.states && Array.isArray(data.states) && data.states.length > 0) {
+          setStatesList(data.states)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const fetchVolunteers = useCallback(async () => {
     setLoading(true)
@@ -265,7 +278,21 @@ export default function VolunteersClient() {
             <Grid item xs={12} sm={6}><TextField label="Phone" fullWidth value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} /></Grid>
             <Grid item xs={12}><TextField label="Address" fullWidth multiline rows={2} value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} /></Grid>
             <Grid item xs={6}><TextField label="City" fullWidth value={formData.city} onChange={e => setFormData({ ...formData, city: e.target.value })} /></Grid>
-            <Grid item xs={6}><TextField label="State" fullWidth value={formData.state} onChange={e => setFormData({ ...formData, state: e.target.value })} /></Grid>
+            <Grid item xs={6}>
+              <Autocomplete
+                options={statesList}
+                value={formData.state || null}
+                onChange={(_, newValue) => setFormData({ ...formData, state: newValue || '' })}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="State / UT"
+                    placeholder="Select state"
+                    fullWidth
+                  />
+                )}
+              />
+            </Grid>
             <Grid item xs={12}><TextField label="Skills (comma-separated)" fullWidth value={formData.skills} onChange={e => setFormData({ ...formData, skills: e.target.value })} /></Grid>
             <Grid item xs={12}><TextField label="Interests (comma-separated)" fullWidth value={formData.interests} onChange={e => setFormData({ ...formData, interests: e.target.value })} /></Grid>
             <Grid item xs={12}><TextField label="Availability" fullWidth value={formData.availability} onChange={e => setFormData({ ...formData, availability: e.target.value })} /></Grid>

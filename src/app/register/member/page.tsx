@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -9,12 +9,14 @@ import {
   Box,
   Paper,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Autocomplete
 } from '@mui/material';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import HomeIcon from '@mui/icons-material/Home';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { DEFAULT_INDIAN_STATES } from '@/lib/constants';
 
 export default function MemberRegistration() {
   const [formData, setFormData] = useState({
@@ -26,9 +28,21 @@ export default function MemberRegistration() {
     state: ''
   });
 
+  const [statesList, setStatesList] = useState<string[]>(DEFAULT_INDIAN_STATES);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/public/form-options')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.states && Array.isArray(data.states) && data.states.length > 0) {
+          setStatesList(data.states);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -204,12 +218,21 @@ export default function MemberRegistration() {
               fullWidth
             />
 
-            <TextField
-              label="State"
-              name="state"
-              value={formData.state}
-              onChange={handleChange}
-              fullWidth
+            <Autocomplete
+              options={statesList}
+              value={formData.state || null}
+              onChange={(_, newValue) => {
+                setFormData(prev => ({ ...prev, state: newValue || '' }));
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="State / UT"
+                  name="state"
+                  fullWidth
+                  placeholder="Select state"
+                />
+              )}
             />
           </Box>
 

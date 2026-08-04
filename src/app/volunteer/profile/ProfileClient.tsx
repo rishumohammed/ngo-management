@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import {
   Box, Typography, TextField, Button, Card, CardContent, CardHeader,
-  Avatar, Grid, Chip, Alert, CircularProgress, Divider, Stack,
+  Avatar, Grid, Chip, Alert, CircularProgress, Divider, Stack, Autocomplete,
 } from '@mui/material'
 import SaveIcon from '@mui/icons-material/Save'
 import PersonIcon from '@mui/icons-material/Person'
+import { DEFAULT_INDIAN_STATES } from '@/lib/constants'
 
 
 type VolunteerProfile = any
@@ -17,10 +18,22 @@ export default function ProfileClient() {
   const volunteerId = session?.user?.volunteerId
 
   const [profile, setProfile] = useState<VolunteerProfile | null>(null)
+  const [statesList, setStatesList] = useState<string[]>(DEFAULT_INDIAN_STATES)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [form, setForm] = useState({ name: '', phone: '', address: '', city: '', state: '', availability: '', motivation: '' })
+
+  useEffect(() => {
+    fetch('/api/public/form-options')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.states && Array.isArray(data.states) && data.states.length > 0) {
+          setStatesList(data.states)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!volunteerId) return
@@ -63,19 +76,17 @@ export default function ProfileClient() {
       {/* Profile Header */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Avatar sx={{ width: 64, height: 64, bgcolor: 'primary.main', fontSize: '1.5rem', fontWeight: 700 }}>
-              {profile?.name?.charAt(0)}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
+            <Avatar sx={{ width: 64, height: 64, bgcolor: 'primary.main', fontSize: '1.5rem' }}>
+              {profile?.name?.[0] || 'V'}
             </Avatar>
             <Box>
-              <Typography variant="h5" fontWeight={700}>{profile?.name}</Typography>
+              <Typography variant="h6">{profile?.name}</Typography>
               <Typography variant="body2" color="text.secondary">{profile?.email}</Typography>
-              <Chip
-                label={`Volunteer · ${profile?.currentStage === 'APPROVED' ? 'Active' : profile?.currentStage}`}
-                color="success"
-                size="small"
-                sx={{ mt: 0.5 }}
-              />
+              <Stack direction="row" spacing={1} sx={{ mt: 0.5 }}>
+                <Chip label={`Status: ${profile?.status}`} size="small" color={profile?.status === 'APPROVED' ? 'success' : 'default'} />
+                {profile?.availability && <Chip label={profile.availability} size="small" variant="outlined" />}
+              </Stack>
             </Box>
           </Box>
 
@@ -100,7 +111,22 @@ export default function ProfileClient() {
             <Grid item xs={12}><TextField label="Full Name" fullWidth value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></Grid>
             <Grid item xs={12} sm={6}><TextField label="Phone" fullWidth value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></Grid>
             <Grid item xs={12} sm={6}><TextField label="City" fullWidth value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} /></Grid>
-            <Grid item xs={12}><TextField label="Address" fullWidth multiline rows={2} value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></Grid>
+            <Grid item xs={12} sm={6}>
+              <Autocomplete
+                options={statesList}
+                value={form.state || null}
+                onChange={(_, newValue) => setForm({ ...form, state: newValue || '' })}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="State / UT"
+                    placeholder="Select state"
+                    fullWidth
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}><TextField label="Address" fullWidth value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></Grid>
             <Grid item xs={12}><TextField label="Availability" fullWidth value={form.availability} onChange={e => setForm({ ...form, availability: e.target.value })} /></Grid>
             <Grid item xs={12}><TextField label="Motivation" fullWidth multiline rows={3} value={form.motivation} onChange={e => setForm({ ...form, motivation: e.target.value })} /></Grid>
           </Grid>
