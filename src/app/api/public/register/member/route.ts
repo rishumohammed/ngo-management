@@ -12,7 +12,7 @@ const memberSchema = z.object({
   address: z.string().optional().or(z.literal('')),
   city: z.string().optional().or(z.literal('')),
   state: z.string().optional().or(z.literal('')),
-  membershipType: z.nativeEnum(MembershipType).default(MembershipType.GENERAL),
+  membershipType: z.nativeEnum(MembershipType).optional().default(MembershipType.GENERAL),
 });
 
 export async function POST(request: Request) {

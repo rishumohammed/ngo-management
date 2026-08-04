@@ -8,11 +8,13 @@ import {
   Button,
   Box,
   Paper,
-  MenuItem,
   Alert,
   CircularProgress
 } from '@mui/material';
-import { MembershipType } from '@prisma/client';
+import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
+import HomeIcon from '@mui/icons-material/Home';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 export default function MemberRegistration() {
   const [formData, setFormData] = useState({
@@ -21,8 +23,7 @@ export default function MemberRegistration() {
     phone: '',
     address: '',
     city: '',
-    state: '',
-    membershipType: 'GENERAL'
+    state: ''
   });
 
   const [loading, setLoading] = useState(false);
@@ -66,18 +67,72 @@ export default function MemberRegistration() {
 
   if (success) {
     return (
-      <Container maxWidth="sm" sx={{ mt: 8 }}>
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <Alert severity="success" sx={{ mb: 3 }}>
-            Registration Successful!
-          </Alert>
-          <Typography variant="h5" gutterBottom>
-            Welcome to the Free Mind Foundation
+      <Container maxWidth="sm" sx={{ mt: 8, mb: 8 }}>
+        <Paper
+          elevation={4}
+          sx={{
+            p: { xs: 3, sm: 5 },
+            textAlign: 'center',
+            borderRadius: 3,
+            borderTop: '5px solid #0284c7'
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+            <CheckCircleOutlineIcon sx={{ fontSize: 64, color: 'success.main' }} />
+          </Box>
+
+          <Typography variant="h4" component="h1" gutterBottom fontWeight="bold" color="primary.main">
+            Welcome to Free Mind Foundation!
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Your membership application has been received. Our team will contact you shortly if necessary.
+
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 4, lineHeight: 1.7 }}>
+            Thank you for registering as a member. Your membership application has been successfully received. Together, we can make a lasting impact on preventive mental wellness and community empowerment.
           </Typography>
-          <Button variant="contained" href="/">
+
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 3,
+              mb: 4,
+              bgcolor: 'rgba(2, 132, 199, 0.04)',
+              borderColor: 'primary.light',
+              borderRadius: 2
+            }}
+          >
+            <Typography variant="h6" gutterBottom fontWeight="600" color="primary.dark">
+              Support Our Mission
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+              Your valuable contribution helps us expand our mental health awareness programs, workshops, and community initiatives.
+            </Typography>
+            <Button
+              variant="contained"
+              color="primary"
+              size="large"
+              startIcon={<VolunteerActivismIcon />}
+              endIcon={<OpenInNewIcon fontSize="small" />}
+              href="https://pages.razorpay.com/freemindfoundation"
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                py: 1.5,
+                px: 4,
+                fontWeight: 'bold',
+                fontSize: '1rem',
+                boxShadow: 3
+              }}
+            >
+              Donate Now
+            </Button>
+          </Paper>
+
+          <Button
+            variant="outlined"
+            color="inherit"
+            startIcon={<HomeIcon />}
+            href="/"
+            sx={{ minWidth: 160 }}
+          >
             Return to Home
           </Button>
         </Paper>
@@ -87,8 +142,8 @@ export default function MemberRegistration() {
 
   return (
     <Container maxWidth="md" sx={{ mt: 8, mb: 8 }}>
-      <Paper sx={{ p: { xs: 3, md: 5 } }}>
-        <Typography variant="h4" component="h1" gutterBottom color="primary.main" align="center">
+      <Paper sx={{ p: { xs: 3, md: 5 }, borderRadius: 3 }}>
+        <Typography variant="h4" component="h1" gutterBottom color="primary.main" align="center" fontWeight="bold">
           Member Registration
         </Typography>
         <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 4 }}>
@@ -156,21 +211,6 @@ export default function MemberRegistration() {
               onChange={handleChange}
               fullWidth
             />
-
-            <TextField
-              select
-              label="Membership Type"
-              name="membershipType"
-              value={formData.membershipType}
-              onChange={handleChange}
-              fullWidth
-              sx={{ gridColumn: { sm: '1 / -1' } }}
-            >
-              <MenuItem value="GENERAL">General Member</MenuItem>
-              <MenuItem value="LIFE">Life Member</MenuItem>
-              <MenuItem value="HONORARY">Honorary Member</MenuItem>
-              <MenuItem value="PATRON">Patron</MenuItem>
-            </TextField>
           </Box>
 
           <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>

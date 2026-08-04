@@ -17,6 +17,10 @@ import {
   MenuItem,
   Autocomplete
 } from '@mui/material';
+import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
+import HomeIcon from '@mui/icons-material/Home';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 export default function VolunteerRegistration() {
   const [formData, setFormData] = useState({
@@ -98,18 +102,72 @@ export default function VolunteerRegistration() {
 
   if (success) {
     return (
-      <Container maxWidth="sm" sx={{ mt: 8 }}>
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <Alert severity="success" sx={{ mb: 3 }}>
-            Application Submitted Successfully!
-          </Alert>
-          <Typography variant="h5" gutterBottom>
-            Thank You for Volunteering
+      <Container maxWidth="sm" sx={{ mt: 8, mb: 8 }}>
+        <Paper
+          elevation={4}
+          sx={{
+            p: { xs: 3, sm: 5 },
+            textAlign: 'center',
+            borderRadius: 3,
+            borderTop: '5px solid #0284c7'
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+            <CheckCircleOutlineIcon sx={{ fontSize: 64, color: 'success.main' }} />
+          </Box>
+
+          <Typography variant="h4" component="h1" gutterBottom fontWeight="bold" color="primary.main">
+            Welcome to Free Mind Foundation!
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Your application is now pending review. We will contact you regarding the next steps in our onboarding process.
+
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 4, lineHeight: 1.7 }}>
+            Thank you for applying to volunteer. Your application has been received and is pending review. We will contact you shortly regarding the next steps.
           </Typography>
-          <Button variant="contained" href="/">
+
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 3,
+              mb: 4,
+              bgcolor: 'rgba(2, 132, 199, 0.04)',
+              borderColor: 'primary.light',
+              borderRadius: 2
+            }}
+          >
+            <Typography variant="h6" gutterBottom fontWeight="600" color="primary.dark">
+              Support Our Mission
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+              Your contribution empowers our mental wellness campaigns, workshops, and community outreach.
+            </Typography>
+            <Button
+              variant="contained"
+              color="primary"
+              size="large"
+              startIcon={<VolunteerActivismIcon />}
+              endIcon={<OpenInNewIcon fontSize="small" />}
+              href="https://pages.razorpay.com/freemindfoundation"
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                py: 1.5,
+                px: 4,
+                fontWeight: 'bold',
+                fontSize: '1rem',
+                boxShadow: 3
+              }}
+            >
+              Donate Now
+            </Button>
+          </Paper>
+
+          <Button
+            variant="outlined"
+            color="inherit"
+            startIcon={<HomeIcon />}
+            href="/"
+            sx={{ minWidth: 160 }}
+          >
             Return to Home
           </Button>
         </Paper>
