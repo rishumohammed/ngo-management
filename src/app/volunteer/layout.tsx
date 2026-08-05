@@ -3,12 +3,11 @@ import VolunteerLayout from '@/components/layout/VolunteerLayout'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
+import { prisma } from '@/lib/prisma'
 
 export const metadata: Metadata = {
   title: { default: 'Volunteer Portal', template: '%s | FMF Volunteer Portal' },
 }
-
-import { prisma } from '@/lib/prisma'
 
 export default async function VolunteerSectionLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions)
@@ -17,10 +16,15 @@ export default async function VolunteerSectionLayout({ children }: { children: R
     redirect('/auth/login')
   }
 
-  const logoSetting = await prisma.orgSetting.findUnique({
-    where: { key: 'org_logo' }
-  })
-  const logo = logoSetting?.value || undefined
+  let logo: string | undefined = undefined
+  try {
+    const logoSetting = await prisma.orgSetting.findUnique({
+      where: { key: 'org_logo' }
+    })
+    logo = logoSetting?.value || undefined
+  } catch (err) {
+    // Non-fatal
+  }
 
   return <VolunteerLayout session={session} logo={logo}>{children}</VolunteerLayout>
 }
