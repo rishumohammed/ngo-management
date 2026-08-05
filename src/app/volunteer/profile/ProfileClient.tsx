@@ -10,7 +10,6 @@ import SaveIcon from '@mui/icons-material/Save'
 import PersonIcon from '@mui/icons-material/Person'
 import { DEFAULT_INDIAN_STATES } from '@/lib/constants'
 
-
 type VolunteerProfile = any
 
 export default function ProfileClient() {
@@ -36,34 +35,39 @@ export default function ProfileClient() {
   }, [])
 
   useEffect(() => {
-    if (!volunteerId) return
-    fetch(`/api/volunteers/${volunteerId}`)
+    fetch(`/api/volunteers/${volunteerId || 'me'}`)
       .then(r => r.json())
       .then(d => {
-        setProfile(d)
-        setForm({
-          name: d.name || '',
-          phone: d.phone || '',
-          address: d.address || '',
-          city: d.city || '',
-          state: d.state || '',
-          availability: d.availability || '',
-          motivation: d.motivation || '',
-        })
+        if (d && !d.error) {
+          setProfile(d)
+          setForm({
+            name: d.name || '',
+            phone: d.phone || '',
+            address: d.address || '',
+            city: d.city || '',
+            state: d.state || '',
+            availability: d.availability || '',
+            motivation: d.motivation || '',
+          })
+        }
         setLoading(false)
       })
+      .catch(() => setLoading(false))
   }, [volunteerId])
 
   const handleSave = async () => {
-    setSaving(true); setMsg(null)
+    setSaving(true)
+    setMsg(null)
     try {
-      const res = await fetch(`/api/volunteers/${volunteerId}`, {
+      const res = await fetch(`/api/volunteers/${volunteerId || 'me'}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
       setMsg(res.ok ? { type: 'success', text: 'Profile updated.' } : { type: 'error', text: 'Update failed.' })
-    } finally { setSaving(false) }
+    } finally {
+      setSaving(false)
+    }
     setTimeout(() => setMsg(null), 4000)
   }
 
@@ -84,13 +88,13 @@ export default function ProfileClient() {
               <Typography variant="h6">{profile?.name}</Typography>
               <Typography variant="body2" color="text.secondary">{profile?.email}</Typography>
               <Stack direction="row" spacing={1} sx={{ mt: 0.5 }}>
-                <Chip label={`Status: ${profile?.status}`} size="small" color={profile?.status === 'APPROVED' ? 'success' : 'default'} />
+                <Chip label={`Stage: ${profile?.currentStage || 'APPLICATION'}`} size="small" color={profile?.currentStage === 'APPROVED' ? 'success' : 'default'} />
                 {profile?.availability && <Chip label={profile.availability} size="small" variant="outlined" />}
               </Stack>
             </Box>
           </Box>
 
-          {profile?.skills?.length > 0 && (
+          {profile?.skills && Array.isArray(profile.skills) && profile.skills.length > 0 && (
             <Box sx={{ mt: 2 }}>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>Skills</Typography>
               <Stack direction="row" flexWrap="wrap" gap={0.5}>

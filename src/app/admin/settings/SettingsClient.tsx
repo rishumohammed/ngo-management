@@ -185,7 +185,24 @@ export default function SettingsClient() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary', letterSpacing: -0.5 }}>
+            Organization Settings
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+            Configure organization identity, 80G tax settings, email dispatch, and volunteer workflow stages.
+          </Typography>
+        </Box>
         {canEdit && (
           <Button
             id="save-settings-btn"

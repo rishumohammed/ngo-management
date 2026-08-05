@@ -90,68 +90,100 @@ export default function UsersClient() {
   }
 
   const columns: GridColDef[] = [
-    { field: 'name', headerName: 'Name', flex: 1, minWidth: 150 },
-    { field: 'email', headerName: 'Email', flex: 1, minWidth: 200 },
+    { field: 'name', headerName: 'Name', flex: 1.2, minWidth: 150 },
+    { field: 'email', headerName: 'Email', flex: 1.2, minWidth: 200 },
     {
       field: 'role',
       headerName: 'Role',
-      width: 150,
+      minWidth: 140,
+      flex: 0.9,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (p: GridRenderCellParams) => (
         <Chip 
           label={p.value} 
           size="small" 
-          color={p.value === 'SUPER_ADMIN' ? 'error' : p.value === 'ADMIN' ? 'warning' : 'default'} 
+          color={p.value === 'SUPER_ADMIN' ? 'error' : p.value === 'ADMIN' ? 'warning' : 'default'}
+          sx={{ fontWeight: 600, minWidth: 80 }}
         />
       ),
     },
     {
       field: 'isActive',
       headerName: 'Status',
-      width: 120,
+      minWidth: 120,
+      flex: 0.8,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (p: GridRenderCellParams) => (
         <Chip 
           label={p.value ? 'Active' : 'Inactive'} 
           size="small" 
-          color={p.value ? 'success' : 'default'} 
+          color={p.value ? 'success' : 'default'}
+          sx={{ fontWeight: 600, minWidth: 70 }}
         />
       ),
     },
     {
       field: 'createdAt',
       headerName: 'Created At',
-      width: 130,
+      minWidth: 120,
+      flex: 0.8,
       valueGetter: (v) => formatDate(v),
     },
     {
       field: 'lastLoginAt',
       headerName: 'Last Login',
-      width: 130,
+      minWidth: 120,
+      flex: 0.8,
       valueGetter: (v) => v ? formatDate(v) : 'Never',
     },
     {
       field: 'actions',
-      headerName: '',
-      width: 80,
+      headerName: 'Actions',
+      minWidth: 90,
+      flex: 0.6,
       sortable: false,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (p: GridRenderCellParams) => (
-        <Tooltip title={p.row.id === currentUserId ? 'Cannot edit your own account here' : 'Edit User'}>
-          <span>
-            <IconButton 
-              size="small" 
-              onClick={() => handleOpenDialog(p.row)}
-              disabled={p.row.id === currentUserId}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </span>
-        </Tooltip>
+        <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <Tooltip title={p.row.id === currentUserId ? 'Cannot edit your own account here' : 'Edit User'}>
+            <span>
+              <IconButton 
+                size="small" 
+                onClick={() => handleOpenDialog(p.row)}
+                disabled={p.row.id === currentUserId}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Box>
       ),
     },
   ]
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary', letterSpacing: -0.5 }}>
+            User Management
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+            Manage staff accounts, roles, access permissions, and active statuses.
+          </Typography>
+        </Box>
         <Button
           variant="contained"
           startIcon={<AddIcon />}

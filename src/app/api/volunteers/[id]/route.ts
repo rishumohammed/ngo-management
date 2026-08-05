@@ -23,34 +23,99 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const volunteer = await prisma.volunteer.findUnique({
-    where: { id: params.id },
-    include: {
-      stages: { orderBy: { createdAt: 'asc' } },
-      hoursLogs: { orderBy: { date: 'desc' }, take: 20 },
-      eventAssignments: { include: { event: true } },
-      user: {
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          isActive: true,
-          lastLoginAt: true,
-          createdAt: true,
-          inviteTokens: {
-            orderBy: { createdAt: 'desc' },
-            take: 1,
+  let volunteer = null
+
+  if (params.id === 'me') {
+    if (session.user.volunteerId) {
+      volunteer = await prisma.volunteer.findUnique({
+        where: { id: session.user.volunteerId },
+        include: {
+          stages: { orderBy: { createdAt: 'asc' } },
+          hoursLogs: { orderBy: { date: 'desc' }, take: 20, include: { event: { select: { id: true, name: true } } } },
+          eventAssignments: { include: { event: true } },
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              role: true,
+              isActive: true,
+              lastLoginAt: true,
+              createdAt: true,
+              inviteTokens: {
+                orderBy: { createdAt: 'desc' },
+                take: 1,
+              },
+            },
+          },
+        },
+      })
+    }
+    if (!volunteer && session.user.id) {
+      volunteer = await prisma.volunteer.findFirst({
+        where: {
+          OR: [
+            { userId: session.user.id },
+            { email: session.user.email || '' },
+            { email: (session.user.email || '').toLowerCase() },
+          ],
+        },
+        include: {
+          stages: { orderBy: { createdAt: 'asc' } },
+          hoursLogs: { orderBy: { date: 'desc' }, take: 20, include: { event: { select: { id: true, name: true } } } },
+          eventAssignments: { include: { event: true } },
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              role: true,
+              isActive: true,
+              lastLoginAt: true,
+              createdAt: true,
+              inviteTokens: {
+                orderBy: { createdAt: 'desc' },
+                take: 1,
+              },
+            },
+          },
+        },
+      })
+    }
+  } else {
+    volunteer = await prisma.volunteer.findUnique({
+      where: { id: params.id },
+      include: {
+        stages: { orderBy: { createdAt: 'asc' } },
+        hoursLogs: { orderBy: { date: 'desc' }, take: 20, include: { event: { select: { id: true, name: true } } } },
+        eventAssignments: { include: { event: true } },
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+            isActive: true,
+            lastLoginAt: true,
+            createdAt: true,
+            inviteTokens: {
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+            },
           },
         },
       },
-    },
-  })
+    })
+  }
 
   if (!volunteer) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  // Volunteers can only see their own profile
-  if (session.user.isVolunteer && session.user.volunteerId !== params.id)
+  // Check authorization
+  const isOwn = (session.user.volunteerId && session.user.volunteerId === volunteer.id) ||
+                (volunteer.userId && volunteer.userId === session.user.id) ||
+                (volunteer.email && session.user.email && volunteer.email.toLowerCase() === session.user.email.toLowerCase())
+
+  if (session.user.isVolunteer && !isOwn)
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -79,13 +144,26 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const isOwn = session.user.isVolunteer && session.user.volunteerId === params.id
+  let targetId = params.id
+  if (targetId === 'me') {
+    if (session.user.volunteerId) {
+      targetId = session.user.volunteerId
+    } else {
+      const v = await prisma.volunteer.findFirst({
+        where: { OR: [{ userId: session.user.id }, { email: session.user.email || '' }] },
+        select: { id: true },
+      })
+      if (v) targetId = v.id
+    }
+  }
+
+  const isOwn = session.user.isVolunteer && (session.user.volunteerId === targetId || session.user.id)
   if (!isOwn && !can(session.user.role, 'volunteers', 'update'))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const body = await req.json()
   const volunteer = await prisma.volunteer.update({
-    where: { id: params.id },
+    where: { id: targetId },
     data: {
       name: body.name,
       phone: body.phone,

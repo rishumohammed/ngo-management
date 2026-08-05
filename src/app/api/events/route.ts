@@ -29,7 +29,19 @@ export async function GET(req: NextRequest) {
   const pageSize = parseInt(searchParams.get('pageSize') || '50')
 
   // Volunteers see only assigned events
-  const volunteerId = session.user.isVolunteer ? session.user.volunteerId : null
+  let volunteerId = session.user.isVolunteer ? session.user.volunteerId : null
+  if (session.user.isVolunteer && !volunteerId) {
+    const v = await prisma.volunteer.findFirst({
+      where: {
+        OR: [
+          { userId: session.user.id },
+          { email: session.user.email || '' },
+        ],
+      },
+      select: { id: true },
+    })
+    if (v) volunteerId = v.id
+  }
 
   const where: Record<string, unknown> = {}
   if (status) where.status = status

@@ -160,6 +160,20 @@ export const authOptions: NextAuthOptions = {
         token.isVolunteer = (user as { isVolunteer: boolean }).isVolunteer
         token.volunteerId = (user as { volunteerId?: string }).volunteerId
       }
+      if (token?.isVolunteer && !token.volunteerId && token.id) {
+        try {
+          const v = await prisma.volunteer.findFirst({
+            where: {
+              OR: [
+                { userId: token.id as string },
+                { email: (token.email as string) || '' },
+              ],
+            },
+            select: { id: true },
+          })
+          if (v) token.volunteerId = v.id
+        } catch (e) {}
+      }
       return token
     },
     async session({ session, token }) {

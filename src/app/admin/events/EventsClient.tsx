@@ -85,7 +85,24 @@ export default function EventsClient() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary', letterSpacing: -0.5 }}>
+            Events & Activities
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+            Plan, organize, and monitor NGO outreach events, workshops, and volunteer assignments.
+          </Typography>
+        </Box>
         <Stack direction="row" spacing={1.5} alignItems="center">
           <ToggleButtonGroup
             value={viewMode}
@@ -97,7 +114,16 @@ export default function EventsClient() {
             <ToggleButton value="calendar"><CalendarMonthIcon fontSize="small" /></ToggleButton>
           </ToggleButtonGroup>
           {canCreate && (
-            <Button id="add-event-btn" variant="contained" startIcon={<AddIcon />} onClick={() => { setFormData(emptyForm); setFormError(''); setDialogOpen(true) }}>
+            <Button
+              id="add-event-btn"
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => {
+                setFormData(emptyForm)
+                setFormError('')
+                setDialogOpen(true)
+              }}
+            >
               Add Event
             </Button>
           )}

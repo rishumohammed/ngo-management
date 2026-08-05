@@ -117,7 +117,7 @@ export default function AdminLayout({ children, session, logo }: { children: Rea
                 width: 36,
                 height: 36,
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #00897B, #43A047)',
+                bgcolor: 'primary.main',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

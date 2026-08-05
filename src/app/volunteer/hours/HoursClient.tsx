@@ -10,7 +10,6 @@ import AddIcon from '@mui/icons-material/Add'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import { formatDate } from '@/lib/utils'
 
-
 type HoursLog = any
 
 const emptyForm = {
@@ -32,12 +31,16 @@ export default function HoursClient() {
   const [formError, setFormError] = useState('')
 
   const fetchLogs = async () => {
-    if (!volunteerId) return
     setLoading(true)
-    const res = await fetch(`/api/volunteers/${volunteerId}/hours`)
-    const data = await res.json()
-    setLogs(data || [])
-    setLoading(false)
+    try {
+      const res = await fetch(`/api/volunteers/${volunteerId || 'me'}/hours`)
+      const data = await res.json()
+      setLogs(Array.isArray(data) ? data : [])
+    } catch {
+      setLogs([])
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { fetchLogs() }, [volunteerId])
@@ -48,7 +51,7 @@ export default function HoursClient() {
     if (!formData.activity || !formData.hours) { setFormError('Activity and hours are required'); return }
     setSaving(true); setFormError('')
     try {
-      const res = await fetch(`/api/volunteers/${volunteerId}/hours`, {
+      const res = await fetch(`/api/volunteers/${volunteerId || 'me'}/hours`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formData, hours: parseFloat(formData.hours) }),
@@ -72,61 +75,95 @@ export default function HoursClient() {
         </Button>
       </Box>
 
-      {/* Summary Card */}
-      <Card sx={{ mb: 3, bgcolor: 'primary.main', color: 'white' }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <AccessTimeIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-            <Box>
-              <Typography variant="h3" fontWeight={700}>{totalHours.toFixed(1)}</Typography>
-              <Typography variant="body1" sx={{ opacity: 0.85 }}>Total Hours Volunteered</Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-
-      {/* Logs List */}
-      <Stack spacing={1.5}>
-        {logs.map((log: HoursLog) => (
-          <Card key={log.id}>
-            <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}><CircularProgress /></Box>
+      ) : logs.length === 0 ? (
+        <Card sx={{ p: 4, textAlign: 'center', color: 'text.secondary' }}>
+          <AccessTimeIcon sx={{ fontSize: 48, mb: 1, opacity: 0.4 }} />
+          <Typography variant="body1">No hours logged yet.</Typography>
+          <Button variant="outlined" sx={{ mt: 2 }} onClick={() => { setFormData(emptyForm); setFormError(''); setDialogOpen(true) }}>
+            Log Your First Contribution
+          </Button>
+        </Card>
+      ) : (
+        <Stack spacing={2}>
+          {logs.map((log: HoursLog) => (
+            <Card key={log.id}>
+              <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', py: 2 }}>
                 <Box>
-                  <Typography variant="body1" fontWeight={600}>{log.activity}</Typography>
+                  <Typography variant="subtitle1" fontWeight={600}>{log.activity}</Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {formatDate(log.date)}{log.event ? ` · ${log.event.name}` : ''}
+                    {formatDate(log.date)} {log.event?.name ? ` • Event: ${log.event.name}` : ''}
                   </Typography>
-                  {log.notes && <Typography variant="caption" color="text.secondary" display="block">{log.notes}</Typography>}
+                  {log.notes && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                      {log.notes}
+                    </Typography>
+                  )}
                 </Box>
-                <Chip label={`${log.hours}h`} color="primary" />
-              </Box>
-            </CardContent>
-          </Card>
-        ))}
-        {!loading && logs.length === 0 && (
-          <Box sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
-            <AccessTimeIcon sx={{ fontSize: 48, mb: 1, opacity: 0.3 }} />
-            <Typography>No hours logged yet. Start contributing!</Typography>
-          </Box>
-        )}
-      </Stack>
+                <Chip
+                  label={`${log.hours} hr${log.hours !== 1 ? 's' : ''}`}
+                  color="primary"
+                  variant="outlined"
+                  sx={{ fontWeight: 600 }}
+                />
+              </CardContent>
+            </Card>
+          ))}
+        </Stack>
+      )}
 
       {/* Log Hours Dialog */}
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Log Volunteer Hours</DialogTitle>
         <DialogContent dividers>
           {formError && <Alert severity="error" sx={{ mb: 2 }}>{formError}</Alert>}
           <Grid container spacing={2}>
-            <Grid item xs={12}><TextField label="Date" type="date" fullWidth value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} InputLabelProps={{ shrink: true }} /></Grid>
-            <Grid item xs={12}><TextField label="Activity *" fullWidth value={formData.activity} onChange={e => setFormData({ ...formData, activity: e.target.value })} /></Grid>
-            <Grid item xs={12}><TextField label="Hours *" type="number" fullWidth value={formData.hours} onChange={e => setFormData({ ...formData, hours: e.target.value })} inputProps={{ min: 0.5, step: 0.5 }} /></Grid>
-            <Grid item xs={12}><TextField label="Notes" fullWidth multiline rows={2} value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} /></Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Date *"
+                type="date"
+                fullWidth
+                value={formData.date}
+                onChange={e => setFormData({ ...formData, date: e.target.value })}
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Hours Contributed *"
+                type="number"
+                inputProps={{ step: '0.5', min: '0.5', max: '24' }}
+                fullWidth
+                value={formData.hours}
+                onChange={e => setFormData({ ...formData, hours: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Activity / Task Description *"
+                fullWidth
+                placeholder="e.g. Field distribution, workshop assistance, content writing..."
+                value={formData.activity}
+                onChange={e => setFormData({ ...formData, activity: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Notes / Reflection (Optional)"
+                fullWidth
+                multiline
+                rows={2}
+                value={formData.notes}
+                onChange={e => setFormData({ ...formData, notes: e.target.value })}
+              />
+            </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions sx={{ px: 2, pb: 2 }}>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
           <Button variant="contained" onClick={handleSave} disabled={saving}>
-            {saving ? <CircularProgress size={20} color="inherit" /> : 'Save'}
+            {saving ? <CircularProgress size={20} color="inherit" /> : 'Save Hours'}
           </Button>
         </DialogActions>
       </Dialog>

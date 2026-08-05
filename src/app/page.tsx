@@ -327,7 +327,7 @@ export default function HomePage() {
           sx={{
             p: { xs: 2.5, sm: 3 },
             borderRadius: 3,
-            background: 'linear-gradient(135deg, #12446A 0%, #1E5580 100%)',
+            bgcolor: '#12446A',
             color: '#FFFFFF',
             display: 'flex',
             flexDirection: { xs: 'column', sm: 'row' },

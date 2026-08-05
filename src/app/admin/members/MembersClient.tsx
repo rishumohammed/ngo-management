@@ -194,40 +194,50 @@ export default function MembersClient() {
   }
 
   const columns: GridColDef[] = [
-    { field: 'memberNumber', headerName: 'Member #', width: 120 },
-    { field: 'name', headerName: 'Name', flex: 1, minWidth: 160 },
-    { field: 'phone', headerName: 'Phone', width: 140, valueGetter: (v) => v || '—' },
-    { field: 'email', headerName: 'Email', flex: 1, minWidth: 180, valueGetter: (v) => v || '—' },
-    { field: 'city', headerName: 'City', width: 120, valueGetter: (v) => v || '—' },
+    { field: 'memberNumber', headerName: 'Member #', minWidth: 120, flex: 0.8 },
+    { field: 'name', headerName: 'Name', flex: 1.2, minWidth: 160 },
+    { field: 'phone', headerName: 'Phone', minWidth: 130, flex: 0.9, valueGetter: (v) => v || '—' },
+    { field: 'email', headerName: 'Email', flex: 1.2, minWidth: 180, valueGetter: (v) => v || '—' },
+    { field: 'city', headerName: 'City', minWidth: 120, flex: 0.8, valueGetter: (v) => v || '—' },
     {
       field: 'membershipType',
       headerName: 'Type',
-      width: 110,
+      minWidth: 120,
+      flex: 0.8,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (p: GridRenderCellParams) => (
-        <Chip label={MEMBERSHIP_TYPE_LABELS[p.value] || p.value} size="small" variant="outlined" />
+        <Chip label={MEMBERSHIP_TYPE_LABELS[p.value] || p.value} size="small" variant="outlined" sx={{ fontWeight: 500 }} />
       ),
     },
     {
       field: 'status',
       headerName: 'Status',
-      width: 110,
+      minWidth: 120,
+      flex: 0.8,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (p: GridRenderCellParams) => (
-        <Chip label={p.value} size="small" color={STATUS_COLORS[p.value] || 'default'} />
+        <Chip label={p.value} size="small" color={STATUS_COLORS[p.value] || 'default'} sx={{ fontWeight: 600, minWidth: 80 }} />
       ),
     },
     {
       field: 'joinDate',
       headerName: 'Join Date',
-      width: 120,
+      minWidth: 120,
+      flex: 0.8,
       valueGetter: (v) => formatDate(v),
     },
     {
       field: 'actions',
-      headerName: '',
-      width: 90,
+      headerName: 'Actions',
+      minWidth: 100,
+      flex: 0.7,
       sortable: false,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (p: GridRenderCellParams) => (
-        <Box>
+        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center', width: '100%' }}>
           {canUpdate && (
             <Tooltip title="Edit">
               <IconButton size="small" onClick={() => openEditDialog(p.row as Member)}>
@@ -254,8 +264,25 @@ export default function MembersClient() {
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 3 }}>
-        <Box display="flex" gap={1}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary', letterSpacing: -0.5 }}>
+            Members Directory
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+            Manage organization members, types, contact information, and membership status.
+          </Typography>
+        </Box>
+        <Stack direction="row" spacing={1.5} alignItems="center">
           <Button
             variant="outlined"
             onClick={() => downloadCSV(members, 'Members_Export')}
@@ -273,7 +300,7 @@ export default function MembersClient() {
               Add Member
             </Button>
           )}
-        </Box>
+        </Stack>
       </Box>
 
       {/* Filters */}

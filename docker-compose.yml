@@ -5,21 +5,30 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: fmf_portal_web
+    restart: always
     ports:
       - "3000:3000"
     environment:
       - DATABASE_URL=mysql://root:fmf_password@db:3306/fmf_db
-      - NEXTAUTH_SECRET=fmf_development_secret_key_12345
-      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-fmf_prod_secret_key_change_me}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-https://portal.freemindfoundation.org.in}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://portal.freemindfoundation.org.in}
+      - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME:-Free Mind Foundation Management}
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER:-brevo}
+      - EMAIL_API_KEY=${EMAIL_API_KEY:-}
+      - EMAIL_FROM=${EMAIL_FROM:-no-reply@freemindfoundation.org.in}
+      - EMAIL_FROM_NAME=${EMAIL_FROM_NAME:-Free Mind Foundation}
     depends_on:
       db:
         condition: service_healthy
-    restart: always
 
   db:
     image: mysql:8.0
+    container_name: fmf_portal_db
+    restart: always
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     environment:
       - MYSQL_ROOT_PASSWORD=fmf_password
       - MYSQL_DATABASE=fmf_db
@@ -27,9 +36,9 @@ services:
       - mysql_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
-    restart: always
+      interval: 10s
+      timeout: 10s
+      retries: 5
 
 volumes:
   mysql_data:

@@ -49,38 +49,20 @@ function KpiCard({ title, value, subtitle, icon, color, accent }: KpiCardProps) 
     <Card 
       sx={{ 
         height: '100%', 
-        borderRadius: 4,
-        border: 'none',
-        background: `linear-gradient(135deg, #ffffff 0%, ${color}05 100%)`,
-        boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        borderRadius: 3,
+        border: '1px solid #E1E6EB',
+        bgcolor: '#FFFFFF',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
         overflow: 'hidden',
         position: 'relative',
         '&:hover': {
-          transform: 'translateY(-6px)',
-          boxShadow: `0 14px 30px ${color}15`,
-          '& .MuiAvatar-root': {
-            transform: 'scale(1.1) rotate(8deg)',
-            bgcolor: color,
-            color: 'white',
-          }
+          transform: 'translateY(-4px)',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+          borderColor: color,
         }
       }}
     >
-      {/* Decorative background element */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: -20,
-          right: -20,
-          width: 120,
-          height: 120,
-          borderRadius: '50%',
-          background: `radial-gradient(circle, ${color}10 0%, transparent 70%)`,
-          zIndex: 0,
-          transition: 'all 0.3s ease',
-        }}
-      />
       
       <CardContent sx={{ p: 3, position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
@@ -190,7 +172,14 @@ export default function DashboardClient({ data }: { data: any }) {
 
   return (
     <Box>
-      
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary', letterSpacing: -0.5 }}>
+          Admin Dashboard
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+          Real-time metrics, donor analytics, volunteer pipeline, and governance compliance summary.
+        </Typography>
+      </Box>
 
       {/* Alerts */}
       <Stack spacing={1.5} sx={{ mb: 3 }}>

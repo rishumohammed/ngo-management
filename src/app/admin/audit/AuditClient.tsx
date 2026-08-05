@@ -54,9 +54,17 @@ export default function AuditClient() {
 
   return (
     <Box>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary', letterSpacing: -0.5 }}>
+          Audit Logs
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+          Comprehensive activity history tracking all administrative actions, data changes, and security events.
+        </Typography>
+      </Box>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mb: 2 }}>
-        <FormControl sx={{ minWidth: 160 }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mb: 2.5 }}>
+        <FormControl sx={{ minWidth: 180 }}>
           <InputLabel>Entity</InputLabel>
           <Select label="Entity" value={entity} onChange={e => setEntity(e.target.value)}>
             <MenuItem value="">All</MenuItem>

@@ -311,7 +311,7 @@ export default function VolunteersClient() {
     {
       field: 'name',
       headerName: 'Name',
-      flex: 1,
+      flex: 1.2,
       minWidth: 170,
       renderCell: (p: GridRenderCellParams) => (
         <Box
@@ -329,12 +329,15 @@ export default function VolunteersClient() {
         </Box>
       ),
     },
-    { field: 'email', headerName: 'Email', flex: 1, minWidth: 190 },
-    { field: 'phone', headerName: 'Phone', width: 140, valueGetter: (v) => v || '—' },
+    { field: 'email', headerName: 'Email', flex: 1.2, minWidth: 190 },
+    { field: 'phone', headerName: 'Phone', minWidth: 130, flex: 0.9, valueGetter: (v) => v || '—' },
     {
       field: 'currentStage',
       headerName: 'Status / Stage',
-      width: 210,
+      minWidth: 180,
+      flex: 1,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (p: GridRenderCellParams) => {
         if (p.row.isSuspended) {
           return (
@@ -347,6 +350,7 @@ export default function VolunteersClient() {
                   bgcolor: '#FEF3C7',
                   color: '#92400E',
                   border: '1px solid #FDE68A',
+                  minWidth: 90,
                 }}
               />
             </Tooltip>
@@ -357,7 +361,7 @@ export default function VolunteersClient() {
             label={dynamicStageLabels[p.value] || p.value}
             size="small"
             color={STAGE_STATUS_COLORS[p.value] || 'default'}
-            sx={{ fontWeight: 600 }}
+            sx={{ fontWeight: 600, minWidth: 90 }}
           />
         )
       },
@@ -365,16 +369,20 @@ export default function VolunteersClient() {
     {
       field: 'createdAt',
       headerName: 'Applied',
-      width: 130,
+      minWidth: 120,
+      flex: 0.8,
       valueGetter: (v) => formatDate(v),
     },
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 160,
+      minWidth: 160,
+      flex: 0.9,
       sortable: false,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (p: GridRenderCellParams) => (
-        <Stack direction="row" spacing={0.5} onClick={(e) => e.stopPropagation()}>
+        <Stack direction="row" spacing={0.5} justifyContent="center" width="100%" onClick={(e) => e.stopPropagation()}>
           <Tooltip title="View Profile & Credentials">
             <IconButton
               size="small"
@@ -441,8 +449,25 @@ export default function VolunteersClient() {
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 3 }}>
-        <Box display="flex" gap={1}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary', letterSpacing: -0.5 }}>
+            Volunteer Management
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+            Manage volunteer pipeline, review applications, track credentials, and oversee contributions.
+          </Typography>
+        </Box>
+        <Stack direction="row" spacing={1.5} alignItems="center">
           <Button
             variant="outlined"
             onClick={() => downloadCSV(volunteers, 'Volunteers_Export')}
@@ -464,7 +489,7 @@ export default function VolunteersClient() {
               Add Application
             </Button>
           )}
-        </Box>
+        </Stack>
       </Box>
 
       {/* Filters */}

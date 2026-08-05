@@ -7,7 +7,7 @@ const nextConfig = {
     serverComponentsExternalPackages: ['@prisma/client', 'prisma', '@react-pdf/renderer'],
   },
   images: {
-    domains: ['localhost'],
+    domains: ['localhost', 'portal.freemindfoundation.org.in'],
   },
 }
 

@@ -75,7 +75,14 @@ export default function DonationsClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formData, amount: parseFloat(formData.amount) }),
       })
-      if (!res.ok) { const e = await res.json(); setFormError(e.error || 'Failed'); return }
+      if (!res.ok) {
+        const e = await res.json()
+        const detailMsg = e.details && Array.isArray(e.details)
+          ? e.details.map((d: any) => d.message).join(', ')
+          : (e.error || 'Failed to record donation')
+        setFormError(detailMsg)
+        return
+      }
       setDialogOpen(false)
       fetchDonations()
       setActionMsg({ type: 'success', msg: 'Donation recorded and receipt generated.' })
@@ -115,47 +122,60 @@ export default function DonationsClient() {
   }
 
   const columns: GridColDef[] = [
-    { field: 'receiptNumber', headerName: 'Receipt #', width: 160 },
-    { field: 'donorName', headerName: 'Donor', flex: 1, minWidth: 150 },
-    { field: 'donorPan', headerName: 'PAN', width: 120, valueGetter: (v) => v || '—' },
+    { field: 'receiptNumber', headerName: 'Receipt #', minWidth: 160, flex: 1 },
+    { field: 'donorName', headerName: 'Donor', minWidth: 150, flex: 1.2 },
+    { field: 'donorPan', headerName: 'PAN', minWidth: 120, flex: 0.8, valueGetter: (v) => v || '—' },
     {
       field: 'amount',
       headerName: 'Amount',
-      width: 130,
+      minWidth: 130,
+      flex: 0.9,
+      align: 'right',
+      headerAlign: 'right',
       renderCell: (p: GridRenderCellParams) => (
         <Typography variant="body2" fontWeight={600} color="primary.dark">
           {formatCurrency(Number(p.value))}
         </Typography>
       ),
     },
-    { field: 'date', headerName: 'Date', width: 110, valueGetter: (v) => formatDate(v) },
+    { field: 'date', headerName: 'Date', minWidth: 120, flex: 0.8, valueGetter: (v) => formatDate(v) },
     {
       field: 'paymentMode',
       headerName: 'Mode',
-      width: 100,
+      minWidth: 110,
+      flex: 0.8,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (p: GridRenderCellParams) => (
-        <Chip label={p.value} size="small" variant="outlined" />
+        <Chip label={p.value} size="small" variant="outlined" sx={{ fontWeight: 500 }} />
       ),
     },
     {
       field: 'status',
       headerName: 'Status',
-      width: 100,
+      minWidth: 130,
+      flex: 0.9,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (p: GridRenderCellParams) => (
         <Chip
           label={p.value}
           size="small"
           color={p.value === 'CONFIRMED' ? 'success' : p.value === 'CANCELLED' ? 'error' : 'warning'}
+          sx={{ fontWeight: 600, minWidth: 90 }}
         />
       ),
     },
     {
       field: 'actions',
       headerName: 'Receipt',
-      width: 110,
+      minWidth: 110,
+      flex: 0.8,
       sortable: false,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (p: GridRenderCellParams) => (
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
+        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center', width: '100%' }}>
           <Tooltip title="Download PDF Receipt">
             <IconButton
               size="small"
@@ -185,8 +205,25 @@ export default function DonationsClient() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 3 }}>
-        <Box display="flex" gap={1}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary', letterSpacing: -0.5 }}>
+            Donations & 80G Receipts
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+            Manage donor contributions, track payments, and issue 80G tax-exempt receipts.
+          </Typography>
+        </Box>
+        <Stack direction="row" spacing={1.5} alignItems="center">
           <Button
             variant="outlined"
             onClick={() => downloadCSV(donations, 'Donations_Export')}
@@ -195,11 +232,20 @@ export default function DonationsClient() {
             Export CSV
           </Button>
           {canCreate && (
-            <Button id="record-donation-btn" variant="contained" startIcon={<AddIcon />} onClick={() => { setFormData(emptyForm); setFormError(''); setDialogOpen(true) }}>
+            <Button
+              id="record-donation-btn"
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => {
+                setFormData(emptyForm)
+                setFormError('')
+                setDialogOpen(true)
+              }}
+            >
               Record Donation
             </Button>
           )}
-        </Box>
+        </Stack>
       </Box>
 
       {actionMsg && (

@@ -182,6 +182,16 @@ const theme = createTheme({
             fontWeight: 600,
             fontSize: '0.8125rem',
           },
+          '& .MuiDataGrid-cell': {
+            display: 'flex',
+            alignItems: 'center',
+          },
+          '& .MuiDataGrid-cell--textRight': {
+            justifyContent: 'flex-end',
+          },
+          '& .MuiDataGrid-cell--textCenter': {
+            justifyContent: 'center',
+          },
           '& .MuiDataGrid-row:hover': {
             backgroundColor: '#F0F5F9',
           },

@@ -87,9 +87,35 @@ export default function MinutesClient() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary', letterSpacing: -0.5 }}>
+            Meeting Minutes
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+            Record, review, and finalize proceedings, resolutions, and action items from board & committee meetings.
+          </Typography>
+        </Box>
         {canCreate && (
-          <Button id="add-minutes-btn" variant="contained" startIcon={<AddIcon />} onClick={() => { setFormData(emptyForm); setFormError(''); setDialogOpen(true) }}>
+          <Button
+            id="add-minutes-btn"
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => {
+              setFormData(emptyForm)
+              setFormError('')
+              setDialogOpen(true)
+            }}
+          >
             New Minutes
           </Button>
         )}

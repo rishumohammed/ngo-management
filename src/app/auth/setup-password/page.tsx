@@ -48,7 +48,7 @@ function SetupPasswordContent() {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #00897B 0%, #004D40 100%)',
+        bgcolor: '#0F3354',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

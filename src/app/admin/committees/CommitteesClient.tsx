@@ -6,7 +6,7 @@ import {
   Box, Button, Typography, Chip, Grid, Alert, CircularProgress, Dialog,
   DialogTitle, DialogContent, DialogActions, TextField, FormControl, InputLabel,
   Select, MenuItem, Card, CardContent, CardHeader, Divider, AvatarGroup,
-  Avatar, Tooltip, LinearProgress, Switch, FormControlLabel,
+  Avatar, Tooltip, LinearProgress, Switch, FormControlLabel, Stack,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import GroupWorkIcon from '@mui/icons-material/GroupWork'
@@ -60,18 +60,44 @@ export default function CommitteesClient() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary', letterSpacing: -0.5 }}>
+            Committees & Governance
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+            Manage organizational committees, board structure, member roles, and active tenures.
+          </Typography>
+        </Box>
+        <Stack direction="row" spacing={2} alignItems="center">
           <FormControlLabel
             control={<Switch checked={showArchived} onChange={e => setShowArchived(e.target.checked)} size="small" />}
             label={<Typography variant="body2">Show Archived</Typography>}
           />
           {canCreate && (
-            <Button id="add-committee-btn" variant="contained" startIcon={<AddIcon />} onClick={() => { setFormData(emptyForm); setFormError(''); setDialogOpen(true) }}>
+            <Button
+              id="add-committee-btn"
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => {
+                setFormData(emptyForm)
+                setFormError('')
+                setDialogOpen(true)
+              }}
+            >
               Create Committee
             </Button>
           )}
-        </Box>
+        </Stack>
       </Box>
 
       {loading && <LinearProgress sx={{ mb: 2 }} />}
