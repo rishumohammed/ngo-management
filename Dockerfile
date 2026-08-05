@@ -3,7 +3,6 @@ FROM node:20-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
@@ -45,6 +44,11 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/package.json ./package.json
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/docker-entrypoint.sh ./docker-entrypoint.sh
+
+RUN chmod +x /app/docker-entrypoint.sh
 
 USER nextjs
 
@@ -52,5 +56,5 @@ EXPOSE 3000
 
 ENV PORT 3000
 
-# start the app with node server.js (since standalone mode is used)
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["node", "server.js"]
