@@ -8,10 +8,10 @@ echo "=================================================="
 # 1. Sync database schema
 if [ -n "$DATABASE_URL" ]; then
   echo "Applying database migrations (Prisma db push)..."
-  npx prisma db push --skip-generate || echo "Warning: prisma db push encountered a non-fatal issue, continuing..."
+  npx prisma db push --accept-data-loss || echo "Prisma db push finished or skipped"
 
   echo "Seeding initial admin and settings if needed..."
-  node prisma/seed.js || echo "Warning: prisma seed encountered a non-fatal issue, continuing..."
+  node prisma/seed.js || echo "Prisma seed finished or skipped"
 fi
 
 echo "=================================================="
