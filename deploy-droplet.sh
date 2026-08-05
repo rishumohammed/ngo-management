@@ -17,6 +17,7 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 DOMAIN="portal.freemindfoundation.org.in"
+EMAIL="freemindfoundation786@gmail.com"
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo -e "${PURPLE}================================================================${NC}"
@@ -37,8 +38,8 @@ if ! swapon --show | grep -q "/swapfile"; then
   echo -e "  Creating 2GB swap file..."
   fallocate -l 2G /swapfile 2>/dev/null || dd if=/dev/zero of=/swapfile bs=1M count=2048
   chmod 600 /swapfile
-  mkswap /swapfile
-  swapon /swapfile
+  mkswap /swapfile 2>/dev/null || true
+  swapon /swapfile 2>/dev/null || true
   if ! grep -q "/swapfile" /etc/fstab; then
     echo '/swapfile none swap sw 0 0' >> /etc/fstab
   fi
@@ -112,16 +113,19 @@ fi
 # 6. Setup SSL & Nginx
 echo -e "\n${BLUE}▶ Step 5: Setting up SSL Certificate & Nginx Reverse Proxy...${NC}"
 
-# Check if SSL certificate exists
-if [ ! -d "/etc/letsencrypt/live/${DOMAIN}" ]; then
-  echo -e "${YELLOW}  Requesting SSL certificate for ${DOMAIN}...${NC}"
-  echo -e "  (Make sure your DNS A record points to this server's public IP!)"
-  certbot certonly --nginx -d "${DOMAIN}" --non-interactive --agree-tos --register-unsafely-without-email || {
-    echo -e "${YELLOW}  Notice: Standalone certbot fallback...${NC}"
-    systemctl stop nginx
-    certbot certonly --standalone -d "${DOMAIN}" --non-interactive --agree-tos --register-unsafely-without-email || true
-    systemctl start nginx
+# Ensure SSL directory and cert exist
+if [ ! -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ]; then
+  echo -e "${YELLOW}  Obtaining Let's Encrypt SSL certificate for ${DOMAIN}...${NC}"
+  systemctl stop nginx || true
+  certbot certonly --standalone -d "${DOMAIN}" --non-interactive --agree-tos -m "${EMAIL}" || {
+    echo -e "${YELLOW}  Warning: Let's Encrypt challenge not completed (Check DNS A record). Generating temporary fallback SSL cert...${NC}"
+    mkdir -p "/etc/letsencrypt/live/${DOMAIN}"
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+      -keyout "/etc/letsencrypt/live/${DOMAIN}/privkey.pem" \
+      -out "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" \
+      -subj "/CN=${DOMAIN}" 2>/dev/null || true
   }
+  systemctl start nginx || true
 fi
 
 # Deploy Nginx config
@@ -130,21 +134,22 @@ cp "$APP_DIR/nginx/portal.freemindfoundation.org.in.conf" /etc/nginx/sites-avail
 ln -sf /etc/nginx/sites-available/fmf-portal.conf /etc/nginx/sites-enabled/fmf-portal.conf
 rm -f /etc/nginx/sites-enabled/default
 
-# Test Nginx syntax
+# Test Nginx syntax and reload
 if nginx -t; then
   systemctl reload nginx
   echo -e "${GREEN}  ✓ Nginx configured and reloaded successfully!${NC}"
 else
-  echo -e "${RED}  ⚠️ Nginx configuration test failed. Please check SSL certificate path.${NC}"
+  echo -e "${RED}  ⚠️ Nginx configuration test failed. Re-starting nginx...${NC}"
+  systemctl restart nginx || true
 fi
 
 # 7. Build and Run Docker Containers
 echo -e "\n${BLUE}▶ Step 6: Building and starting Docker containers...${NC}"
-docker compose down --remove-orphans || true
+docker compose down --remove-orphans 2>/dev/null || true
 docker compose up -d --build
 
 echo -e "\n${BLUE}▶ Step 7: Waiting for services to initialize...${NC}"
-sleep 10
+sleep 8
 docker compose ps
 
 echo -e "\n${PURPLE}================================================================${NC}"
