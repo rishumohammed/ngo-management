@@ -4,6 +4,8 @@ import { prisma } from './prisma'
 import bcrypt from 'bcryptjs'
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET || 'fmf_production_secret_key_change_me_super_secret_123',
+  useSecureCookies: process.env.NEXTAUTH_URL?.startsWith('https://') ?? (process.env.NODE_ENV === 'production'),
   session: {
     strategy: 'jwt',
     maxAge: 8 * 60 * 60, // 8 hours
@@ -172,16 +174,29 @@ export const authOptions: NextAuthOptions = {
             select: { id: true },
           })
           if (v) token.volunteerId = v.id
-        } catch (e) {}
+        } catch (e) {
+          // non-fatal
+        }
       }
       return token
     },
     async session({ session, token }) {
-      if (token && session.user) {
-        session.user.id = token.id as string
-        session.user.role = token.role as string
-        session.user.isVolunteer = token.isVolunteer as boolean
-        session.user.volunteerId = token.volunteerId as string | undefined
+      if (token) {
+        if (!session.user) {
+          session.user = {
+            id: token.id as string,
+            email: token.email as string,
+            name: token.name as string,
+            role: token.role as string,
+            isVolunteer: Boolean(token.isVolunteer),
+            volunteerId: token.volunteerId as string | undefined,
+          }
+        } else {
+          session.user.id = (token.id as string) || session.user.id
+          session.user.role = (token.role as string) || session.user.role
+          session.user.isVolunteer = Boolean(token.isVolunteer ?? session.user.isVolunteer)
+          session.user.volunteerId = (token.volunteerId as string | undefined) ?? session.user.volunteerId
+        }
       }
       return session
     },
