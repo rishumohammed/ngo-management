@@ -12,9 +12,11 @@ const VolunteerSchema = z.object({
   phone: z.string().optional(),
   address: z.string().optional(),
   city: z.string().optional(),
+  district: z.string().optional(),
   state: z.string().optional(),
   skills: z.array(z.string()).optional(),
   interests: z.array(z.string()).optional(),
+  contributionType: z.string().optional(),
   availability: z.string().optional(),
   motivation: z.string().optional(),
 })

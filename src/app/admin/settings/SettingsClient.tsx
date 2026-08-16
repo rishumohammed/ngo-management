@@ -59,9 +59,11 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   email_from: 'no-reply@freemindfoundation.org.in',
   email_from_name: 'Free Mind Foundation',
   form_states: JSON.stringify(DEFAULT_INDIAN_STATES),
+  form_districts: '{}',
   volunteer_availabilities: '[]',
   volunteer_skills: '[]',
   volunteer_interests: '[]',
+  volunteer_contributions: '[]',
   volunteer_pipeline_stages: JSON.stringify(DEFAULT_PIPELINE_STAGES),
 }
 
@@ -75,6 +77,8 @@ export default function SettingsClient() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  
+  const [selectedDistrictState, setSelectedDistrictState] = useState<string>('')
 
   useEffect(() => {
     fetch('/api/settings')
@@ -509,6 +513,52 @@ export default function SettingsClient() {
                 />
               </Grid>
 
+              {/* District Management */}
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+                  District Options by State
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={4}>
+                    <Autocomplete
+                      options={JSON.parse(settings.form_states || JSON.stringify(DEFAULT_INDIAN_STATES))}
+                      value={selectedDistrictState || null}
+                      onChange={(_, newValue) => setSelectedDistrictState(newValue || '')}
+                      renderInput={(params) => (
+                        <TextField {...params} label="Select State" placeholder="Select a state first" />
+                      )}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={8}>
+                    <Autocomplete
+                      multiple
+                      freeSolo
+                      disabled={!selectedDistrictState || !canEdit}
+                      options={[]}
+                      value={(JSON.parse(settings.form_districts || '{}')[selectedDistrictState] || []) as string[]}
+                      onChange={(_, newValue) => {
+                        const currentDistricts = JSON.parse(settings.form_districts || '{}');
+                        currentDistricts[selectedDistrictState] = newValue;
+                        set('form_districts', JSON.stringify(currentDistricts));
+                      }}
+                      renderTags={(value: readonly string[], getTagProps) =>
+                        value.map((option: string, index: number) => {
+                          const { key, ...tagProps } = getTagProps({ index })
+                          return <Chip variant="outlined" color="primary" label={option} key={key} {...tagProps} />
+                        })
+                      }
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Districts"
+                          placeholder={selectedDistrictState ? "Type district name and press Enter to add" : "Select a state to add districts"}
+                        />
+                      )}
+                    />
+                  </Grid>
+                </Grid>
+              </Grid>
+
               <Grid item xs={12}>
                 <Divider />
               </Grid>
@@ -588,6 +638,30 @@ export default function SettingsClient() {
                       label="Interests Options"
                       placeholder="Type and press enter"
                       helperText="e.g. Youth Programs, Mental Health Awareness, Community Outreach"
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Autocomplete
+                  multiple
+                  freeSolo
+                  options={[]}
+                  value={JSON.parse(settings.volunteer_contributions || '[]')}
+                  onChange={(_, newValue) => set('volunteer_contributions', JSON.stringify(newValue))}
+                  disabled={!canEdit}
+                  renderTags={(value: readonly string[], getTagProps) =>
+                    value.map((option: string, index: number) => {
+                      const { key, ...tagProps } = getTagProps({ index })
+                      return <Chip variant="outlined" label={option} key={key} {...tagProps} />
+                    })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Contribution Options"
+                      placeholder="Type and press enter"
+                      helperText="e.g. Weekly field visits, Remote work, Weekend events"
                     />
                   )}
                 />

@@ -7,7 +7,7 @@ import { authOptions } from '@/lib/auth'
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions)
-    if (session?.user?.role !== 'SUPER_ADMIN') {
+    if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 

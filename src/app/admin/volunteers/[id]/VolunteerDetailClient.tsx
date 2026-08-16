@@ -117,6 +117,7 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
   const [editForm, setEditForm] = useState<any>({})
   const [savingEdit, setSavingEdit] = useState(false)
   const [statesList, setStatesList] = useState<string[]>(DEFAULT_INDIAN_STATES)
+  const [districtsMap, setDistrictsMap] = useState<Record<string, string[]>>({})
 
   // Credentials Management
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
@@ -178,6 +179,9 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
       .then((data) => {
         if (data?.states && Array.isArray(data.states) && data.states.length > 0) {
           setStatesList(data.states)
+        }
+        if (data?.districts) {
+          setDistrictsMap(data.districts)
         }
         if (data?.pipelineStages && Array.isArray(data.pipelineStages) && data.pipelineStages.length > 0) {
           setPipelineStages(data.pipelineStages)
@@ -555,9 +559,11 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                       phone: volunteer.phone || '',
                       address: volunteer.address || '',
                       city: volunteer.city || '',
+                      district: volunteer.district || '',
                       state: volunteer.state || '',
                       skills: Array.isArray(volunteer.skills) ? volunteer.skills.join(', ') : volunteer.skills || '',
                       interests: Array.isArray(volunteer.interests) ? volunteer.interests.join(', ') : volunteer.interests || '',
+                      contributionType: volunteer.contributionType || '',
                       availability: volunteer.availability || '',
                       motivation: volunteer.motivation || '',
                     })
@@ -1106,7 +1112,7 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                         Location / Address
                       </Typography>
                       <Typography variant="body2">
-                        {[volunteer.address, volunteer.city, volunteer.state].filter(Boolean).join(', ') || 'Not provided'}
+                        {[volunteer.address, volunteer.city, volunteer.district, volunteer.state].filter(Boolean).join(', ') || 'Not provided'}
                       </Typography>
                     </Box>
                   </Box>
@@ -1153,6 +1159,16 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                     ) : (
                       <Typography variant="body2" color="text.secondary">None specified</Typography>
                     )}
+                  </Box>
+
+                  {/* Contribution Type */}
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.8 }}>
+                      Contribution Preference
+                    </Typography>
+                    <Typography variant="body2">
+                      {volunteer.contributionType || 'None specified'}
+                    </Typography>
                   </Box>
 
                   {/* Motivation */}
@@ -1569,9 +1585,20 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
               <Autocomplete
                 options={statesList}
                 value={editForm.state || null}
-                onChange={(_, newValue) => setEditForm({ ...editForm, state: newValue || '' })}
+                onChange={(_, newValue) => setEditForm({ ...editForm, state: newValue || '', district: '' })}
                 renderInput={(params) => (
                   <TextField {...params} label="State / UT" placeholder="Select state" fullWidth />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Autocomplete
+                options={editForm.state ? (districtsMap[editForm.state] || []) : []}
+                value={editForm.district || null}
+                disabled={!editForm.state}
+                onChange={(_, newValue) => setEditForm({ ...editForm, district: newValue || '' })}
+                renderInput={(params) => (
+                  <TextField {...params} label="District" placeholder={editForm.state ? "Select district" : "Select a state first"} fullWidth />
                 )}
               />
             </Grid>
@@ -1615,6 +1642,14 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                 fullWidth
                 value={editForm.interests || ''}
                 onChange={(e) => setEditForm({ ...editForm, interests: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Contribution Preference"
+                fullWidth
+                value={editForm.contributionType || ''}
+                onChange={(e) => setEditForm({ ...editForm, contributionType: e.target.value })}
               />
             </Grid>
             <Grid item xs={12}>

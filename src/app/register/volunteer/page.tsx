@@ -30,19 +30,25 @@ export default function VolunteerRegistration() {
     phone: '',
     address: '',
     city: '',
+    district: '',
     state: '',
     availability: '',
+    contributionType: '',
     motivation: ''
   });
   
   const [skills, setSkills] = useState<string[]>([]);
   const [interests, setInterests] = useState<string[]>([]);
   
-  const [options, setOptions] = useState<{ states: string[], availabilities: string[], skills: string[], interests: string[] }>({
+  const [options, setOptions] = useState<{ states: string[], districts: Record<string, string[]>, availabilities: string[], skills: string[], interests: string[], contributions: string[], orgLogo: string, orgName: string }>({
     states: DEFAULT_INDIAN_STATES,
     availabilities: [],
     skills: [],
-    interests: []
+    interests: [],
+    contributions: [],
+    orgLogo: '',
+    orgName: 'Free Mind Foundation',
+    districts: {}
   });
   const [optionsLoading, setOptionsLoading] = useState(true);
 
@@ -59,7 +65,11 @@ export default function VolunteerRegistration() {
             states: data.states && data.states.length > 0 ? data.states : DEFAULT_INDIAN_STATES,
             availabilities: data.availabilities || [],
             skills: data.skills || [],
-            interests: data.interests || []
+            interests: data.interests || [],
+            contributions: data.contributions || [],
+            orgLogo: data.orgLogo || '',
+            orgName: data.orgName || 'Free Mind Foundation',
+            districts: data.districts || {}
           });
         }
         setOptionsLoading(false);
@@ -126,7 +136,7 @@ export default function VolunteerRegistration() {
           </Box>
 
           <Typography variant="h4" component="h1" gutterBottom fontWeight="bold" color="primary.main">
-            Welcome to Free Mind Foundation!
+            Welcome to {options.orgName}!
           </Typography>
 
           <Typography variant="body1" color="text.secondary" sx={{ mb: 4, lineHeight: 1.7 }}>
@@ -187,11 +197,21 @@ export default function VolunteerRegistration() {
   return (
     <Container maxWidth="md" sx={{ mt: 8, mb: 8 }}>
       <Paper sx={{ p: { xs: 3, md: 5 } }}>
+        {options.orgLogo ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+            <Box
+              component="img"
+              src={options.orgLogo}
+              alt="Logo"
+              sx={{ height: 60, width: 'auto', objectFit: 'contain' }}
+            />
+          </Box>
+        ) : null}
         <Typography variant="h4" component="h1" gutterBottom color="primary.main" align="center">
           Volunteer Registration
         </Typography>
         <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 4 }}>
-          Become a volunteer at Free Mind Foundation. Help us make a difference in mental wellness.
+          Become a volunteer at {options.orgName}. Help us make a difference in mental wellness.
         </Typography>
 
         {optionsLoading ? (
@@ -258,7 +278,7 @@ export default function VolunteerRegistration() {
               options={options.states}
               value={formData.state || null}
               onChange={(_, newValue) => {
-                setFormData(prev => ({ ...prev, state: newValue || '' }));
+                setFormData(prev => ({ ...prev, state: newValue || '', district: '' }));
               }}
               renderInput={(params) => (
                 <TextField
@@ -267,6 +287,24 @@ export default function VolunteerRegistration() {
                   name="state"
                   fullWidth
                   placeholder="Select state"
+                />
+              )}
+            />
+
+            <Autocomplete
+              options={formData.state && options.districts[formData.state] ? options.districts[formData.state] : []}
+              value={formData.district || null}
+              onChange={(_, newValue) => {
+                setFormData(prev => ({ ...prev, district: newValue || '' }));
+              }}
+              disabled={!formData.state || !options.districts[formData.state]}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="District"
+                  name="district"
+                  fullWidth
+                  placeholder="Select district"
                 />
               )}
             />
@@ -281,6 +319,21 @@ export default function VolunteerRegistration() {
               >
                 <MenuItem value=""><em>None</em></MenuItem>
                 {options.availabilities.map(opt => (
+                  <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <InputLabel>Contribution Type</InputLabel>
+              <Select
+                name="contributionType"
+                value={formData.contributionType}
+                label="Contribution Type"
+                onChange={handleChange as any}
+              >
+                <MenuItem value=""><em>None</em></MenuItem>
+                {options.contributions.map(opt => (
                   <MenuItem key={opt} value={opt}>{opt}</MenuItem>
                 ))}
               </Select>

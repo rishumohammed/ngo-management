@@ -28,7 +28,11 @@ export default function MemberRegistration() {
     state: ''
   });
 
-  const [statesList, setStatesList] = useState<string[]>(DEFAULT_INDIAN_STATES);
+  const [options, setOptions] = useState<{ states: string[], orgLogo: string, orgName: string }>({
+    states: DEFAULT_INDIAN_STATES,
+    orgLogo: '',
+    orgName: 'Free Mind Foundation'
+  });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,9 +41,12 @@ export default function MemberRegistration() {
     fetch('/api/public/form-options')
       .then(res => res.json())
       .then(data => {
-        if (data?.states && Array.isArray(data.states) && data.states.length > 0) {
-          setStatesList(data.states);
-        }
+        setOptions(prev => ({
+          ...prev,
+          states: (data?.states && Array.isArray(data.states) && data.states.length > 0) ? data.states : prev.states,
+          orgLogo: data?.orgLogo || '',
+          orgName: data?.orgName || 'Free Mind Foundation'
+        }));
       })
       .catch(() => {});
   }, []);
@@ -96,7 +103,7 @@ export default function MemberRegistration() {
           </Box>
 
           <Typography variant="h4" component="h1" gutterBottom fontWeight="bold" color="primary.main">
-            Welcome to Free Mind Foundation!
+            Welcome to {options.orgName}!
           </Typography>
 
           <Typography variant="body1" color="text.secondary" sx={{ mb: 4, lineHeight: 1.7 }}>
@@ -157,11 +164,21 @@ export default function MemberRegistration() {
   return (
     <Container maxWidth="md" sx={{ mt: 8, mb: 8 }}>
       <Paper sx={{ p: { xs: 3, md: 5 }, borderRadius: 3 }}>
+        {options.orgLogo ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+            <Box
+              component="img"
+              src={options.orgLogo}
+              alt="Logo"
+              sx={{ height: 60, width: 'auto', objectFit: 'contain' }}
+            />
+          </Box>
+        ) : null}
         <Typography variant="h4" component="h1" gutterBottom color="primary.main" align="center" fontWeight="bold">
           Member Registration
         </Typography>
         <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 4 }}>
-          Join the Free Mind Foundation and support our mission for preventive mental wellness.
+          Join {options.orgName} and support our mission for preventive mental wellness.
         </Typography>
 
         {error && (
@@ -219,7 +236,7 @@ export default function MemberRegistration() {
             />
 
             <Autocomplete
-              options={statesList}
+              options={options.states}
               value={formData.state || null}
               onChange={(_, newValue) => {
                 setFormData(prev => ({ ...prev, state: newValue || '' }));

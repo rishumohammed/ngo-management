@@ -72,9 +72,11 @@ const emptyForm = {
   phone: '',
   address: '',
   city: '',
+  district: '',
   state: '',
   skills: '',
   interests: '',
+  contributionType: '',
   availability: '',
   motivation: '',
 }
@@ -102,6 +104,7 @@ export default function VolunteersClient() {
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
   const [statesList, setStatesList] = useState<string[]>(DEFAULT_INDIAN_STATES)
+  const [districtsMap, setDistrictsMap] = useState<Record<string, string[]>>({})
   const [pipelineStages, setPipelineStages] = useState<PipelineStageConfig[]>(DEFAULT_PIPELINE_STAGES)
 
   // Suspend Dialog
@@ -132,6 +135,9 @@ export default function VolunteersClient() {
       .then((data) => {
         if (data?.states && Array.isArray(data.states) && data.states.length > 0) {
           setStatesList(data.states)
+        }
+        if (data?.districts) {
+          setDistrictsMap(data.districts)
         }
         if (data?.pipelineStages && Array.isArray(data.pipelineStages) && data.pipelineStages.length > 0) {
           setPipelineStages(data.pipelineStages)
@@ -183,6 +189,8 @@ export default function VolunteersClient() {
           ...formData,
           skills: formData.skills ? formData.skills.split(',').map((s) => s.trim()).filter(Boolean) : [],
           interests: formData.interests ? formData.interests.split(',').map((s) => s.trim()).filter(Boolean) : [],
+          contributionType: formData.contributionType || '',
+          district: formData.district || '',
         }),
       })
       if (!res.ok) {
@@ -627,9 +635,20 @@ export default function VolunteersClient() {
               <Autocomplete
                 options={statesList}
                 value={formData.state || null}
-                onChange={(_, newValue) => setFormData({ ...formData, state: newValue || '' })}
+                onChange={(_, newValue) => setFormData({ ...formData, state: newValue || '', district: '' })}
                 renderInput={(params) => (
                   <TextField {...params} label="State / UT" placeholder="Select state" fullWidth />
+                )}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <Autocomplete
+                options={formData.state ? (districtsMap[formData.state] || []) : []}
+                value={formData.district || null}
+                disabled={!formData.state}
+                onChange={(_, newValue) => setFormData({ ...formData, district: newValue || '' })}
+                renderInput={(params) => (
+                  <TextField {...params} label="District" placeholder={formData.state ? "Select district" : "Select a state first"} fullWidth />
                 )}
               />
             </Grid>
@@ -647,6 +666,14 @@ export default function VolunteersClient() {
                 fullWidth
                 value={formData.interests}
                 onChange={(e) => setFormData({ ...formData, interests: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Contribution Preference"
+                fullWidth
+                value={formData.contributionType}
+                onChange={(e) => setFormData({ ...formData, contributionType: e.target.value })}
               />
             </Grid>
             <Grid item xs={12}>

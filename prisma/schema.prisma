@@ -120,9 +120,11 @@ model Volunteer {
   phone           String?
   address         String?       @db.Text
   city            String?
+  district        String?
   state           String?
   skills          Json?         // array of strings
   interests       Json?         // array of strings
+  contributionType String?
   availability    String?       // free text or JSON
   motivation      String?       @db.Text
   currentStage    PipelineStage @default(APPLICATION)
@@ -418,6 +420,7 @@ model Event {
   status       EventStatus @default(PLANNED)
   committeeId  String?
   committee    Committee?  @relation(fields: [committeeId], references: [id])
+  images       Json?       // array of { url: string, uploadedBy: string, uploadedAt: string }
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 

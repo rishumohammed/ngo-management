@@ -1,18 +1,19 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Box, Button, Typography, Card, CardContent, CardHeader,
   Grid, TextField, CircularProgress, Alert, IconButton,
   List, ListItem, ListItemText, Divider, Dialog, DialogTitle,
   DialogContent, DialogActions, Select, MenuItem, FormControl, InputLabel,
-  Chip, Avatar
+  Chip, Avatar, ImageList, ImageListItem, ImageListItemBar
 } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
+import PhotoCamera from '@mui/icons-material/PhotoCamera'
 import dayjs from 'dayjs'
 
 export default function EventDetailClient({ id }: { id: string }) {
@@ -20,6 +21,8 @@ export default function EventDetailClient({ id }: { id: string }) {
   const [event, setEvent] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [volunteersList, setVolunteersList] = useState<any[]>([])
 
@@ -98,6 +101,45 @@ export default function EventDetailClient({ id }: { id: string }) {
     }
   }
 
+  const handleUploadImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return
+    const file = e.target.files[0]
+    
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+      
+      if (!uploadRes.ok) {
+        throw new Error('Image upload failed')
+      }
+      
+      const { path } = await uploadRes.json()
+      
+      const res = await fetch(`/api/events/${id}/images`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: path })
+      })
+      
+      if (!res.ok) throw new Error('Failed to add image to event')
+      
+      fetchData()
+    } catch (err: any) {
+      alert(err.message)
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
   if (loading) return <Box p={3}><CircularProgress /></Box>
   if (error) return <Box p={3}><Alert severity="error">{error}</Alert></Box>
   if (!event) return null
@@ -158,6 +200,53 @@ export default function EventDetailClient({ id }: { id: string }) {
             )
           })}
         </List>
+      </Card>
+
+      <Card sx={{ mt: 4 }}>
+        <CardHeader
+          title="Event Gallery"
+          action={
+            <Button
+              component="label"
+              variant="contained"
+              startIcon={<PhotoCamera />}
+              size="small"
+              disabled={uploading}
+            >
+              {uploading ? 'Uploading...' : 'Upload Image'}
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                ref={fileInputRef}
+                onChange={handleUploadImage}
+              />
+            </Button>
+          }
+        />
+        <Divider />
+        <CardContent>
+          {(!event.images || event.images.length === 0) ? (
+            <Typography variant="body2" color="text.secondary">No images uploaded for this event yet.</Typography>
+          ) : (
+            <ImageList sx={{ width: '100%', height: 'auto' }} cols={4} rowHeight={200} gap={8}>
+              {event.images.map((img: any, index: number) => (
+                <ImageListItem key={index}>
+                  <img
+                    src={img.url}
+                    alt={`Event Image ${index + 1}`}
+                    loading="lazy"
+                    style={{ height: '100%', objectFit: 'cover' }}
+                  />
+                  <ImageListItemBar
+                    title={img.uploadedBy}
+                    subtitle={dayjs(img.uploadedAt).format('MMM D, YYYY h:mm A')}
+                  />
+                </ImageListItem>
+              ))}
+            </ImageList>
+          )}
+        </CardContent>
       </Card>
 
       {/* Assignment Dialog */}
