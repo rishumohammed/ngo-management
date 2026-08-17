@@ -199,7 +199,6 @@ export default function CommitteesClient() {
               <Select label="Type" value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value })}>
                 <MenuItem value="GOVERNING_BOARD">Governing Board</MenuItem>
                 <MenuItem value="EXECUTIVE_TEAM">Executive Team</MenuItem>
-                <MenuItem value="COMMITTEE">Committee</MenuItem>
                 <MenuItem value="DEPARTMENT">Department</MenuItem>
               </Select>
             </FormControl>

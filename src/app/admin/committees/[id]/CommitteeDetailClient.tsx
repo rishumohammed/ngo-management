@@ -343,7 +343,6 @@ export default function CommitteeDetailClient({ id }: { id: string }) {
               <Select label="Type" value={editForm.type} onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}>
                 <MenuItem value="GOVERNING_BOARD">Governing Board</MenuItem>
                 <MenuItem value="EXECUTIVE_TEAM">Executive Team</MenuItem>
-                <MenuItem value="COMMITTEE">Committee</MenuItem>
                 <MenuItem value="DEPARTMENT">Department</MenuItem>
               </Select>
             </FormControl>
