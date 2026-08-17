@@ -92,48 +92,49 @@ function LoginContent({ orgLogo, orgName = 'Free Mind Foundation' }: { orgLogo?:
       }}
     >
       <Box sx={{ width: '100%', maxWidth: 420 }}>
-        {/* Logo / Brand */}
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
-          <Box
-            sx={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 64,
-              height: 64,
-              borderRadius: '50%',
-              background: 'rgba(255,255,255,0.15)',
-              backdropFilter: 'blur(10px)',
-              mb: 2,
-              border: '2px solid rgba(255,255,255,0.3)',
-            }}
-          >
-            {orgLogo ? (
-              <Box
-                component="img"
-                src={orgLogo}
-                alt="Logo"
-                sx={{
-                  width: '100%',
-                  maxHeight: 48,
-                  objectFit: 'contain',
-                }}
-              />
-            ) : (
-              <FavoriteIcon sx={{ fontSize: 32, color: 'white' }} />
-            )}
-          </Box>
-          <Typography variant="h5" sx={{ color: 'white', fontWeight: 700, mb: 0.5 }}>
-            {orgName}
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.75)' }}>
-            Trust Management System
-          </Typography>
-        </Box>
+
 
         {/* Login Card */}
         <Card sx={{ borderRadius: 3, boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
           <CardContent sx={{ p: 4 }}>
+            {/* Logo / Brand Inside Card */}
+            <Box sx={{ textAlign: 'center', mb: 4 }}>
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 64,
+                  height: 64,
+                  borderRadius: '50%',
+                  background: 'rgba(15, 51, 84, 0.05)',
+                  mb: 2,
+                  border: '2px solid rgba(15, 51, 84, 0.1)',
+                }}
+              >
+                {orgLogo ? (
+                  <Box
+                    component="img"
+                    src={orgLogo}
+                    alt="Logo"
+                    sx={{
+                      width: '100%',
+                      maxHeight: 48,
+                      objectFit: 'contain',
+                    }}
+                  />
+                ) : (
+                  <FavoriteIcon sx={{ fontSize: 32, color: '#0F3354' }} />
+                )}
+              </Box>
+              <Typography variant="h5" sx={{ color: '#0F3354', fontWeight: 700, mb: 0.5 }}>
+                {orgName}
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                Trust Management System
+              </Typography>
+            </Box>
+
             <Typography variant="h6" sx={{ mb: 3, color: 'text.primary', fontWeight: 600 }}>
               Sign In
             </Typography>
