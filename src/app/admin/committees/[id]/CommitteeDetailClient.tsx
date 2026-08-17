@@ -24,6 +24,10 @@ export default function CommitteeDetailClient({ id }: { id: string }) {
   const [membersList, setMembersList] = useState<any[]>([])
   const [volunteersList, setVolunteersList] = useState<any[]>([])
 
+  // Committee Edit State
+  const [editOpen, setEditOpen] = useState(false)
+  const [editForm, setEditForm] = useState({ name: '', type: '', purpose: '', isArchived: false })
+
   // Member Dialog State
   const [memberOpen, setMemberOpen] = useState(false)
   const [editingMember, setEditingMember] = useState<any>(null)
@@ -58,6 +62,27 @@ export default function CommitteeDetailClient({ id }: { id: string }) {
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  // --- Committee Handlers ---
+  const handleOpenEdit = () => {
+    setEditForm({ name: committee.name, type: committee.type, purpose: committee.purpose || '', isArchived: committee.isArchived })
+    setEditOpen(true)
+  }
+
+  const handleSaveEdit = async () => {
+    try {
+      const res = await fetch(`/api/committees/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm)
+      })
+      if (!res.ok) throw new Error('Failed to update committee')
+      setEditOpen(false)
+      fetchData()
+    } catch (err: any) {
+      alert(err.message)
+    }
+  }
 
   // --- Member Handlers ---
   const handleOpenMember = (item: any = null) => {
@@ -121,6 +146,10 @@ export default function CommitteeDetailClient({ id }: { id: string }) {
         <Typography variant="h4" component="h1">{committee.name}</Typography>
         <Chip label={committee.type} variant="outlined" />
         {committee.isArchived && <Chip label="Archived" color="error" />}
+        <Box flexGrow={1} />
+        <Button startIcon={<EditIcon />} variant="outlined" size="small" onClick={handleOpenEdit}>
+          Edit Details
+        </Button>
       </Box>
       <Typography variant="body1" color="text.secondary" mb={4}>{committee.purpose}</Typography>
 
@@ -280,6 +309,37 @@ export default function CommitteeDetailClient({ id }: { id: string }) {
         <DialogActions>
           <Button onClick={() => setMemberOpen(false)}>Cancel</Button>
           <Button variant="contained" onClick={handleSaveMember} disabled={!editingMember && !memberForm.memberId && !memberForm.volunteerId}>Save</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Committee Dialog */}
+      <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit Committee Details</DialogTitle>
+        <DialogContent dividers>
+          <Box display="flex" flexDirection="column" gap={2} mt={1}>
+            <FormControl fullWidth>
+              <InputLabel>Type</InputLabel>
+              <Select label="Type" value={editForm.type} onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}>
+                <MenuItem value="GOVERNING_BOARD">Governing Board</MenuItem>
+                <MenuItem value="EXECUTIVE_TEAM">Executive Team</MenuItem>
+                <MenuItem value="COMMITTEE">Committee</MenuItem>
+                <MenuItem value="DEPARTMENT">Department</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField label="Name" fullWidth value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+            <TextField label="Purpose / Description" fullWidth multiline rows={3} value={editForm.purpose} onChange={(e) => setEditForm({ ...editForm, purpose: e.target.value })} />
+            <FormControl fullWidth>
+              <InputLabel>Status</InputLabel>
+              <Select label="Status" value={editForm.isArchived ? 'ARCHIVED' : 'ACTIVE'} onChange={(e) => setEditForm({ ...editForm, isArchived: e.target.value === 'ARCHIVED' })}>
+                <MenuItem value="ACTIVE">Active</MenuItem>
+                <MenuItem value="ARCHIVED">Archived</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleSaveEdit}>Save Changes</Button>
         </DialogActions>
       </Dialog>
     </Box>
