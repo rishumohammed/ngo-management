@@ -254,12 +254,6 @@ model DonationReceipt {
 // MEETING MINUTES
 // ─────────────────────────────────────────────
 
-enum MeetingType {
-  BOARD
-  COMMITTEE
-  GENERAL_BODY
-  AD_HOC
-}
 
 enum MinuteStatus {
   DRAFT
@@ -269,7 +263,7 @@ enum MinuteStatus {
 
 model MeetingMinute {
   id           String       @id @default(uuid())
-  meetingType  MeetingType
+  meetingType  String
   title        String
   date         DateTime
   location     String?
@@ -368,16 +362,6 @@ model Committee {
   @@map("committees")
 }
 
-enum CommitteeMemberRole {
-  EXECUTIVE_LEADER
-  CHAIRPERSON
-  HEAD_OF_DEPARTMENT
-  DISTRICT_REPRESENTATIVE
-  SECRETARY
-  TREASURER
-  MEMBER
-  ADVISOR
-}
 
 model CommitteeMember {
   id           String              @id @default(uuid())
@@ -389,7 +373,7 @@ model CommitteeMember {
   volunteer    Volunteer?          @relation(fields: [volunteerId], references: [id])
   designation  String?
   district     String?
-  role         CommitteeMemberRole @default(MEMBER)
+  role         String              @default("MEMBER")
   termStart    DateTime?
   termEnd      DateTime?
   isActive     Boolean             @default(true)

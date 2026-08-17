@@ -31,6 +31,11 @@ export default function MinuteDetailClient({ id }: { id: string }) {
   const [editingAction, setEditingAction] = useState<any>(null)
   const [actionForm, setActionForm] = useState({ description: '', ownerName: '', dueDate: '', status: 'OPEN' })
 
+  // Addendum Dialog State
+  const [addendumOpen, setAddendumOpen] = useState(false)
+  const [editingAddendum, setEditingAddendum] = useState<any>(null)
+  const [addendumForm, setAddendumForm] = useState({ content: '' })
+
   const fetchMinute = useCallback(async () => {
     try {
       const res = await fetch(`/api/minutes/${id}`)
@@ -129,6 +134,46 @@ export default function MinuteDetailClient({ id }: { id: string }) {
     if (!confirm('Are you sure you want to delete this action item?')) return
     try {
       const res = await fetch(`/api/minutes/${id}/action-items/${actionId}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete')
+      fetchMinute()
+    } catch (err: any) {
+      alert(err.message)
+    }
+  }
+
+  // --- Addendum Handlers ---
+  const handleOpenAddendum = (item: any = null) => {
+    if (item) {
+      setEditingAddendum(item)
+      setAddendumForm({ content: item.content })
+    } else {
+      setEditingAddendum(null)
+      setAddendumForm({ content: '' })
+    }
+    setAddendumOpen(true)
+  }
+
+  const handleSaveAddendum = async () => {
+    try {
+      const url = editingAddendum ? `/api/minutes/${id}/addendums/${editingAddendum.id}` : `/api/minutes/${id}/addendums`
+      const method = editingAddendum ? 'PUT' : 'POST'
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(addendumForm)
+      })
+      if (!res.ok) throw new Error('Failed to save addendum')
+      setAddendumOpen(false)
+      fetchMinute()
+    } catch (err: any) {
+      alert(err.message)
+    }
+  }
+
+  const handleDeleteAddendum = async (addendumId: string) => {
+    if (!confirm('Are you sure you want to delete this addendum?')) return
+    try {
+      const res = await fetch(`/api/minutes/${id}/addendums/${addendumId}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Failed to delete')
       fetchMinute()
     } catch (err: any) {
@@ -237,6 +282,47 @@ export default function MinuteDetailClient({ id }: { id: string }) {
         </Grid>
       </Grid>
 
+      <Box mt={3}>
+        <Card>
+          <CardHeader
+            title="Addendums (Post-Meeting Notes)"
+            action={
+              <Button startIcon={<AddIcon />} variant="contained" size="small" onClick={() => handleOpenAddendum()}>
+                Add
+              </Button>
+            }
+          />
+          <Divider />
+          <List>
+            {minute.addendums?.length === 0 && <ListItem><ListItemText secondary="No addendums yet." /></ListItem>}
+            {minute.addendums?.map((item: any) => (
+              <ListItem
+                key={item.id}
+                divider
+                secondaryAction={
+                  <Box>
+                    <IconButton size="small" onClick={() => handleOpenAddendum(item)}><EditIcon /></IconButton>
+                    <IconButton size="small" color="error" onClick={() => handleDeleteAddendum(item.id)}><DeleteIcon /></IconButton>
+                  </Box>
+                }
+              >
+                <ListItemText
+                  primary={item.content}
+                  secondary={
+                    <Box component="span" display="flex" gap={1} mt={1}>
+                      <Chip size="small" label={`Added by: ${item.addedBy}`} />
+                      <Typography variant="caption" color="text.secondary" sx={{ alignSelf: 'center' }}>
+                        {dayjs(item.addedAt).format('MMM D, YYYY h:mm A')}
+                      </Typography>
+                    </Box>
+                  }
+                />
+              </ListItem>
+            ))}
+          </List>
+        </Card>
+      </Box>
+
       {/* Agenda Dialog */}
       <Dialog open={agendaOpen} onClose={() => setAgendaOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>{editingAgenda ? 'Edit Agenda Item' : 'Add Agenda Item'}</DialogTitle>
@@ -276,6 +362,19 @@ export default function MinuteDetailClient({ id }: { id: string }) {
         <DialogActions>
           <Button onClick={() => setActionOpen(false)}>Cancel</Button>
           <Button variant="contained" onClick={handleSaveAction} disabled={!actionForm.description || !actionForm.ownerName}>Save</Button>
+        </DialogActions>
+      </Dialog>
+      {/* Addendum Dialog */}
+      <Dialog open={addendumOpen} onClose={() => setAddendumOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>{editingAddendum ? 'Edit Addendum' : 'Add Addendum'}</DialogTitle>
+        <DialogContent>
+          <Box display="flex" flexDirection="column" gap={2} mt={2}>
+            <TextField label="Content" fullWidth multiline rows={4} required value={addendumForm.content} onChange={(e) => setAddendumForm({ ...addendumForm, content: e.target.value })} />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAddendumOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleSaveAddendum} disabled={!addendumForm.content}>Save</Button>
         </DialogActions>
       </Dialog>
     </Box>

@@ -39,6 +39,7 @@ import MenuIcon from '@mui/icons-material/Menu'
 import LogoutIcon from '@mui/icons-material/Logout'
 import FavoriteIcon from '@mui/icons-material/Favorite'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
+import LocationOnIcon from '@mui/icons-material/LocationOn'
 import { ROLE_LABELS } from '@/lib/permissions'
 import { can } from '@/lib/permissions'
 
@@ -57,8 +58,9 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Volunteers', icon: <VolunteerActivismIcon />, href: '/admin/volunteers', module: 'volunteers' },
   { label: 'Donations & 80G', icon: <MonetizationOnIcon />, href: '/admin/donations', module: 'donations' },
   { label: 'Meeting Minutes', icon: <ArticleIcon />, href: '/admin/minutes', module: 'minutes' },
-  { label: 'Committees', icon: <AccountTreeIcon />, href: '/admin/committees', module: 'committees' },
+  { label: 'Organization Structure', icon: <AccountTreeIcon />, href: '/admin/committees', module: 'committees' },
   { label: 'Events', icon: <EventIcon />, href: '/admin/events', module: 'events' },
+  { label: 'Locations', icon: <LocationOnIcon />, href: '/admin/locations', module: 'settings' },
   { label: 'Audit Log', icon: <SecurityIcon />, href: '/admin/audit', module: 'audit' },
   { label: 'Users', icon: <PeopleIcon />, href: '/admin/users', module: 'users' },
   { label: 'Settings', icon: <SettingsIcon />, href: '/admin/settings', module: 'settings' },

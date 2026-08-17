@@ -23,7 +23,19 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import SecurityIcon from '@mui/icons-material/Security'
 
-export default function HomeClient({ orgLogo, orgName = 'Free Mind Foundation' }: { orgLogo?: string; orgName?: string }) {
+import GroupsIcon from '@mui/icons-material/Groups'
+import EventAvailableIcon from '@mui/icons-material/EventAvailable'
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
+
+export default function HomeClient({ 
+  orgLogo, 
+  orgName = 'Free Mind Foundation',
+  stats = { members: 0, volunteers: 0, events: 0 }
+}: { 
+  orgLogo?: string; 
+  orgName?: string;
+  stats?: { members: number; volunteers: number; events: number };
+}) {
   return (
     <Box
       sx={{
@@ -40,7 +52,7 @@ export default function HomeClient({ orgLogo, orgName = 'Free Mind Foundation' }
         sx={{
           bgcolor: '#FFFFFF',
           borderBottom: '1px solid #E1E6EB',
-          py: 2,
+          py: 0,
           px: { xs: 2, md: 4 },
         }}
       >
@@ -56,7 +68,7 @@ export default function HomeClient({ orgLogo, orgName = 'Free Mind Foundation' }
                     e.currentTarget.style.display = 'none'
                   }}
                   sx={{
-                    height: 40,
+                    height: { xs: 56, sm: 80 },
                     width: 'auto',
                     objectFit: 'contain',
                   }}
@@ -64,23 +76,25 @@ export default function HomeClient({ orgLogo, orgName = 'Free Mind Foundation' }
               ) : (
                 <VolunteerActivismIcon sx={{ fontSize: 32, color: '#12446A' }} />
               )}
-              <Box>
-                <Typography
-                  variant="subtitle1"
-                  fontWeight={800}
-                  sx={{
-                    color: '#12446A',
-                    letterSpacing: '0.02em',
-                    lineHeight: 1.1,
-                    fontSize: { xs: '0.95rem', sm: '1.1rem' },
-                  }}
-                >
-                  {orgName.toUpperCase()}
-                </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                  Trust & Operations Management System
-                </Typography>
-              </Box>
+              {!orgLogo && (
+                <Box>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={800}
+                    sx={{
+                      color: '#12446A',
+                      letterSpacing: '0.02em',
+                      lineHeight: 1.1,
+                      fontSize: { xs: '0.95rem', sm: '1.1rem' },
+                    }}
+                  >
+                    {orgName.toUpperCase()}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                    Trust & Operations Management System
+                  </Typography>
+                </Box>
+              )}
             </Box>
 
             <Button
@@ -184,6 +198,43 @@ export default function HomeClient({ orgLogo, orgName = 'Free Mind Foundation' }
             Official gateway for volunteer onboarding, member registration, and operational management for Free Mind Foundation.
           </Typography>
         </Box>
+
+        {/* ── Stats Row ── */}
+        <Grid container spacing={2} sx={{ mb: { xs: 4, sm: 6 } }}>
+          <Grid item xs={12} sm={4}>
+            <Paper elevation={0} sx={{ p: 3, textAlign: 'center', borderRadius: 3, border: '1px solid #E1E6EB', bgcolor: '#FFFFFF' }}>
+              <GroupsIcon sx={{ fontSize: 40, color: '#2E7D32', mb: 1, opacity: 0.8 }} />
+              <Typography variant="h3" fontWeight={800} color="#12446A">
+                {stats.members}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" fontWeight={600} textTransform="uppercase" letterSpacing={1}>
+                Active Members
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <Paper elevation={0} sx={{ p: 3, textAlign: 'center', borderRadius: 3, border: '1px solid #E1E6EB', bgcolor: '#FFFFFF' }}>
+              <VolunteerActivismIcon sx={{ fontSize: 40, color: '#12446A', mb: 1, opacity: 0.8 }} />
+              <Typography variant="h3" fontWeight={800} color="#12446A">
+                {stats.volunteers}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" fontWeight={600} textTransform="uppercase" letterSpacing={1}>
+                Volunteers
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <Paper elevation={0} sx={{ p: 3, textAlign: 'center', borderRadius: 3, border: '1px solid #E1E6EB', bgcolor: '#FFFFFF' }}>
+              <EmojiEventsIcon sx={{ fontSize: 40, color: '#E65100', mb: 1, opacity: 0.8 }} />
+              <Typography variant="h3" fontWeight={800} color="#12446A">
+                {stats.events}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" fontWeight={600} textTransform="uppercase" letterSpacing={1}>
+                Events Conducted
+              </Typography>
+            </Paper>
+          </Grid>
+        </Grid>
 
         {/* Portal Cards Grid (2 Cards: Member Registration & Volunteer Hub) */}
         <Grid container spacing={3} sx={{ mb: 4 }}>

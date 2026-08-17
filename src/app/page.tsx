@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic'
 export default async function HomePage() {
   let orgLogo = ''
   let orgName = 'Free Mind Foundation'
+  let stats = { members: 0, volunteers: 0, events: 0 }
   try {
     const settings = await prisma.orgSetting.findMany({
       where: {
@@ -22,5 +23,16 @@ export default async function HomePage() {
     console.error('Failed to fetch org settings for home page:', error)
   }
 
-  return <HomeClient orgLogo={orgLogo} orgName={orgName} />
+  try {
+    const [memberCount, volunteerCount, eventCount] = await Promise.all([
+      prisma.member.count({ where: { status: 'ACTIVE' } }),
+      prisma.volunteer.count({ where: { currentStage: 'APPROVED', isSuspended: false } }),
+      prisma.event.count({ where: { status: 'COMPLETED' } })
+    ])
+    stats = { members: memberCount, volunteers: volunteerCount, events: eventCount }
+  } catch (error) {
+    console.error('Failed to fetch stats for home page:', error)
+  }
+
+  return <HomeClient orgLogo={orgLogo} orgName={orgName} stats={stats} />
 }

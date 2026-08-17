@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import LoginClient from './LoginClient'
 
+export const dynamic = 'force-dynamic'
+
 export default async function LoginPage() {
   let orgLogo = ''
   let orgName = 'Free Mind Foundation'

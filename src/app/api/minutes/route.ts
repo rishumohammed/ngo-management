@@ -7,7 +7,7 @@ import { can } from '@/lib/permissions'
 import { z } from 'zod'
 
 const MinuteSchema = z.object({
-  meetingType: z.enum(['BOARD', 'COMMITTEE', 'GENERAL_BODY', 'AD_HOC']),
+  meetingType: z.string().min(1),
   title: z.string().min(1),
   date: z.string().min(1),
   location: z.string().optional(),

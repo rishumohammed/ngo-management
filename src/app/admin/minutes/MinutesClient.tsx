@@ -20,7 +20,7 @@ const STATUS_COLORS: Record<string, 'default' | 'warning' | 'success' | 'error'>
   FINALIZED: 'success',
 }
 
-const MEETING_TYPES = ['BOARD', 'COMMITTEE', 'GENERAL_BODY', 'AD_HOC']
+
 const STATUS_FLOW: Record<string, string> = { DRAFT: 'UNDER_REVIEW', UNDER_REVIEW: 'FINALIZED' }
 const STATUS_LABELS: Record<string, string> = { DRAFT: 'Draft', UNDER_REVIEW: 'Under Review', FINALIZED: 'Finalized' }
 
@@ -47,6 +47,20 @@ export default function MinutesClient() {
   const [formData, setFormData] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
+  const [meetingTypes, setMeetingTypes] = useState(['BOARD', 'COMMITTEE', 'GENERAL_BODY', 'AD_HOC'])
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data.meeting_types) {
+          try {
+            setMeetingTypes(JSON.parse(data.meeting_types))
+          } catch (e) {}
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const fetchMinutes = useCallback(async () => {
     setLoading(true)
@@ -111,7 +125,7 @@ export default function MinutesClient() {
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => {
-              setFormData(emptyForm)
+              setFormData({ ...emptyForm, meetingType: meetingTypes[0] || 'BOARD' })
               setFormError('')
               setDialogOpen(true)
             }}
@@ -135,7 +149,7 @@ export default function MinutesClient() {
           <InputLabel>Meeting Type</InputLabel>
           <Select label="Meeting Type" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
             <MenuItem value="">All Types</MenuItem>
-            {MEETING_TYPES.map(t => <MenuItem key={t} value={t}>{t.replace('_', ' ')}</MenuItem>)}
+            {meetingTypes.map(t => <MenuItem key={t} value={t}>{t.replace('_', ' ')}</MenuItem>)}
           </Select>
         </FormControl>
       </Stack>
@@ -210,7 +224,7 @@ export default function MinutesClient() {
               <FormControl fullWidth>
                 <InputLabel>Meeting Type</InputLabel>
                 <Select label="Meeting Type" value={formData.meetingType} onChange={e => setFormData({ ...formData, meetingType: e.target.value })}>
-                  {MEETING_TYPES.map(t => <MenuItem key={t} value={t}>{t.replace('_', ' ')}</MenuItem>)}
+                  {meetingTypes.map(t => <MenuItem key={t} value={t}>{t.replace('_', ' ')}</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>

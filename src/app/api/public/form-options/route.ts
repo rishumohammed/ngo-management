@@ -17,6 +17,9 @@ export async function GET() {
       'volunteer_pipeline_stages',
       'org_logo',
       'org_name',
+      'roles_GOVERNING_BOARD',
+      'roles_EXECUTIVE_TEAM',
+      'roles_DEPARTMENT',
     ]
 
     const settings = await prisma.orgSetting.findMany({
@@ -38,6 +41,11 @@ export async function GET() {
       pipelineStages: DEFAULT_PIPELINE_STAGES as PipelineStageConfig[],
       orgLogo: '',
       orgName: 'Free Mind Foundation',
+      roles: {
+        GOVERNING_BOARD: ['Chairperson', 'Vice Chairperson', 'Secretary', 'Treasurer', 'Member', 'Advisor'] as string[],
+        EXECUTIVE_TEAM: ['Executive Director', 'Operations Head', 'Finance Head', 'Member'] as string[],
+        DEPARTMENT: ['Head of Department', 'Coordinator', 'Member'] as string[],
+      }
     }
 
     settings.forEach((setting) => {
@@ -61,6 +69,9 @@ export async function GET() {
             if (setting.key === 'volunteer_skills') result.skills = parsed
             if (setting.key === 'volunteer_interests') result.interests = parsed
             if (setting.key === 'volunteer_pipeline_stages') result.pipelineStages = parsed
+            if (setting.key === 'roles_GOVERNING_BOARD') result.roles.GOVERNING_BOARD = parsed
+            if (setting.key === 'roles_EXECUTIVE_TEAM') result.roles.EXECUTIVE_TEAM = parsed
+            if (setting.key === 'roles_DEPARTMENT') result.roles.DEPARTMENT = parsed
           }
         }
       } catch (e) {

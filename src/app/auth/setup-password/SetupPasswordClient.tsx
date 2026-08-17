@@ -57,15 +57,19 @@ function SetupPasswordContent({ orgLogo, orgName = 'Free Mind Foundation' }: { o
     >
       <Box sx={{ width: '100%', maxWidth: 400 }}>
         <Box sx={{ textAlign: 'center', mb: 3 }}>
-          <Box sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 56, height: 56, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', mb: 2, border: '2px solid rgba(255,255,255,0.3)' }}>
-            {orgLogo ? (
-              <Box component="img" src={orgLogo} alt="Logo" sx={{ width: '100%', maxHeight: 40, objectFit: 'contain' }} />
-            ) : (
+          {orgLogo ? (
+            <Box component="img" src={orgLogo} alt="Logo" sx={{ width: '100%', maxHeight: 80, objectFit: 'contain', mb: 2 }} />
+          ) : (
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 56, height: 56, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', mb: 2, border: '2px solid rgba(255,255,255,0.3)' }}>
               <FavoriteIcon sx={{ fontSize: 28, color: 'white' }} />
-            )}
-          </Box>
-          <Typography variant="h5" sx={{ color: 'white', fontWeight: 700 }}>{orgName}</Typography>
-          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.75)' }}>Set up your account</Typography>
+            </Box>
+          )}
+          {!orgLogo && (
+            <>
+              <Typography variant="h5" sx={{ color: 'white', fontWeight: 700 }}>{orgName}</Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.75)' }}>Set up your account</Typography>
+            </>
+          )}
         </Box>
         <Card sx={{ borderRadius: 3 }}>
           <CardContent sx={{ p: 4 }}>

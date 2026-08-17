@@ -425,12 +425,17 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
       {/* ── Top Header / Navigation ── */}
       <Box sx={{ mb: 3 }}>
         <Button
-          component={Link}
-          href="/admin/volunteers"
+          onClick={() => {
+            if (window.history.length > 2) {
+              router.back()
+            } else {
+              router.push('/admin/volunteers')
+            }
+          }}
           startIcon={<ArrowBackIcon />}
           sx={{ mb: 1.5, color: 'text.secondary' }}
         >
-          Back to Volunteers List
+          Back
         </Button>
 
         {/* Suspended Alert Banner */}

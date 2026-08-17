@@ -21,7 +21,6 @@ export default function CommitteeDetailClient({ id }: { id: string }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const [membersList, setMembersList] = useState<any[]>([])
   const [volunteersList, setVolunteersList] = useState<any[]>([])
 
   // Committee Edit State
@@ -32,26 +31,32 @@ export default function CommitteeDetailClient({ id }: { id: string }) {
   const [memberOpen, setMemberOpen] = useState(false)
   const [editingMember, setEditingMember] = useState<any>(null)
   const [memberForm, setMemberForm] = useState({ 
-    memberId: '', volunteerId: '', designation: '', district: '', role: 'MEMBER', termStart: '', termEnd: '', isActive: true
+    volunteerId: '', designation: '', district: '', role: 'MEMBER', termStart: '', termEnd: '', isActive: true
   })
   const [districtsMap, setDistrictsMap] = useState<Record<string, string[]>>({})
   const [selectedState, setSelectedState] = useState<string>('')
+  const [dynamicRoles, setDynamicRoles] = useState<{GOVERNING_BOARD: string[], EXECUTIVE_TEAM: string[], DEPARTMENT: string[]}>({
+    GOVERNING_BOARD: [],
+    EXECUTIVE_TEAM: [],
+    DEPARTMENT: []
+  })
 
   const fetchData = useCallback(async () => {
     try {
-      const [resC, resM, resV, resOpt] = await Promise.all([
+      const [resC, resV, resOpt] = await Promise.all([
         fetch(`/api/committees/${id}`),
-        fetch(`/api/members`),
-        fetch(`/api/volunteers`),
+        fetch(`/api/volunteers?pageSize=1000`),
         fetch(`/api/public/form-options`)
       ])
       if (!resC.ok) throw new Error('Failed to fetch committee')
       
-      const [dataC, dataM, dataV, dataOpt] = await Promise.all([resC.json(), resM.json(), resV.json(), resOpt.json()])
+      const [dataC, dataV, dataOpt] = await Promise.all([resC.json(), resV.json(), resOpt.json()])
       setCommittee(dataC)
-      setMembersList(dataM.members || [])
       setVolunteersList(dataV.volunteers || [])
       setDistrictsMap(dataOpt.districts || {})
+      if (dataOpt.roles) {
+        setDynamicRoles(dataOpt.roles)
+      }
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -107,7 +112,6 @@ export default function CommitteeDetailClient({ id }: { id: string }) {
     if (item) {
       setEditingMember(item)
       setMemberForm({ 
-        memberId: item.memberId || '', 
         volunteerId: item.volunteerId || '',
         designation: item.designation || '', 
         district: item.district || '',
@@ -120,7 +124,8 @@ export default function CommitteeDetailClient({ id }: { id: string }) {
     } else {
       setEditingMember(null)
       setSelectedState('')
-      setMemberForm({ memberId: '', volunteerId: '', designation: '', district: '', role: 'MEMBER', termStart: '', termEnd: '', isActive: true })
+      const defaultRole = dynamicRoles[committee?.type as keyof typeof dynamicRoles]?.[0] || 'Member'
+      setMemberForm({ volunteerId: '', designation: '', district: '', role: defaultRole, termStart: '', termEnd: '', isActive: true })
     }
     setMemberOpen(true)
   }
@@ -236,25 +241,11 @@ export default function CommitteeDetailClient({ id }: { id: string }) {
             {!editingMember && (
               <Box display="flex" gap={2}>
                 <FormControl fullWidth>
-                  <InputLabel>Link Member</InputLabel>
-                  <Select 
-                    label="Link Member" 
-                    value={memberForm.memberId} 
-                    onChange={(e) => setMemberForm({ ...memberForm, memberId: e.target.value, volunteerId: '' })}
-                    disabled={!!memberForm.volunteerId}
-                  >
-                    <MenuItem value=""><em>None</em></MenuItem>
-                    {membersList.map(m => <MenuItem key={m.id} value={m.id}>{m.name} ({m.memberNumber})</MenuItem>)}
-                  </Select>
-                </FormControl>
-                <Typography variant="body2" sx={{ alignSelf: 'center' }}>OR</Typography>
-                <FormControl fullWidth>
                   <InputLabel>Link Volunteer</InputLabel>
                   <Select 
                     label="Link Volunteer" 
                     value={memberForm.volunteerId} 
-                    onChange={(e) => setMemberForm({ ...memberForm, volunteerId: e.target.value, memberId: '' })}
-                    disabled={!!memberForm.memberId}
+                    onChange={(e) => setMemberForm({ ...memberForm, volunteerId: e.target.value })}
                   >
                     <MenuItem value=""><em>None</em></MenuItem>
                     {volunteersList.map(v => <MenuItem key={v.id} value={v.id}>{v.name}</MenuItem>)}
@@ -266,48 +257,44 @@ export default function CommitteeDetailClient({ id }: { id: string }) {
             <FormControl fullWidth>
               <InputLabel>Role</InputLabel>
               <Select value={memberForm.role} label="Role" onChange={(e) => setMemberForm({ ...memberForm, role: e.target.value })}>
-                <MenuItem value="EXECUTIVE_LEADER">Executive Leader</MenuItem>
-                <MenuItem value="CHAIRPERSON">Chairperson</MenuItem>
-                <MenuItem value="HEAD_OF_DEPARTMENT">Head of Department</MenuItem>
-                <MenuItem value="DISTRICT_REPRESENTATIVE">District Representative</MenuItem>
-                <MenuItem value="SECRETARY">Secretary</MenuItem>
-                <MenuItem value="TREASURER">Treasurer</MenuItem>
-                <MenuItem value="MEMBER">Member</MenuItem>
-                <MenuItem value="ADVISOR">Advisor</MenuItem>
+                {(dynamicRoles[committee.type as keyof typeof dynamicRoles] || []).map((r) => (
+                  <MenuItem key={r} value={r}>{r}</MenuItem>
+                ))}
               </Select>
             </FormControl>
 
-            {memberForm.role === 'DISTRICT_REPRESENTATIVE' && (
-              <Box display="flex" gap={2}>
-                <FormControl fullWidth>
-                  <InputLabel>State</InputLabel>
-                  <Select 
-                    value={selectedState} 
-                    label="State"
-                    onChange={(e) => {
-                      setSelectedState(e.target.value)
-                      setMemberForm(prev => ({ ...prev, district: '' }))
-                    }}
-                  >
-                    {Object.keys(districtsMap).map(state => (
-                      <MenuItem key={state} value={state}>{state}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <FormControl fullWidth disabled={!selectedState}>
-                  <InputLabel>District</InputLabel>
-                  <Select 
-                    value={memberForm.district} 
-                    label="District"
-                    onChange={(e) => setMemberForm(prev => ({ ...prev, district: e.target.value }))}
-                  >
-                    {(districtsMap[selectedState] || []).map(district => (
-                      <MenuItem key={district} value={district}>{district}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-            )}
+            {/* In the new dynamic setup, we can ask for state/district for any role if they want, but let's just make it always available or hide it unless District Representative is typed. Wait, let's just leave District Representative check, but we can't be sure it matches string exactly. Let's make it available if the string contains "District" or just show it all the time. Actually, showing it all the time for Departments / Execs is harmless. */}
+            <Box display="flex" gap={2}>
+              <FormControl fullWidth>
+                <InputLabel>State (Optional)</InputLabel>
+                <Select 
+                  value={selectedState} 
+                  label="State (Optional)"
+                  onChange={(e) => {
+                    setSelectedState(e.target.value)
+                    setMemberForm(prev => ({ ...prev, district: '' }))
+                  }}
+                >
+                  <MenuItem value=""><em>None</em></MenuItem>
+                  {Object.keys(districtsMap).map(state => (
+                    <MenuItem key={state} value={state}>{state}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth disabled={!selectedState}>
+                <InputLabel>District (Optional)</InputLabel>
+                <Select 
+                  value={memberForm.district} 
+                  label="District (Optional)"
+                  onChange={(e) => setMemberForm(prev => ({ ...prev, district: e.target.value }))}
+                >
+                  <MenuItem value=""><em>None</em></MenuItem>
+                  {(districtsMap[selectedState] || []).map(district => (
+                    <MenuItem key={district} value={district}>{district}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
 
             <TextField label="Designation (Optional)" fullWidth value={memberForm.designation} onChange={(e) => setMemberForm({ ...memberForm, designation: e.target.value })} />
             
@@ -329,7 +316,7 @@ export default function CommitteeDetailClient({ id }: { id: string }) {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setMemberOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSaveMember} disabled={!editingMember && !memberForm.memberId && !memberForm.volunteerId}>Save</Button>
+          <Button variant="contained" onClick={handleSaveMember} disabled={!editingMember && !memberForm.volunteerId}>Save</Button>
         </DialogActions>
       </Dialog>
 

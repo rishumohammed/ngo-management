@@ -65,6 +65,10 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   volunteer_interests: '[]',
   volunteer_contributions: '[]',
   volunteer_pipeline_stages: JSON.stringify(DEFAULT_PIPELINE_STAGES),
+  roles_GOVERNING_BOARD: '["Chairperson", "Vice Chairperson", "Secretary", "Treasurer", "Member", "Advisor"]',
+  roles_EXECUTIVE_TEAM: '["Executive Director", "Operations Head", "Finance Head", "Member"]',
+  roles_DEPARTMENT: '["Head of Department", "Coordinator", "Member"]',
+  meeting_types: '["BOARD", "COMMITTEE", "GENERAL_BODY", "AD_HOC"]',
 }
 
 export default function SettingsClient() {
@@ -77,8 +81,6 @@ export default function SettingsClient() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-  
-  const [selectedDistrictState, setSelectedDistrictState] = useState<string>('')
 
   useEffect(() => {
     fetch('/api/settings')
@@ -236,7 +238,7 @@ export default function SettingsClient() {
         <Tab icon={<BusinessIcon fontSize="small" />} iconPosition="start" label="Organization" />
         <Tab icon={<ReceiptLongIcon fontSize="small" />} iconPosition="start" label="Donations & 80G" />
         <Tab icon={<EmailIcon fontSize="small" />} iconPosition="start" label="Email" />
-        <Tab icon={<TuneIcon fontSize="small" />} iconPosition="start" label="Form Options & States" />
+        <Tab icon={<TuneIcon fontSize="small" />} iconPosition="start" label="Form Options" />
         <Tab icon={<AccountTreeIcon fontSize="small" />} iconPosition="start" label="Volunteer Pipeline" />
       </Tabs>
 
@@ -468,103 +470,12 @@ export default function SettingsClient() {
       {tab === 3 && (
         <Card>
           <CardHeader
-            title="Form Options & State Master"
-            subheader="Manage states dropdown and predefined options available across member & volunteer registration forms"
+            title="Form Options"
+            subheader="Manage predefined options available across member & volunteer registration forms"
           />
           <Divider />
           <CardContent>
             <Grid container spacing={3}>
-              {/* States Management */}
-              <Grid item xs={12}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                  <Typography variant="subtitle1" fontWeight={600}>
-                    State & Union Territory Options
-                  </Typography>
-                  {canEdit && (
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      startIcon={<RestartAltIcon />}
-                      onClick={() => set('form_states', JSON.stringify(DEFAULT_INDIAN_STATES))}
-                    >
-                      Reset to All 36 Indian States & UTs
-                    </Button>
-                  )}
-                </Box>
-                <Autocomplete
-                  multiple
-                  freeSolo
-                  options={DEFAULT_INDIAN_STATES}
-                  value={JSON.parse(settings.form_states || JSON.stringify(DEFAULT_INDIAN_STATES))}
-                  onChange={(_, newValue) => set('form_states', JSON.stringify(newValue))}
-                  disabled={!canEdit}
-                  renderTags={(value: readonly string[], getTagProps) =>
-                    value.map((option: string, index: number) => {
-                      const { key, ...tagProps } = getTagProps({ index })
-                      return <Chip variant="outlined" color="primary" label={option} key={key} {...tagProps} />
-                    })
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Available States & UTs"
-                      placeholder="Type state name and press Enter to add"
-                      helperText="Used in public Member & Volunteer registration forms, and admin management forms"
-                    />
-                  )}
-                />
-              </Grid>
-
-              {/* District Management */}
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
-                  District Options by State
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={4}>
-                    <Autocomplete
-                      options={JSON.parse(settings.form_states || JSON.stringify(DEFAULT_INDIAN_STATES))}
-                      value={selectedDistrictState || null}
-                      onChange={(_, newValue) => setSelectedDistrictState(newValue || '')}
-                      renderInput={(params) => (
-                        <TextField {...params} label="Select State" placeholder="Select a state first" />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={8}>
-                    <Autocomplete
-                      multiple
-                      freeSolo
-                      disabled={!selectedDistrictState || !canEdit}
-                      options={[]}
-                      value={(JSON.parse(settings.form_districts || '{}')[selectedDistrictState] || []) as string[]}
-                      onChange={(_, newValue) => {
-                        const currentDistricts = JSON.parse(settings.form_districts || '{}');
-                        currentDistricts[selectedDistrictState] = newValue;
-                        set('form_districts', JSON.stringify(currentDistricts));
-                      }}
-                      renderTags={(value: readonly string[], getTagProps) =>
-                        value.map((option: string, index: number) => {
-                          const { key, ...tagProps } = getTagProps({ index })
-                          return <Chip variant="outlined" color="primary" label={option} key={key} {...tagProps} />
-                        })
-                      }
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="Districts"
-                          placeholder={selectedDistrictState ? "Type district name and press Enter to add" : "Select a state to add districts"}
-                        />
-                      )}
-                    />
-                  </Grid>
-                </Grid>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Divider />
-              </Grid>
-
               {/* General Form Dropdowns */}
               <Grid item xs={12}>
                 <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
@@ -726,6 +637,134 @@ export default function SettingsClient() {
                       label="Contribution Options"
                       placeholder="Type and press enter"
                       helperText="e.g. Weekly field visits, Remote work, Weekend events"
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Divider sx={{ my: 1 }} />
+              </Grid>
+
+              {/* Committee Roles */}
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+                  Organization Structure Roles
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  These roles will appear in the dropdown when assigning volunteers to different parts of the organization structure.
+                </Typography>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Autocomplete
+                  multiple
+                  freeSolo
+                  options={[]}
+                  value={JSON.parse(settings.roles_GOVERNING_BOARD || '[]')}
+                  onChange={(_, newValue) => set('roles_GOVERNING_BOARD', JSON.stringify(newValue))}
+                  disabled={!canEdit}
+                  renderTags={(value: readonly string[], getTagProps) =>
+                    value.map((option: string, index: number) => {
+                      const { key, ...tagProps } = getTagProps({ index })
+                      return <Chip variant="outlined" label={option} key={key} {...tagProps} />
+                    })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Governing Board Roles"
+                      placeholder="Type and press enter"
+                      helperText="e.g. Chairperson, Secretary, Treasurer, Member"
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Autocomplete
+                  multiple
+                  freeSolo
+                  options={[]}
+                  value={JSON.parse(settings.roles_EXECUTIVE_TEAM || '[]')}
+                  onChange={(_, newValue) => set('roles_EXECUTIVE_TEAM', JSON.stringify(newValue))}
+                  disabled={!canEdit}
+                  renderTags={(value: readonly string[], getTagProps) =>
+                    value.map((option: string, index: number) => {
+                      const { key, ...tagProps } = getTagProps({ index })
+                      return <Chip variant="outlined" label={option} key={key} {...tagProps} />
+                    })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Executive Team Roles"
+                      placeholder="Type and press enter"
+                      helperText="e.g. Executive Director, Operations Head, Member"
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Autocomplete
+                  multiple
+                  freeSolo
+                  options={[]}
+                  value={JSON.parse(settings.roles_DEPARTMENT || '[]')}
+                  onChange={(_, newValue) => set('roles_DEPARTMENT', JSON.stringify(newValue))}
+                  disabled={!canEdit}
+                  renderTags={(value: readonly string[], getTagProps) =>
+                    value.map((option: string, index: number) => {
+                      const { key, ...tagProps } = getTagProps({ index })
+                      return <Chip variant="outlined" label={option} key={key} {...tagProps} />
+                    })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Department Roles"
+                      placeholder="Type and press enter"
+                      helperText="e.g. Head of Department, Coordinator, Member"
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Divider sx={{ my: 1 }} />
+              </Grid>
+
+              {/* Meeting Types */}
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+                  Meeting Types
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  These types will appear in the dropdown when creating new Meeting Minutes.
+                </Typography>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Autocomplete
+                  multiple
+                  freeSolo
+                  options={[]}
+                  value={JSON.parse(settings.meeting_types || '[]')}
+                  onChange={(_, newValue) => set('meeting_types', JSON.stringify(newValue))}
+                  disabled={!canEdit}
+                  renderTags={(value: readonly string[], getTagProps) =>
+                    value.map((option: string, index: number) => {
+                      const { key, ...tagProps } = getTagProps({ index })
+                      return <Chip variant="outlined" label={option} key={key} {...tagProps} />
+                    })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Meeting Types"
+                      placeholder="Type and press enter"
+                      helperText="e.g. BOARD, COMMITTEE, GENERAL_BODY"
                     />
                   )}
                 />

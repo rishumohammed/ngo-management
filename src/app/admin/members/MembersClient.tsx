@@ -31,6 +31,7 @@ import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import SearchIcon from '@mui/icons-material/Search'
 import PersonIcon from '@mui/icons-material/Person'
+import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism'
 import { can } from '@/lib/permissions'
 import { formatDate } from '@/lib/utils'
 import { downloadCSV } from '@/lib/csv'
@@ -101,6 +102,11 @@ export default function MembersClient() {
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deletingMember, setDeletingMember] = useState<Member | null>(null)
+  
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false)
+  const [upgradingMember, setUpgradingMember] = useState<Member | null>(null)
+  const [upgrading, setUpgrading] = useState(false)
+
   const [statesList, setStatesList] = useState<string[]>(DEFAULT_INDIAN_STATES)
 
   useEffect(() => {
@@ -193,6 +199,25 @@ export default function MembersClient() {
     }
   }
 
+  const handleUpgrade = async () => {
+    if (!upgradingMember) return
+    setUpgrading(true)
+    try {
+      const res = await fetch(`/api/members/${upgradingMember.id}/upgrade`, { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) {
+        alert(data.error || 'Failed to upgrade to volunteer')
+        return
+      }
+      setUpgradeDialogOpen(false)
+      alert(`Successfully added ${upgradingMember.name} to the Volunteer pipeline!`)
+    } catch (e) {
+      alert('Error upgrading to volunteer')
+    } finally {
+      setUpgrading(false)
+    }
+  }
+
   const columns: GridColDef[] = [
     { field: 'memberNumber', headerName: 'Member #', minWidth: 120, flex: 0.8 },
     { field: 'name', headerName: 'Name', flex: 1.2, minWidth: 160 },
@@ -242,6 +267,13 @@ export default function MembersClient() {
             <Tooltip title="Edit">
               <IconButton size="small" onClick={() => openEditDialog(p.row as Member)}>
                 <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+          {canUpdate && (
+            <Tooltip title="Upgrade to Volunteer">
+              <IconButton size="small" color="primary" onClick={() => { setUpgradingMember(p.row as Member); setUpgradeDialogOpen(true) }}>
+                <VolunteerActivismIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           )}
@@ -508,6 +540,25 @@ export default function MembersClient() {
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
           <Button color="error" variant="contained" onClick={handleDelete}>
             Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Upgrade Confirm Dialog */}
+      <Dialog open={upgradeDialogOpen} onClose={() => !upgrading && setUpgradeDialogOpen(false)} maxWidth="xs">
+        <DialogTitle>Upgrade to Volunteer?</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to upgrade <strong>{upgradingMember?.name}</strong> to a Volunteer? 
+            They will be added to the Volunteer pipeline in the <strong>APPLICATION</strong> stage.
+            <br/><br/>
+            (Their original Member record will remain intact).
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setUpgradeDialogOpen(false)} disabled={upgrading}>Cancel</Button>
+          <Button color="primary" variant="contained" onClick={handleUpgrade} disabled={upgrading}>
+            {upgrading ? <CircularProgress size={20} color="inherit" /> : 'Confirm Upgrade'}
           </Button>
         </DialogActions>
       </Dialog>

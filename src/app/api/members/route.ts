@@ -30,6 +30,8 @@ export async function GET(req: NextRequest) {
   const search = searchParams.get('search') || ''
   const status = searchParams.get('status') || ''
   const membershipType = searchParams.get('membershipType') || ''
+  const filterState = searchParams.get('state') || ''
+  const filterDistrict = searchParams.get('district') || ''
   const page = parseInt(searchParams.get('page') || '1')
   const pageSize = parseInt(searchParams.get('pageSize') || '25')
 
@@ -44,6 +46,8 @@ export async function GET(req: NextRequest) {
   }
   if (status) where.status = status
   if (membershipType) where.membershipType = membershipType
+  if (filterState) where.state = filterState
+  if (filterDistrict) where.district = filterDistrict
 
   const [members, total] = await Promise.all([
     prisma.member.findMany({
