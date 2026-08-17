@@ -1,9 +1,10 @@
 # Use Node.js LTS as base
 FROM node:20-alpine AS base
+RUN apk add --no-cache openssl
 
 # Install dependencies only when needed
 FROM base AS deps
-RUN apk add --no-cache libc6-compat openssl
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
@@ -22,6 +23,9 @@ RUN npx prisma generate
 # Next.js telemetry is disabled
 ENV NEXT_TELEMETRY_DISABLED 1
 
+# Set Node memory limit for 1GB VPS
+ENV NODE_OPTIONS="--max-old-space-size=512"
+
 RUN npm run build
 
 # Production image, copy all the files and run next
@@ -31,8 +35,7 @@ WORKDIR /app
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
 
-# Install openssl for Prisma
-RUN apk add --no-cache openssl
+# Install openssl for Prisma (Already in base)
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
