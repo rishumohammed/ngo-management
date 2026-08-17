@@ -51,3 +51,34 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ error: 'Failed to update committee' }, { status: 500 })
   }
 }
+
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session || !can(session.user.role, 'committees', 'delete')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
+    // Check if committee has members
+    const committee = await prisma.committee.findUnique({
+      where: { id: params.id },
+      include: { _count: { select: { members: true } } }
+    })
+
+    if (!committee) {
+      return NextResponse.json({ error: 'Committee not found' }, { status: 404 })
+    }
+
+    if (committee._count.members > 0) {
+      return NextResponse.json({ error: 'Cannot delete a committee that has members. Please remove the members first.' }, { status: 400 })
+    }
+
+    await prisma.committee.delete({
+      where: { id: params.id }
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to delete committee' }, { status: 500 })
+  }
+}

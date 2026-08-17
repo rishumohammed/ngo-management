@@ -88,6 +88,20 @@ export default function CommitteeDetailClient({ id }: { id: string }) {
     }
   }
 
+  const handleDeleteCommittee = async () => {
+    if (!confirm('Are you sure you want to completely delete this committee? This action cannot be undone.')) return
+    try {
+      const res = await fetch(`/api/committees/${id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to delete committee')
+      }
+      router.push('/admin/committees')
+    } catch (err: any) {
+      alert(err.message)
+    }
+  }
+
   // --- Member Handlers ---
   const handleOpenMember = (item: any = null) => {
     if (item) {
@@ -151,8 +165,11 @@ export default function CommitteeDetailClient({ id }: { id: string }) {
         <Chip label={committee.type} variant="outlined" />
         {committee.isArchived && <Chip label="Archived" color="error" />}
         <Box flexGrow={1} />
-        <Button startIcon={<EditIcon />} variant="outlined" size="small" onClick={handleOpenEdit}>
+        <Button startIcon={<EditIcon />} variant="outlined" size="small" onClick={handleOpenEdit} sx={{ mr: 1 }}>
           Edit Details
+        </Button>
+        <Button startIcon={<DeleteIcon />} variant="outlined" color="error" size="small" onClick={handleDeleteCommittee}>
+          Delete
         </Button>
       </Box>
       <Typography variant="body1" color="text.secondary" mb={4}>{committee.purpose}</Typography>
