@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import HomeClient from './HomeClient'
 
+export const dynamic = 'force-dynamic'
+
 export default async function HomePage() {
   let orgLogo = ''
   let orgName = 'Free Mind Foundation'

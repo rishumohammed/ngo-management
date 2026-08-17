@@ -79,7 +79,10 @@ model Member {
   email          String?
   address        String?        @db.Text
   city           String?
+  district       String?
   state          String?
+  gender         String?
+  education      String?
   joinDate       DateTime
   membershipType MembershipType @default(GENERAL)
   status         MemberStatus   @default(ACTIVE)
@@ -122,6 +125,8 @@ model Volunteer {
   city            String?
   district        String?
   state           String?
+  gender          String?
+  education       String?
   skills          Json?         // array of strings
   interests       Json?         // array of strings
   contributionType String?

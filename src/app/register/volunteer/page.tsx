@@ -32,6 +32,8 @@ export default function VolunteerRegistration() {
     city: '',
     district: '',
     state: '',
+    gender: '',
+    education: '',
     availability: '',
     contributionType: '',
     motivation: ''
@@ -40,8 +42,10 @@ export default function VolunteerRegistration() {
   const [skills, setSkills] = useState<string[]>([]);
   const [interests, setInterests] = useState<string[]>([]);
   
-  const [options, setOptions] = useState<{ states: string[], districts: Record<string, string[]>, availabilities: string[], skills: string[], interests: string[], contributions: string[], orgLogo: string, orgName: string }>({
+  const [options, setOptions] = useState<{ states: string[], districts: Record<string, string[]>, availabilities: string[], skills: string[], interests: string[], contributions: string[], genders: string[], educations: string[], orgLogo: string, orgName: string }>({
     states: DEFAULT_INDIAN_STATES,
+    genders: ['Male', 'Female', 'Other'],
+    educations: [],
     availabilities: [],
     skills: [],
     interests: [],
@@ -67,6 +71,8 @@ export default function VolunteerRegistration() {
             skills: data.skills || [],
             interests: data.interests || [],
             contributions: data.contributions || [],
+            genders: data.genders || ['Male', 'Female', 'Other'],
+            educations: data.educations || [],
             orgLogo: data.orgLogo || '',
             orgName: data.orgName || 'Free Mind Foundation',
             districts: data.districts || {}
@@ -196,25 +202,67 @@ export default function VolunteerRegistration() {
 
   return (
     <Container maxWidth="md" sx={{ mt: 8, mb: 8 }}>
-      <Paper sx={{ p: { xs: 3, md: 5 } }}>
-        {options.orgLogo ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+      <Paper sx={{ overflow: 'hidden', borderRadius: 3, boxShadow: 4 }}>
+        <Box
+          sx={{
+            background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+            py: 5,
+            px: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            color: 'white',
+            textAlign: 'center',
+            position: 'relative',
+          }}
+        >
+          {options.orgLogo ? (
             <Box
-              component="img"
-              src={options.orgLogo}
-              alt="Logo"
-              sx={{ height: 60, width: 'auto', objectFit: 'contain' }}
-            />
-          </Box>
-        ) : null}
-        <Typography variant="h4" component="h1" gutterBottom color="primary.main" align="center">
-          Volunteer Registration
-        </Typography>
-        <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 4 }}>
-          Become a volunteer at {options.orgName}. Help us make a difference in mental wellness.
-        </Typography>
+              sx={{
+                bgcolor: 'white',
+                p: 1.5,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 90,
+                height: 90,
+                mb: 2,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              }}
+            >
+              <Box
+                component="img"
+                src={options.orgLogo}
+                alt="Logo"
+                sx={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              />
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                bgcolor: 'rgba(255,255,255,0.2)',
+                p: 2,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mb: 2,
+              }}
+            >
+              <VolunteerActivismIcon sx={{ fontSize: 48, color: 'white' }} />
+            </Box>
+          )}
+          <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+            Volunteer Registration
+          </Typography>
+          <Typography variant="subtitle1" sx={{ opacity: 0.9, maxWidth: 600 }}>
+            Join {options.orgName} to help us make a difference in mental wellness and community outreach.
+          </Typography>
+        </Box>
 
-        {optionsLoading ? (
+        <Box sx={{ p: { xs: 3, md: 5 } }}>
+          {optionsLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', my: 5 }}>
             <CircularProgress />
           </Box>
@@ -239,6 +287,43 @@ export default function VolunteerRegistration() {
 
             <TextField
               required
+              label="Phone Number"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              fullWidth
+            />
+
+            <FormControl fullWidth required>
+              <InputLabel>Gender</InputLabel>
+              <Select
+                name="gender"
+                value={formData.gender}
+                label="Gender"
+                onChange={(e) => handleChange(e as any)}
+              >
+                {options.genders.map((g) => (
+                  <MenuItem key={g} value={g}>{g}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth required>
+              <InputLabel>Education Level</InputLabel>
+              <Select
+                name="education"
+                value={formData.education}
+                label="Education Level"
+                onChange={(e) => handleChange(e as any)}
+              >
+                {options.educations.map((ed) => (
+                  <MenuItem key={ed} value={ed}>{ed}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <TextField
+              required
               label="Email Address"
               name="email"
               type="email"
@@ -247,13 +332,6 @@ export default function VolunteerRegistration() {
               fullWidth
             />
 
-            <TextField
-              label="Phone Number"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              fullWidth
-            />
 
             <TextField
               label="City"
@@ -405,6 +483,7 @@ export default function VolunteerRegistration() {
         </form>
           </>
         )}
+        </Box>
       </Paper>
     </Container>
   );

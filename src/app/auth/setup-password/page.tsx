@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import SetupPasswordClient from './SetupPasswordClient'
 
+export const dynamic = 'force-dynamic'
+
 export default async function SetupPasswordPage() {
   let orgLogo = ''
   let orgName = 'Free Mind Foundation'

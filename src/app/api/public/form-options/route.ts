@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { DEFAULT_INDIAN_STATES, DEFAULT_PIPELINE_STAGES, PipelineStageConfig } from '@/lib/constants'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const keys = [
@@ -10,6 +12,8 @@ export async function GET() {
       'volunteer_interests',
       'form_states',
       'form_districts',
+      'form_genders',
+      'form_educations',
       'volunteer_pipeline_stages',
       'org_logo',
       'org_name',
@@ -29,6 +33,8 @@ export async function GET() {
       availabilities: [] as string[],
       skills: [] as string[],
       interests: [] as string[],
+      genders: ['Male', 'Female', 'Other'] as string[],
+      educations: ['High School', "Bachelor's Degree", "Master's Degree", "Doctorate"] as string[],
       pipelineStages: DEFAULT_PIPELINE_STAGES as PipelineStageConfig[],
       orgLogo: '',
       orgName: 'Free Mind Foundation',
@@ -49,6 +55,8 @@ export async function GET() {
           const parsed = JSON.parse(setting.value)
           if (Array.isArray(parsed) && parsed.length > 0) {
             if (setting.key === 'form_states') result.states = parsed
+            if (setting.key === 'form_genders') result.genders = parsed
+            if (setting.key === 'form_educations') result.educations = parsed
             if (setting.key === 'volunteer_availabilities') result.availabilities = parsed
             if (setting.key === 'volunteer_skills') result.skills = parsed
             if (setting.key === 'volunteer_interests') result.interests = parsed

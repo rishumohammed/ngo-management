@@ -11,7 +11,10 @@ const memberSchema = z.object({
   phone: z.string().optional().or(z.literal('')),
   address: z.string().optional().or(z.literal('')),
   city: z.string().optional().or(z.literal('')),
+  district: z.string().optional().or(z.literal('')),
   state: z.string().optional().or(z.literal('')),
+  gender: z.string().optional().or(z.literal('')),
+  education: z.string().optional().or(z.literal('')),
   membershipType: z.nativeEnum(MembershipType).optional().default(MembershipType.GENERAL),
 });
 
@@ -33,7 +36,10 @@ export async function POST(request: Request) {
         phone: data.phone || null,
         address: data.address || null,
         city: data.city || null,
+        district: data.district || null,
         state: data.state || null,
+        gender: data.gender || null,
+        education: data.education || null,
         membershipType: data.membershipType,
         joinDate: new Date(),
         status: 'ACTIVE',

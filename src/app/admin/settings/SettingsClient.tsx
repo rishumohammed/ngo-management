@@ -563,6 +563,68 @@ export default function SettingsClient() {
                 <Divider />
               </Grid>
 
+              {/* General Form Dropdowns */}
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+                  General Form Dropdowns
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  These options are shared across both Member and Volunteer registration forms.
+                </Typography>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Autocomplete
+                  multiple
+                  freeSolo
+                  options={[]}
+                  value={JSON.parse(settings.form_genders || '["Male", "Female", "Other"]')}
+                  onChange={(_, newValue) => set('form_genders', JSON.stringify(newValue))}
+                  disabled={!canEdit}
+                  renderTags={(value: readonly string[], getTagProps) =>
+                    value.map((option: string, index: number) => {
+                      const { key, ...tagProps } = getTagProps({ index })
+                      return <Chip variant="outlined" label={option} key={key} {...tagProps} />
+                    })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Gender Options"
+                      placeholder="Type and press enter"
+                    />
+                  )}
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <Autocomplete
+                  multiple
+                  freeSolo
+                  options={[]}
+                  value={JSON.parse(settings.form_educations || '["High School", "Bachelor\'s Degree", "Master\'s Degree", "Doctorate"]')}
+                  onChange={(_, newValue) => set('form_educations', JSON.stringify(newValue))}
+                  disabled={!canEdit}
+                  renderTags={(value: readonly string[], getTagProps) =>
+                    value.map((option: string, index: number) => {
+                      const { key, ...tagProps } = getTagProps({ index })
+                      return <Chip variant="outlined" label={option} key={key} {...tagProps} />
+                    })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Education Levels"
+                      placeholder="Type and press enter"
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Divider sx={{ my: 1 }} />
+              </Grid>
+
               {/* Volunteer Options */}
               <Grid item xs={12}>
                 <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>

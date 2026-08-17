@@ -25,11 +25,17 @@ export default function MemberRegistration() {
     phone: '',
     address: '',
     city: '',
-    state: ''
+    district: '',
+    state: '',
+    gender: '',
+    education: ''
   });
 
-  const [options, setOptions] = useState<{ states: string[], orgLogo: string, orgName: string }>({
+  const [options, setOptions] = useState<{ states: string[], districts: Record<string, string[]>, genders: string[], educations: string[], orgLogo: string, orgName: string }>({
     states: DEFAULT_INDIAN_STATES,
+    districts: {},
+    genders: ['Male', 'Female', 'Other'],
+    educations: [],
     orgLogo: '',
     orgName: 'Free Mind Foundation'
   });
@@ -44,6 +50,9 @@ export default function MemberRegistration() {
         setOptions(prev => ({
           ...prev,
           states: (data?.states && Array.isArray(data.states) && data.states.length > 0) ? data.states : prev.states,
+          districts: data?.districts || {},
+          genders: data?.genders || ['Male', 'Female', 'Other'],
+          educations: data?.educations || [],
           orgLogo: data?.orgLogo || '',
           orgName: data?.orgName || 'Free Mind Foundation'
         }));
@@ -163,23 +172,66 @@ export default function MemberRegistration() {
 
   return (
     <Container maxWidth="md" sx={{ mt: 8, mb: 8 }}>
-      <Paper sx={{ p: { xs: 3, md: 5 }, borderRadius: 3 }}>
-        {options.orgLogo ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+      <Paper sx={{ overflow: 'hidden', borderRadius: 3, boxShadow: 4 }}>
+        <Box
+          sx={{
+            background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+            py: 5,
+            px: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            color: 'white',
+            textAlign: 'center',
+            position: 'relative',
+          }}
+        >
+          {options.orgLogo ? (
             <Box
-              component="img"
-              src={options.orgLogo}
-              alt="Logo"
-              sx={{ height: 60, width: 'auto', objectFit: 'contain' }}
-            />
-          </Box>
-        ) : null}
-        <Typography variant="h4" component="h1" gutterBottom color="primary.main" align="center" fontWeight="bold">
-          Member Registration
-        </Typography>
-        <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 4 }}>
-          Join {options.orgName} and support our mission for preventive mental wellness.
-        </Typography>
+              sx={{
+                bgcolor: 'white',
+                p: 1.5,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 90,
+                height: 90,
+                mb: 2,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              }}
+            >
+              <Box
+                component="img"
+                src={options.orgLogo}
+                alt="Logo"
+                sx={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              />
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                bgcolor: 'rgba(255,255,255,0.2)',
+                p: 2,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mb: 2,
+              }}
+            >
+              <VolunteerActivismIcon sx={{ fontSize: 48, color: 'white' }} />
+            </Box>
+          )}
+          <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+            Member Registration
+          </Typography>
+          <Typography variant="subtitle1" sx={{ opacity: 0.9, maxWidth: 600 }}>
+            Join {options.orgName} and support our mission for preventive mental wellness.
+          </Typography>
+        </Box>
+
+        <Box sx={{ p: { xs: 3, md: 5 } }}>
 
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
@@ -239,7 +291,7 @@ export default function MemberRegistration() {
               options={options.states}
               value={formData.state || null}
               onChange={(_, newValue) => {
-                setFormData(prev => ({ ...prev, state: newValue || '' }));
+                setFormData(prev => ({ ...prev, state: newValue || '', district: '' }));
               }}
               renderInput={(params) => (
                 <TextField
@@ -249,6 +301,42 @@ export default function MemberRegistration() {
                   fullWidth
                   placeholder="Select state"
                 />
+              )}
+            />
+
+            <Autocomplete
+              options={formData.state && options.districts[formData.state] ? options.districts[formData.state] : []}
+              value={formData.district || null}
+              onChange={(_, newValue) => {
+                setFormData(prev => ({ ...prev, district: newValue || '' }));
+              }}
+              disabled={!formData.state}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="District"
+                  name="district"
+                  fullWidth
+                  placeholder={formData.state ? "Select district" : "Select state first"}
+                />
+              )}
+            />
+            
+            <Autocomplete
+              options={options.genders}
+              value={formData.gender || null}
+              onChange={(_, newValue) => setFormData(prev => ({ ...prev, gender: newValue || '' }))}
+              renderInput={(params) => (
+                <TextField {...params} label="Gender" required />
+              )}
+            />
+
+            <Autocomplete
+              options={options.educations}
+              value={formData.education || null}
+              onChange={(_, newValue) => setFormData(prev => ({ ...prev, education: newValue || '' }))}
+              renderInput={(params) => (
+                <TextField {...params} label="Education Level" required />
               )}
             />
           </Box>
@@ -265,6 +353,7 @@ export default function MemberRegistration() {
             </Button>
           </Box>
         </form>
+        </Box>
       </Paper>
     </Container>
   );

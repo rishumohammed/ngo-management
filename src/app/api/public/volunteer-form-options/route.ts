@@ -2,9 +2,11 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { DEFAULT_INDIAN_STATES } from '@/lib/constants';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
-    const keys = ['volunteer_availabilities', 'volunteer_skills', 'volunteer_interests', 'volunteer_contributions', 'form_states', 'org_logo', 'org_name'];
+    const keys = ['volunteer_availabilities', 'volunteer_skills', 'volunteer_interests', 'volunteer_contributions', 'form_states', 'form_districts', 'form_genders', 'form_educations', 'org_logo', 'org_name'];
     
     const settings = await prisma.orgSetting.findMany({
       where: {
@@ -21,6 +23,8 @@ export async function GET() {
       skills: [] as string[],
       interests: [] as string[],
       contributions: [] as string[],
+      genders: ['Male', 'Female', 'Other'] as string[],
+      educations: ['High School', "Bachelor's Degree", "Master's Degree", "Doctorate"] as string[],
       orgLogo: '',
       orgName: 'Free Mind Foundation',
     };
@@ -40,6 +44,8 @@ export async function GET() {
           const parsed = JSON.parse(setting.value);
           if (Array.isArray(parsed) && parsed.length > 0) {
             if (setting.key === 'form_states') result.states = parsed;
+            if (setting.key === 'form_genders') result.genders = parsed;
+            if (setting.key === 'form_educations') result.educations = parsed;
             if (setting.key === 'volunteer_availabilities') result.availabilities = parsed;
             if (setting.key === 'volunteer_skills') result.skills = parsed;
             if (setting.key === 'volunteer_interests') result.interests = parsed;
