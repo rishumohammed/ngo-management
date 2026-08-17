@@ -18,6 +18,8 @@ services:
       - EMAIL_API_KEY=${EMAIL_API_KEY:-}
       - EMAIL_FROM=${EMAIL_FROM:-no-reply@freemindfoundation.org.in}
       - EMAIL_FROM_NAME=${EMAIL_FROM_NAME:-Free Mind Foundation}
+    volumes:
+      - ./public/uploads:/app/public/uploads
     depends_on:
       db:
         condition: service_healthy
