@@ -56,13 +56,17 @@ export default function CommitteesClient() {
   useEffect(() => { fetchCommittees() }, [fetchCommittees])
 
   const handleSave = async () => {
-    if (!formData.name) { setFormError('Name is required'); return }
+    let finalName = formData.name
+    if (formData.type === 'GOVERNING_BOARD') finalName = 'Governing Board'
+    if (formData.type === 'EXECUTIVE_TEAM') finalName = 'Executive Team'
+    
+    if (!finalName) { setFormError('Name is required'); return }
     setSaving(true); setFormError('')
     try {
       const res = await fetch('/api/committees', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, name: finalName }),
       })
       if (!res.ok) { const e = await res.json(); setFormError(e.error || 'Failed'); return }
       setDialogOpen(false); fetchCommittees()
@@ -199,7 +203,9 @@ export default function CommitteesClient() {
                 <MenuItem value="DEPARTMENT">Department</MenuItem>
               </Select>
             </FormControl>
-            <TextField label="Name *" fullWidth value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+            {(formData.type !== 'GOVERNING_BOARD' && formData.type !== 'EXECUTIVE_TEAM') && (
+              <TextField label="Name *" fullWidth value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+            )}
             <TextField label="Purpose / Description" fullWidth multiline rows={3} value={formData.purpose} onChange={e => setFormData({ ...formData, purpose: e.target.value })} />
           </Box>
         </DialogContent>

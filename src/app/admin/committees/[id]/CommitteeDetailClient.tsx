@@ -70,11 +70,15 @@ export default function CommitteeDetailClient({ id }: { id: string }) {
   }
 
   const handleSaveEdit = async () => {
+    let finalName = editForm.name
+    if (editForm.type === 'GOVERNING_BOARD') finalName = 'Governing Board'
+    if (editForm.type === 'EXECUTIVE_TEAM') finalName = 'Executive Team'
+
     try {
       const res = await fetch(`/api/committees/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm)
+        body: JSON.stringify({ ...editForm, name: finalName })
       })
       if (!res.ok) throw new Error('Failed to update committee')
       setEditOpen(false)
@@ -326,7 +330,9 @@ export default function CommitteeDetailClient({ id }: { id: string }) {
                 <MenuItem value="DEPARTMENT">Department</MenuItem>
               </Select>
             </FormControl>
-            <TextField label="Name" fullWidth value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+            {(editForm.type !== 'GOVERNING_BOARD' && editForm.type !== 'EXECUTIVE_TEAM') && (
+              <TextField label="Name" fullWidth value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+            )}
             <TextField label="Purpose / Description" fullWidth multiline rows={3} value={editForm.purpose} onChange={(e) => setEditForm({ ...editForm, purpose: e.target.value })} />
             <FormControl fullWidth>
               <InputLabel>Status</InputLabel>
