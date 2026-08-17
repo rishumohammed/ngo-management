@@ -9,6 +9,14 @@ const nextConfig = {
   images: {
     domains: ['localhost', 'portal.freemindfoundation.org.in'],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/uploads/:path*',
+        destination: '/api/uploads/:path*',
+      },
+    ]
+  },
 }
 
 module.exports = nextConfig
