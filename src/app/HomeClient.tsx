@@ -185,9 +185,69 @@ export default function HomeClient({ orgLogo, orgName = 'Free Mind Foundation' }
           </Typography>
         </Box>
 
-        {/* Portal Cards Grid (2 Cards: Volunteer Hub & Member Registration) */}
+        {/* Portal Cards Grid (2 Cards: Member Registration & Volunteer Hub) */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
-          {/* Card 1: Volunteer Hub */}
+          {/* Card 1: Member Registration */}
+          <Grid item xs={12} md={6}>
+            <Card
+              elevation={0}
+              sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                borderRadius: 3,
+                border: '1px solid #E1E6EB',
+                bgcolor: '#FFFFFF',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  borderColor: '#2E7D32',
+                  boxShadow: '0 8px 24px rgba(46, 125, 50, 0.08)',
+                  transform: 'translateY(-2px)',
+                },
+              }}
+            >
+              <CardContent sx={{ p: 3.5, flexGrow: 1 }}>
+                <Avatar
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    bgcolor: '#E8F5E9',
+                    color: '#2E7D32',
+                    mb: 2,
+                    borderRadius: 2.5,
+                  }}
+                >
+                  <HowToRegIcon />
+                </Avatar>
+                <Typography variant="h6" fontWeight={700} color="#12446A" gutterBottom>
+                  Member Registration
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2, minHeight: 40 }}>
+                  Join the Free Mind Foundation trust as an official registered member and supporter.
+                </Typography>
+              </CardContent>
+              <CardActions sx={{ p: 3.5, pt: 0 }}>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  component={Link}
+                  href="/register/member"
+                  sx={{
+                    bgcolor: '#2E7D32',
+                    color: '#FFFFFF',
+                    borderRadius: 2,
+                    py: 1.1,
+                    fontWeight: 600,
+                    '&:hover': { bgcolor: '#1B5E20' },
+                  }}
+                >
+                  Register as Member
+                </Button>
+              </CardActions>
+            </Card>
+          </Grid>
+
+          {/* Card 2: Volunteer Hub */}
           <Grid item xs={12} md={6}>
             <Card
               elevation={0}
@@ -268,66 +328,6 @@ export default function HomeClient({ orgLogo, orgName = 'Free Mind Foundation' }
                   }}
                 >
                   Volunteer Portal Login
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-
-          {/* Card 2: Member Registration */}
-          <Grid item xs={12} md={6}>
-            <Card
-              elevation={0}
-              sx={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                borderRadius: 3,
-                border: '1px solid #E1E6EB',
-                bgcolor: '#FFFFFF',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  borderColor: '#2E7D32',
-                  boxShadow: '0 8px 24px rgba(46, 125, 50, 0.08)',
-                  transform: 'translateY(-2px)',
-                },
-              }}
-            >
-              <CardContent sx={{ p: 3.5, flexGrow: 1 }}>
-                <Avatar
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    bgcolor: '#E8F5E9',
-                    color: '#2E7D32',
-                    mb: 2,
-                    borderRadius: 2.5,
-                  }}
-                >
-                  <HowToRegIcon />
-                </Avatar>
-                <Typography variant="h6" fontWeight={700} color="#12446A" gutterBottom>
-                  Member Registration
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2, minHeight: 40 }}>
-                  Join the Free Mind Foundation trust as an official registered member and supporter.
-                </Typography>
-              </CardContent>
-              <CardActions sx={{ p: 3.5, pt: 0, flexDirection: 'column', gap: 1.5 }}>
-                <Button
-                  variant="contained"
-                  fullWidth
-                  component={Link}
-                  href="/register/member"
-                  sx={{
-                    bgcolor: '#2E7D32',
-                    color: '#FFFFFF',
-                    borderRadius: 2,
-                    py: 1.1,
-                    fontWeight: 600,
-                    '&:hover': { bgcolor: '#1B5E20' },
-                  }}
-                >
-                  Register as Member
                 </Button>
               </CardActions>
             </Card>
