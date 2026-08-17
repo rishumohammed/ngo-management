@@ -19,7 +19,7 @@ services:
       - EMAIL_FROM=${EMAIL_FROM:-no-reply@freemindfoundation.org.in}
       - EMAIL_FROM_NAME=${EMAIL_FROM_NAME:-Free Mind Foundation}
     volumes:
-      - ./public/uploads:/app/public/uploads
+      - uploads_data:/app/public/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -43,3 +43,4 @@ services:
 
 volumes:
   mysql_data:
+  uploads_data:
