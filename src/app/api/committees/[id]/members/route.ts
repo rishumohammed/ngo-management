@@ -18,6 +18,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         memberId: data.memberId || null,
         volunteerId: data.volunteerId || null,
         designation: data.designation,
+        district: data.district,
         role: data.role || 'MEMBER',
         termStart: data.termStart ? new Date(data.termStart) : null,
         termEnd: data.termEnd ? new Date(data.termEnd) : null,

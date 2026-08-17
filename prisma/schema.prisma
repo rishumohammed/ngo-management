@@ -346,6 +346,8 @@ model MeetingAddendum {
 // ─────────────────────────────────────────────
 
 enum CommitteeType {
+  GOVERNING_BOARD
+  EXECUTIVE_TEAM
   COMMITTEE
   DEPARTMENT
 }
@@ -367,7 +369,10 @@ model Committee {
 }
 
 enum CommitteeMemberRole {
+  EXECUTIVE_LEADER
   CHAIRPERSON
+  HEAD_OF_DEPARTMENT
+  DISTRICT_REPRESENTATIVE
   SECRETARY
   TREASURER
   MEMBER
@@ -383,6 +388,7 @@ model CommitteeMember {
   volunteerId  String?
   volunteer    Volunteer?          @relation(fields: [volunteerId], references: [id])
   designation  String?
+  district     String?
   role         CommitteeMemberRole @default(MEMBER)
   termStart    DateTime?
   termEnd      DateTime?

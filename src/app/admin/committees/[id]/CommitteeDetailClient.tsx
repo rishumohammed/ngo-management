@@ -28,22 +28,26 @@ export default function CommitteeDetailClient({ id }: { id: string }) {
   const [memberOpen, setMemberOpen] = useState(false)
   const [editingMember, setEditingMember] = useState<any>(null)
   const [memberForm, setMemberForm] = useState({ 
-    memberId: '', volunteerId: '', designation: '', role: 'MEMBER', termStart: '', termEnd: '', isActive: true
+    memberId: '', volunteerId: '', designation: '', district: '', role: 'MEMBER', termStart: '', termEnd: '', isActive: true
   })
+  const [districtsMap, setDistrictsMap] = useState<Record<string, string[]>>({})
+  const [selectedState, setSelectedState] = useState<string>('')
 
   const fetchData = useCallback(async () => {
     try {
-      const [resC, resM, resV] = await Promise.all([
+      const [resC, resM, resV, resOpt] = await Promise.all([
         fetch(`/api/committees/${id}`),
         fetch(`/api/members`),
-        fetch(`/api/volunteers`)
+        fetch(`/api/volunteers`),
+        fetch(`/api/public/form-options`)
       ])
       if (!resC.ok) throw new Error('Failed to fetch committee')
       
-      const [dataC, dataM, dataV] = await Promise.all([resC.json(), resM.json(), resV.json()])
+      const [dataC, dataM, dataV, dataOpt] = await Promise.all([resC.json(), resM.json(), resV.json(), resOpt.json()])
       setCommittee(dataC)
       setMembersList(dataM.members || [])
       setVolunteersList(dataV.volunteers || [])
+      setDistrictsMap(dataOpt.districts || {})
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -63,14 +67,17 @@ export default function CommitteeDetailClient({ id }: { id: string }) {
         memberId: item.memberId || '', 
         volunteerId: item.volunteerId || '',
         designation: item.designation || '', 
+        district: item.district || '',
         role: item.role, 
         termStart: item.termStart ? dayjs(item.termStart).format('YYYY-MM-DD') : '', 
         termEnd: item.termEnd ? dayjs(item.termEnd).format('YYYY-MM-DD') : '',
         isActive: item.isActive
       })
+      // If editing an existing item with a district, try to guess the state (optional)
     } else {
       setEditingMember(null)
-      setMemberForm({ memberId: '', volunteerId: '', designation: '', role: 'MEMBER', termStart: '', termEnd: '', isActive: true })
+      setSelectedState('')
+      setMemberForm({ memberId: '', volunteerId: '', designation: '', district: '', role: 'MEMBER', termStart: '', termEnd: '', isActive: true })
     }
     setMemberOpen(true)
   }
@@ -155,6 +162,7 @@ export default function CommitteeDetailClient({ id }: { id: string }) {
                     <Box display="flex" flexDirection="column" gap={0.5} mt={0.5}>
                       <Typography variant="body2" color="text.secondary">
                         {item.role.replace('_', ' ')} {item.designation ? `— ${item.designation}` : ''}
+                        {item.district && <><br/>District: {item.district}</>}
                       </Typography>
                       {(item.termStart || item.termEnd) && (
                         <Typography variant="caption" color="text.secondary">
@@ -208,13 +216,48 @@ export default function CommitteeDetailClient({ id }: { id: string }) {
             <FormControl fullWidth>
               <InputLabel>Role</InputLabel>
               <Select value={memberForm.role} label="Role" onChange={(e) => setMemberForm({ ...memberForm, role: e.target.value })}>
+                <MenuItem value="EXECUTIVE_LEADER">Executive Leader</MenuItem>
                 <MenuItem value="CHAIRPERSON">Chairperson</MenuItem>
+                <MenuItem value="HEAD_OF_DEPARTMENT">Head of Department</MenuItem>
+                <MenuItem value="DISTRICT_REPRESENTATIVE">District Representative</MenuItem>
                 <MenuItem value="SECRETARY">Secretary</MenuItem>
                 <MenuItem value="TREASURER">Treasurer</MenuItem>
                 <MenuItem value="MEMBER">Member</MenuItem>
                 <MenuItem value="ADVISOR">Advisor</MenuItem>
               </Select>
             </FormControl>
+
+            {memberForm.role === 'DISTRICT_REPRESENTATIVE' && (
+              <Box display="flex" gap={2}>
+                <FormControl fullWidth>
+                  <InputLabel>State</InputLabel>
+                  <Select 
+                    value={selectedState} 
+                    label="State"
+                    onChange={(e) => {
+                      setSelectedState(e.target.value)
+                      setMemberForm(prev => ({ ...prev, district: '' }))
+                    }}
+                  >
+                    {Object.keys(districtsMap).map(state => (
+                      <MenuItem key={state} value={state}>{state}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl fullWidth disabled={!selectedState}>
+                  <InputLabel>District</InputLabel>
+                  <Select 
+                    value={memberForm.district} 
+                    label="District"
+                    onChange={(e) => setMemberForm(prev => ({ ...prev, district: e.target.value }))}
+                  >
+                    {(districtsMap[selectedState] || []).map(district => (
+                      <MenuItem key={district} value={district}>{district}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
+            )}
 
             <TextField label="Designation (Optional)" fullWidth value={memberForm.designation} onChange={(e) => setMemberForm({ ...memberForm, designation: e.target.value })} />
             

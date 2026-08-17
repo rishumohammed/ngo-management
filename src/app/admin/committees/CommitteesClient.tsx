@@ -38,7 +38,18 @@ export default function CommitteesClient() {
     try {
       const res = await fetch(`/api/committees?includeArchived=${showArchived}`)
       const data = await res.json()
-      setCommittees(data || [])
+      
+      const sortedData = (data || []).sort((a: any, b: any) => {
+        const order: Record<string, number> = {
+          'GOVERNING_BOARD': 1,
+          'EXECUTIVE_TEAM': 2,
+          'COMMITTEE': 3,
+          'DEPARTMENT': 4
+        }
+        return (order[a.type] || 5) - (order[b.type] || 5)
+      })
+
+      setCommittees(sortedData)
     } finally { setLoading(false) }
   }, [showArchived])
 
@@ -182,6 +193,8 @@ export default function CommitteesClient() {
             <FormControl fullWidth>
               <InputLabel>Type</InputLabel>
               <Select label="Type" value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value })}>
+                <MenuItem value="GOVERNING_BOARD">Governing Board</MenuItem>
+                <MenuItem value="EXECUTIVE_TEAM">Executive Team</MenuItem>
                 <MenuItem value="COMMITTEE">Committee</MenuItem>
                 <MenuItem value="DEPARTMENT">Department</MenuItem>
               </Select>
