@@ -140,17 +140,17 @@ export async function getEmailProvider(): Promise<EmailProvider> {
     return acc
   }, {} as Record<string, string>)
 
-  const provider = settings['email_provider'] || process.env.EMAIL_PROVIDER || 'brevo'
+  const provider = settings['email_provider'] || process.env.EMAIL_PROVIDER || 'resend'
   const apiKey = settings['email_api_key'] || process.env.EMAIL_API_KEY || ''
   const fromEmail = settings['email_from'] || process.env.EMAIL_FROM || 'no-reply@freemindfoundation.org.in'
   const fromName = settings['email_from_name'] || process.env.EMAIL_FROM_NAME || 'Free Mind Foundation'
 
   switch (provider.toLowerCase()) {
-    case 'resend':
-      return new ResendProvider(apiKey, fromEmail, fromName)
     case 'brevo':
-    default:
       return new BrevoProvider(apiKey, fromEmail, fromName)
+    case 'resend':
+    default:
+      return new ResendProvider(apiKey, fromEmail, fromName)
   }
 }
 

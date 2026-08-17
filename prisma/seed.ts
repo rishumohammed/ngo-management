@@ -50,7 +50,7 @@ async function main() {
     signatory_name: '',
     receipt_prefix: 'FMF',
     fy_start_month: '4',
-    email_provider: 'brevo',
+    email_provider: 'resend',
     email_api_key: '',
     email_from: 'no-reply@freemindfoundation.org.in',
     email_from_name: 'Free Mind Foundation',
