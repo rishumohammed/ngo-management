@@ -37,6 +37,7 @@ export default function MinutesClient() {
   const role = session?.user?.role || ''
   const canCreate = can(role, 'minutes', 'create')
   const canUpdate = can(role, 'minutes', 'update')
+  const canDelete = can(role, 'minutes', 'delete')
 
   const [minutes, setMinutes] = useState<Minute[]>([])
   const [loading, setLoading] = useState(false)
@@ -97,6 +98,17 @@ export default function MinutesClient() {
       body: JSON.stringify({ id: minute.id, status: nextStatus }),
     })
     fetchMinutes()
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete these meeting minutes?')) return
+    try {
+      const res = await fetch(`/api/minutes/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete')
+      fetchMinutes()
+    } catch (err: any) {
+      alert(err.message)
+    }
   }
 
   return (
@@ -185,9 +197,16 @@ export default function MinutesClient() {
               </CardContent>
               <Divider />
               <CardActions sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Button size="small" component={Link} href={`/admin/minutes/${minute.id}`}>
-                  View Details
-                </Button>
+                <Box>
+                  <Button size="small" component={Link} href={`/admin/minutes/${minute.id}`}>
+                    View Details
+                  </Button>
+                  {canDelete && minute.status !== 'FINALIZED' && (
+                    <Button size="small" color="error" onClick={() => handleDelete(minute.id)}>
+                      Delete
+                    </Button>
+                  )}
+                </Box>
                 {canUpdate && minute.status !== 'FINALIZED' && (
                   <Button
                     size="small"

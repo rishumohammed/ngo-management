@@ -72,3 +72,34 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ error: 'Failed to update' }, { status: 500 })
   }
 }
+
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session || !can(session.user.role, 'minutes', 'delete')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
+    const current = await prisma.meetingMinute.findUnique({ where: { id: params.id } })
+    if (!current || current.status === 'FINALIZED') {
+      return NextResponse.json({ error: 'Cannot delete finalized minutes' }, { status: 400 })
+    }
+
+    const minute = await prisma.meetingMinute.delete({
+      where: { id: params.id },
+    })
+
+    await logAudit({
+      userId: session.user.id,
+      userName: session.user.name || 'Unknown',
+      action: 'DELETE',
+      entity: 'MeetingMinute',
+      entityId: minute.id,
+      entityName: minute.title,
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to delete' }, { status: 500 })
+  }
+}

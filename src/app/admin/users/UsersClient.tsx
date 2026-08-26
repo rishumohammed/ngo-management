@@ -9,6 +9,7 @@ import {
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid'
 import AddIcon from '@mui/icons-material/Add'
 import EditIcon from '@mui/icons-material/Edit'
+import DeleteIcon from '@mui/icons-material/Delete'
 import SecurityIcon from '@mui/icons-material/Security'
 import { formatDate } from '@/lib/utils'
 import { useSession } from 'next-auth/react'
@@ -89,6 +90,17 @@ export default function UsersClient() {
     }
   }
 
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to permanently delete this user? This action cannot be undone.')) return
+    try {
+      const res = await fetch(`/api/users/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete user')
+      fetchUsers()
+    } catch (err: any) {
+      alert(err.message)
+    }
+  }
+
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Name', flex: 1.2, minWidth: 150 },
     { field: 'email', headerName: 'Email', flex: 1.2, minWidth: 200 },
@@ -147,7 +159,7 @@ export default function UsersClient() {
       align: 'center',
       headerAlign: 'center',
       renderCell: (p: GridRenderCellParams) => (
-        <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', width: '100%' }}>
           <Tooltip title={p.row.id === currentUserId ? 'Cannot edit your own account here' : 'Edit User'}>
             <span>
               <IconButton 
@@ -159,6 +171,20 @@ export default function UsersClient() {
               </IconButton>
             </span>
           </Tooltip>
+          {session?.user?.role === 'SUPER_ADMIN' && (
+            <Tooltip title={p.row.id === currentUserId ? 'Cannot delete yourself' : 'Permanently Delete User'}>
+              <span>
+                <IconButton 
+                  size="small" 
+                  color="error"
+                  onClick={() => handleDelete(p.row.id)}
+                  disabled={p.row.id === currentUserId}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
         </Box>
       ),
     },

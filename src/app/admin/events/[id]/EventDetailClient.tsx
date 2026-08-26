@@ -15,9 +15,16 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
 import PhotoCamera from '@mui/icons-material/PhotoCamera'
 import dayjs from 'dayjs'
+import { useSession } from 'next-auth/react'
+import { can } from '@/lib/permissions'
 
 export default function EventDetailClient({ id }: { id: string }) {
   const router = useRouter()
+  const { data: session } = useSession()
+  const role = session?.user?.role || ''
+  const canUpdate = can(role, 'events', 'update')
+  const canDelete = can(role, 'events', 'delete')
+
   const [event, setEvent] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -25,6 +32,11 @@ export default function EventDetailClient({ id }: { id: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [volunteersList, setVolunteersList] = useState<any[]>([])
+
+  // Event Edit Dialog State
+  const [editOpen, setEditOpen] = useState(false)
+  const [editForm, setEditForm] = useState<any>({})
+  const [editingEvent, setEditingEvent] = useState(false)
 
   // Assignment Dialog State
   const [assignmentOpen, setAssignmentOpen] = useState(false)
@@ -56,6 +68,48 @@ export default function EventDetailClient({ id }: { id: string }) {
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  // --- Event Edit/Delete Handlers ---
+  const handleOpenEdit = () => {
+    setEditForm({
+      name: event.name,
+      type: event.type,
+      date: event.date ? new Date(event.date).toISOString().split('T')[0] : '',
+      location: event.location,
+      description: event.description || '',
+      status: event.status,
+    })
+    setEditOpen(true)
+  }
+
+  const handleSaveEdit = async () => {
+    setEditingEvent(true)
+    try {
+      const res = await fetch(`/api/events/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm)
+      })
+      if (!res.ok) throw new Error('Failed to update event')
+      setEditOpen(false)
+      fetchData()
+    } catch (err: any) {
+      alert(err.message)
+    } finally {
+      setEditingEvent(false)
+    }
+  }
+
+  const handleDeleteEvent = async () => {
+    if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) return
+    try {
+      const res = await fetch(`/api/events/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete event')
+      router.push('/admin/events')
+    } catch (err: any) {
+      alert(err.message)
+    }
+  }
 
   // --- Assignment Handlers ---
   const handleOpenAssignment = (item: any = null) => {
@@ -151,6 +205,18 @@ export default function EventDetailClient({ id }: { id: string }) {
         <Typography variant="h4" component="h1">{event.name}</Typography>
         <Chip label={event.type} variant="outlined" />
         <Chip label={event.status} color={event.status === 'COMPLETED' ? 'success' : event.status === 'CANCELLED' ? 'error' : 'primary'} />
+        
+        <Box flexGrow={1} />
+        {canUpdate && (
+          <Button variant="outlined" startIcon={<EditIcon />} onClick={handleOpenEdit}>
+            Edit
+          </Button>
+        )}
+        {canDelete && (
+          <Button variant="outlined" color="error" startIcon={<DeleteIcon />} onClick={handleDeleteEvent}>
+            Delete
+          </Button>
+        )}
       </Box>
       <Typography variant="body1" color="text.secondary" mb={4}>{event.description}</Typography>
 
@@ -284,6 +350,57 @@ export default function EventDetailClient({ id }: { id: string }) {
         <DialogActions>
           <Button onClick={() => setAssignmentOpen(false)}>Cancel</Button>
           <Button variant="contained" onClick={handleSaveAssignment} disabled={!editingAssignment && !assignmentForm.volunteerId}>Save</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Event Edit Dialog */}
+      <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit Event</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12}>
+              <TextField label="Event Name" fullWidth value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} />
+            </Grid>
+            <Grid item xs={6}>
+              <FormControl fullWidth>
+                <InputLabel>Type</InputLabel>
+                <Select label="Type" value={editForm.type} onChange={e => setEditForm({ ...editForm, type: e.target.value })}>
+                  <MenuItem value="AWARENESS">Awareness</MenuItem>
+                  <MenuItem value="WORKSHOP">Workshop</MenuItem>
+                  <MenuItem value="CAMPAIGN">Campaign</MenuItem>
+                  <MenuItem value="FUNDRAISER">Fundraiser</MenuItem>
+                  <MenuItem value="SEMINAR">Seminar</MenuItem>
+                  <MenuItem value="OTHER">Other</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={6}>
+              <FormControl fullWidth>
+                <InputLabel>Status</InputLabel>
+                <Select label="Status" value={editForm.status} onChange={e => setEditForm({ ...editForm, status: e.target.value })}>
+                  <MenuItem value="PLANNED">Planned</MenuItem>
+                  <MenuItem value="ONGOING">Ongoing</MenuItem>
+                  <MenuItem value="COMPLETED">Completed</MenuItem>
+                  <MenuItem value="CANCELLED">Cancelled</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={6}>
+              <TextField label="Date" type="date" fullWidth value={editForm.date} onChange={e => setEditForm({ ...editForm, date: e.target.value })} InputLabelProps={{ shrink: true }} />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField label="Location" fullWidth value={editForm.location} onChange={e => setEditForm({ ...editForm, location: e.target.value })} />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField label="Description" fullWidth multiline rows={3} value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditOpen(false)} disabled={editingEvent}>Cancel</Button>
+          <Button variant="contained" onClick={handleSaveEdit} disabled={editingEvent}>
+            {editingEvent ? <CircularProgress size={20} color="inherit" /> : 'Save Changes'}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

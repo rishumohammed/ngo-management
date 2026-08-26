@@ -125,3 +125,72 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
 }
+
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session || !can(session.user.role, 'donations', 'update')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
+    const data = await req.json()
+    const donation = await prisma.donation.update({
+      where: { id: params.id },
+      data: {
+        donorName: data.donorName,
+        donorPhone: data.donorPhone,
+        donorEmail: data.donorEmail,
+        donorPan: data.donorPan,
+        donorAddress: data.donorAddress,
+        amount: data.amount,
+        date: new Date(data.date),
+        paymentMode: data.paymentMode,
+        chequeNumber: data.chequeNumber,
+        bankName: data.bankName,
+        purpose: data.purpose,
+        tier: data.tier,
+        notes: data.notes,
+        status: data.status,
+      }
+    })
+
+    await logAudit({
+      userId: session.user.id,
+      userName: session.user.name || 'Unknown',
+      action: 'UPDATE',
+      entity: 'Donation',
+      entityId: donation.id,
+      entityName: donation.receiptNumber,
+    })
+
+    return NextResponse.json(donation)
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to update donation' }, { status: 500 })
+  }
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session || !can(session.user.role, 'donations', 'delete')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
+    const donation = await prisma.donation.delete({
+      where: { id: params.id },
+    })
+
+    await logAudit({
+      userId: session.user.id,
+      userName: session.user.name || 'Unknown',
+      action: 'DELETE',
+      entity: 'Donation',
+      entityId: donation.id,
+      entityName: donation.receiptNumber,
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to delete donation' }, { status: 500 })
+  }
+}

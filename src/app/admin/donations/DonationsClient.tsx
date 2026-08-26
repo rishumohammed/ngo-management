@@ -13,6 +13,8 @@ import SearchIcon from '@mui/icons-material/Search'
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 import EmailIcon from '@mui/icons-material/Email'
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn'
+import EditIcon from '@mui/icons-material/Edit'
+import DeleteIcon from '@mui/icons-material/Delete'
 import { can } from '@/lib/permissions'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { downloadCSV } from '@/lib/csv'
@@ -33,6 +35,8 @@ export default function DonationsClient() {
   const { data: session } = useSession()
   const role = session?.user?.role || ''
   const canCreate = can(role, 'donations', 'create')
+  const canUpdate = can(role, 'donations', 'update')
+  const canDelete = can(role, 'donations', 'delete')
 
   const [donations, setDonations] = useState<Donation[]>([])
   const [total, setTotal] = useState(0)
@@ -42,7 +46,10 @@ export default function DonationsClient() {
   const [search, setSearch] = useState('')
   const [modeFilter, setModeFilter] = useState('')
 
+  const [modeFilter, setModeFilter] = useState('')
+
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
   const [formData, setFormData] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
@@ -70,8 +77,11 @@ export default function DonationsClient() {
     }
     setSaving(true); setFormError('')
     try {
-      const res = await fetch('/api/donations', {
-        method: 'POST',
+      const url = editId ? `/api/donations/${editId}` : '/api/donations'
+      const method = editId ? 'PUT' : 'POST'
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formData, amount: parseFloat(formData.amount) }),
       })
@@ -79,13 +89,13 @@ export default function DonationsClient() {
         const e = await res.json()
         const detailMsg = e.details && Array.isArray(e.details)
           ? e.details.map((d: any) => d.message).join(', ')
-          : (e.error || 'Failed to record donation')
+          : (e.error || `Failed to ${editId ? 'update' : 'record'} donation`)
         setFormError(detailMsg)
         return
       }
       setDialogOpen(false)
       fetchDonations()
-      setActionMsg({ type: 'success', msg: 'Donation recorded and receipt generated.' })
+      setActionMsg({ type: 'success', msg: editId ? 'Donation updated successfully.' : 'Donation recorded and receipt generated.' })
       setTimeout(() => setActionMsg(null), 4000)
     } finally { setSaving(false) }
   }
@@ -119,6 +129,41 @@ export default function DonationsClient() {
         : { type: 'error', msg: 'Email send failed.' })
       setTimeout(() => setActionMsg(null), 4000)
     } finally { setEmailLoading(null) }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this donation? This action cannot be undone.')) return
+    try {
+      const res = await fetch(`/api/donations/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete')
+      fetchDonations()
+      setActionMsg({ type: 'success', msg: 'Donation deleted successfully.' })
+      setTimeout(() => setActionMsg(null), 4000)
+    } catch (err: any) {
+      setActionMsg({ type: 'error', msg: err.message })
+    }
+  }
+
+  const handleEdit = (donation: Donation) => {
+    setEditId(donation.id)
+    setFormData({
+      donorName: donation.donorName,
+      donorPhone: donation.donorPhone || '',
+      donorEmail: donation.donorEmail || '',
+      donorPan: donation.donorPan || '',
+      donorAddress: donation.donorAddress || '',
+      amount: String(donation.amount),
+      date: new Date(donation.date).toISOString().split('T')[0],
+      paymentMode: donation.paymentMode,
+      chequeNumber: donation.chequeNumber || '',
+      bankName: donation.bankName || '',
+      purpose: donation.purpose || '',
+      tier: donation.tier || '',
+      notes: donation.notes || '',
+      emailReceipt: false,
+    })
+    setFormError('')
+    setDialogOpen(true)
   }
 
   const columns: GridColDef[] = [
@@ -168,8 +213,8 @@ export default function DonationsClient() {
     },
     {
       field: 'actions',
-      headerName: 'Receipt',
-      minWidth: 110,
+      headerName: 'Actions',
+      minWidth: 160,
       flex: 0.8,
       sortable: false,
       align: 'center',
@@ -195,6 +240,20 @@ export default function DonationsClient() {
                 disabled={emailLoading === p.row.id}
               >
                 {emailLoading === p.row.id ? <CircularProgress size={16} /> : <EmailIcon fontSize="small" />}
+              </IconButton>
+            </Tooltip>
+          )}
+          {canUpdate && (
+            <Tooltip title="Edit Donation">
+              <IconButton size="small" onClick={() => handleEdit(p.row)}>
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+          {canDelete && (
+            <Tooltip title="Delete Donation">
+              <IconButton size="small" color="error" onClick={() => handleDelete(p.row.id)}>
+                <DeleteIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           )}
@@ -237,6 +296,7 @@ export default function DonationsClient() {
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => {
+                setEditId(null)
                 setFormData(emptyForm)
                 setFormError('')
                 setDialogOpen(true)
@@ -285,10 +345,10 @@ export default function DonationsClient() {
         sx={{ bgcolor: 'background.paper' }}
       />
 
-      {/* Add Donation Dialog */}
+      {/* Add/Edit Donation Dialog */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <MonetizationOnIcon color="primary" /> Record Donation
+          <MonetizationOnIcon color="primary" /> {editId ? 'Edit Donation' : 'Record Donation'}
         </DialogTitle>
         <DialogContent dividers>
           {formError && <Alert severity="error" sx={{ mb: 2 }}>{formError}</Alert>}
@@ -317,7 +377,7 @@ export default function DonationsClient() {
             <Grid item xs={6}><TextField label="Purpose" fullWidth value={formData.purpose} onChange={e => setFormData({ ...formData, purpose: e.target.value })} /></Grid>
             <Grid item xs={6}><TextField label="Tier / Category" fullWidth value={formData.tier} onChange={e => setFormData({ ...formData, tier: e.target.value })} /></Grid>
             <Grid item xs={12}><TextField label="Notes" fullWidth multiline rows={2} value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} /></Grid>
-            {formData.donorEmail && (
+            {formData.donorEmail && !editId && (
               <Grid item xs={12}>
                 <FormControlLabel
                   control={<Checkbox checked={formData.emailReceipt} onChange={e => setFormData({ ...formData, emailReceipt: e.target.checked })} color="primary" />}
@@ -330,7 +390,7 @@ export default function DonationsClient() {
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setDialogOpen(false)} disabled={saving}>Cancel</Button>
           <Button id="save-donation-btn" variant="contained" onClick={handleSave} disabled={saving}>
-            {saving ? <CircularProgress size={20} color="inherit" /> : 'Record & Generate Receipt'}
+            {saving ? <CircularProgress size={20} color="inherit" /> : (editId ? 'Save Changes' : 'Record & Generate Receipt')}
           </Button>
         </DialogActions>
       </Dialog>
