@@ -344,6 +344,8 @@ enum CommitteeType {
   EXECUTIVE_TEAM
   COMMITTEE
   DEPARTMENT
+  REGIONAL_NETWORK
+  GENERAL_GOVERNANCE
 }
 
 model Committee {
@@ -351,6 +353,7 @@ model Committee {
   name        String
   type        CommitteeType @default(COMMITTEE)
   purpose     String?       @db.Text
+  state       String?
   isArchived  Boolean       @default(false)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt

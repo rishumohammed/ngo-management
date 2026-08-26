@@ -42,6 +42,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         name: data.name,
         type: data.type,
         purpose: data.purpose,
+        state: data.state,
         isArchived: data.isArchived,
       }
     })

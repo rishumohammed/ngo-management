@@ -8,8 +8,9 @@ import { z } from 'zod'
 
 const CommitteeSchema = z.object({
   name: z.string().min(1),
-  type: z.enum(['COMMITTEE', 'DEPARTMENT', 'GOVERNING_BOARD', 'EXECUTIVE_TEAM']).default('COMMITTEE'),
+  type: z.enum(['COMMITTEE', 'DEPARTMENT', 'GOVERNING_BOARD', 'EXECUTIVE_TEAM', 'REGIONAL_NETWORK', 'GENERAL_GOVERNANCE']).default('COMMITTEE'),
   purpose: z.string().optional(),
+  state: z.string().optional(),
 })
 
 export async function GET(req: NextRequest) {
