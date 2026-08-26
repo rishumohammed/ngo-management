@@ -20,6 +20,9 @@ export async function GET() {
       'roles_GOVERNING_BOARD',
       'roles_EXECUTIVE_TEAM',
       'roles_DEPARTMENT',
+      'roles_REGIONAL_NETWORK',
+      'roles_GENERAL_GOVERNANCE',
+      'roles_COMMITTEE',
     ]
 
     const settings = await prisma.orgSetting.findMany({
@@ -45,6 +48,9 @@ export async function GET() {
         GOVERNING_BOARD: ['Chairperson', 'Vice Chairperson', 'Secretary', 'Treasurer', 'Member', 'Advisor'] as string[],
         EXECUTIVE_TEAM: ['Executive Director', 'Operations Head', 'Finance Head', 'Member'] as string[],
         DEPARTMENT: ['Head of Department', 'Coordinator', 'Member'] as string[],
+        REGIONAL_NETWORK: ['State Head', 'Regional Coordinator', 'Member'] as string[],
+        GENERAL_GOVERNANCE: ['State Head', 'Secretary', 'Member'] as string[],
+        COMMITTEE: ['Chairperson', 'State Head', 'Member'] as string[],
       }
     }
 
@@ -72,6 +78,9 @@ export async function GET() {
             if (setting.key === 'roles_GOVERNING_BOARD') result.roles.GOVERNING_BOARD = parsed
             if (setting.key === 'roles_EXECUTIVE_TEAM') result.roles.EXECUTIVE_TEAM = parsed
             if (setting.key === 'roles_DEPARTMENT') result.roles.DEPARTMENT = parsed
+            if (setting.key === 'roles_REGIONAL_NETWORK') result.roles.REGIONAL_NETWORK = parsed
+            if (setting.key === 'roles_GENERAL_GOVERNANCE') result.roles.GENERAL_GOVERNANCE = parsed
+            if (setting.key === 'roles_COMMITTEE') result.roles.COMMITTEE = parsed
           }
         }
       } catch (e) {

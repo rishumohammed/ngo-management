@@ -68,6 +68,9 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   roles_GOVERNING_BOARD: '["Chairperson", "Vice Chairperson", "Secretary", "Treasurer", "Member", "Advisor"]',
   roles_EXECUTIVE_TEAM: '["Executive Director", "Operations Head", "Finance Head", "Member"]',
   roles_DEPARTMENT: '["Head of Department", "Coordinator", "Member"]',
+  roles_REGIONAL_NETWORK: '["State Head", "Regional Coordinator", "Member"]',
+  roles_GENERAL_GOVERNANCE: '["State Head", "Secretary", "Member"]',
+  roles_COMMITTEE: '["Chairperson", "State Head", "Member"]',
   meeting_types: '["BOARD", "COMMITTEE", "GENERAL_BODY", "AD_HOC"]',
 }
 
@@ -726,6 +729,81 @@ export default function SettingsClient() {
                       label="Department Roles"
                       placeholder="Type and press enter"
                       helperText="e.g. Head of Department, Coordinator, Member"
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Autocomplete
+                  multiple
+                  freeSolo
+                  options={[]}
+                  value={JSON.parse(settings.roles_REGIONAL_NETWORK || '[]')}
+                  onChange={(_, newValue) => set('roles_REGIONAL_NETWORK', JSON.stringify(newValue))}
+                  disabled={!canEdit}
+                  renderTags={(value: readonly string[], getTagProps) =>
+                    value.map((option: string, index: number) => {
+                      const { key, ...tagProps } = getTagProps({ index })
+                      return <Chip variant="outlined" label={option} key={key} {...tagProps} />
+                    })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Regional Network Roles"
+                      placeholder="Type and press enter"
+                      helperText="e.g. State Head, Regional Coordinator, Member"
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Autocomplete
+                  multiple
+                  freeSolo
+                  options={[]}
+                  value={JSON.parse(settings.roles_GENERAL_GOVERNANCE || '[]')}
+                  onChange={(_, newValue) => set('roles_GENERAL_GOVERNANCE', JSON.stringify(newValue))}
+                  disabled={!canEdit}
+                  renderTags={(value: readonly string[], getTagProps) =>
+                    value.map((option: string, index: number) => {
+                      const { key, ...tagProps } = getTagProps({ index })
+                      return <Chip variant="outlined" label={option} key={key} {...tagProps} />
+                    })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="General Governance Roles"
+                      placeholder="Type and press enter"
+                      helperText="e.g. State Head, Secretary, Member"
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Autocomplete
+                  multiple
+                  freeSolo
+                  options={[]}
+                  value={JSON.parse(settings.roles_COMMITTEE || '[]')}
+                  onChange={(_, newValue) => set('roles_COMMITTEE', JSON.stringify(newValue))}
+                  disabled={!canEdit}
+                  renderTags={(value: readonly string[], getTagProps) =>
+                    value.map((option: string, index: number) => {
+                      const { key, ...tagProps } = getTagProps({ index })
+                      return <Chip variant="outlined" label={option} key={key} {...tagProps} />
+                    })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Standard Committee Roles"
+                      placeholder="Type and press enter"
+                      helperText="e.g. Chairperson, State Head, Member"
                     />
                   )}
                 />
