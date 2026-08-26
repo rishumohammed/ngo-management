@@ -46,8 +46,6 @@ export default function DonationsClient() {
   const [search, setSearch] = useState('')
   const [modeFilter, setModeFilter] = useState('')
 
-  const [modeFilter, setModeFilter] = useState('')
-
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
   const [formData, setFormData] = useState(emptyForm)
