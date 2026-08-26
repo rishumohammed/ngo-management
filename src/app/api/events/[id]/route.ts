@@ -42,7 +42,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       data: {
         name: data.name,
         type: data.type,
-        date: new Date(data.date),
+        startDate: new Date(data.startDate),
+        endDate: data.endDate ? new Date(data.endDate) : undefined,
         location: data.location,
         description: data.description,
         status: data.status,

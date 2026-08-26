@@ -74,7 +74,7 @@ export default function EventDetailClient({ id }: { id: string }) {
     setEditForm({
       name: event.name,
       type: event.type,
-      date: event.date ? new Date(event.date).toISOString().split('T')[0] : '',
+      startDate: event.startDate ? new Date(event.startDate).toISOString().split('T')[0] : '',
       location: event.location,
       description: event.description || '',
       status: event.status,
@@ -386,7 +386,7 @@ export default function EventDetailClient({ id }: { id: string }) {
               </FormControl>
             </Grid>
             <Grid item xs={6}>
-              <TextField label="Date" type="date" fullWidth value={editForm.date} onChange={e => setEditForm({ ...editForm, date: e.target.value })} InputLabelProps={{ shrink: true }} />
+              <TextField label="Date" type="date" fullWidth value={editForm.startDate} onChange={e => setEditForm({ ...editForm, startDate: e.target.value })} InputLabelProps={{ shrink: true }} />
             </Grid>
             <Grid item xs={6}>
               <TextField label="Location" fullWidth value={editForm.location} onChange={e => setEditForm({ ...editForm, location: e.target.value })} />
