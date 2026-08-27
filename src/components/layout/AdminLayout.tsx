@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import {
   Box,
@@ -23,8 +23,7 @@ import {
   Chip,
   useMediaQuery,
   useTheme,
-  Badge,
-  CircularProgress,
+  Collapse,
 } from '@mui/material'
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import PeopleIcon from '@mui/icons-material/People'
@@ -40,16 +39,26 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import FavoriteIcon from '@mui/icons-material/Favorite'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
+import ExpandLess from '@mui/icons-material/ExpandLess'
+import ExpandMore from '@mui/icons-material/ExpandMore'
 import { ROLE_LABELS } from '@/lib/permissions'
 import { can } from '@/lib/permissions'
 
 const DRAWER_WIDTH = 248
+
+interface SubNavItem {
+  label: string
+  href: string
+  tabKey?: string
+}
 
 interface NavItem {
   label: string
   icon: React.ReactNode
   href: string
   module?: string
+  subItems?: SubNavItem[]
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -57,16 +66,75 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Members', icon: <PeopleIcon />, href: '/admin/members', module: 'members' },
   { label: 'Volunteers', icon: <VolunteerActivismIcon />, href: '/admin/volunteers', module: 'volunteers' },
   { label: 'Donations & 80G', icon: <MonetizationOnIcon />, href: '/admin/donations', module: 'donations' },
+  {
+    label: 'Finance & Accounts',
+    icon: <AccountBalanceWalletIcon />,
+    href: '/admin/finance',
+    module: 'finance',
+    subItems: [
+      { label: 'Treasury Overview', href: '/admin/finance?tab=overview', tabKey: 'overview' },
+      { label: 'Expenses Log', href: '/admin/finance?tab=expenses', tabKey: 'expenses' },
+      { label: 'Expense Categories', href: '/admin/finance?tab=categories', tabKey: 'categories' },
+      { label: 'Commercial Subsidiaries', href: '/admin/finance?tab=commercial', tabKey: 'commercial' },
+      { label: 'Financial Statement', href: '/admin/finance?tab=statement', tabKey: 'statement' },
+    ],
+  },
   { label: 'Meeting Minutes', icon: <ArticleIcon />, href: '/admin/minutes', module: 'minutes' },
   { label: 'Organization Structure', icon: <AccountTreeIcon />, href: '/admin/committees', module: 'committees' },
   { label: 'Events', icon: <EventIcon />, href: '/admin/events', module: 'events' },
   { label: 'Locations', icon: <LocationOnIcon />, href: '/admin/locations', module: 'settings' },
-  { label: 'Audit Log', icon: <SecurityIcon />, href: '/admin/audit', module: 'audit' },
   { label: 'Users', icon: <PeopleIcon />, href: '/admin/users', module: 'users' },
-  { label: 'Settings', icon: <SettingsIcon />, href: '/admin/settings', module: 'settings' },
+  {
+    label: 'Settings',
+    icon: <SettingsIcon />,
+    href: '/admin/settings',
+    module: 'settings',
+    subItems: [
+      { label: 'Organization Identity', href: '/admin/settings?tab=org', tabKey: 'org' },
+      { label: 'Donations & 80G', href: '/admin/settings?tab=fiscal', tabKey: 'fiscal' },
+      { label: 'Email Dispatch', href: '/admin/settings?tab=email', tabKey: 'email' },
+      { label: 'Form Options & Roles', href: '/admin/settings?tab=form', tabKey: 'form' },
+      { label: 'Volunteer Pipeline', href: '/admin/settings?tab=pipeline', tabKey: 'pipeline' },
+    ],
+  },
+  { label: 'Audit Log', icon: <SecurityIcon />, href: '/admin/audit', module: 'audit' },
 ]
 
-export default function AdminLayout({ children, session, logo }: { children: React.ReactNode, session: any, logo?: string }) {
+function SubItemLink({ sub, item, pathname, onNavigate }: { sub: SubNavItem; item: NavItem; pathname: string; onNavigate: (href: string) => void }) {
+  const searchParams = useSearchParams()
+  const currentTab = searchParams.get('tab') || ''
+
+  const isSubActive =
+    pathname === item.href &&
+    (currentTab === sub.tabKey ||
+      (!currentTab && (sub.tabKey === 'overview' || sub.tabKey === 'org')))
+
+  return (
+    <ListItem disablePadding>
+      <ListItemButton
+        selected={isSubActive}
+        onClick={() => onNavigate(sub.href)}
+        sx={{
+          py: 0.5,
+          px: 1.5,
+          borderRadius: 1,
+          bgcolor: isSubActive ? 'primary.50' : 'transparent',
+        }}
+      >
+        <ListItemText
+          primary={sub.label}
+          primaryTypographyProps={{
+            fontSize: '0.8125rem',
+            fontWeight: isSubActive ? 600 : 400,
+            color: isSubActive ? 'primary.main' : 'text.secondary',
+          }}
+        />
+      </ListItemButton>
+    </ListItem>
+  )
+}
+
+export default function AdminLayout({ children, session, logo }: { children: React.ReactNode; session: any; logo?: string }) {
   const pathname = usePathname()
   const router = useRouter()
   const theme = useTheme()
@@ -75,14 +143,19 @@ export default function AdminLayout({ children, session, logo }: { children: Rea
   const [mobileOpen, setMobileOpen] = useState(false)
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
 
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+
   const role = session?.user?.role || ''
 
   const visibleNavItems = NAV_ITEMS.filter((item) => {
-    if (!item.module) return true // Dashboard always visible
+    if (!item.module) return true
     return can(role, item.module as Parameters<typeof can>[1], 'read')
   })
 
-
+  const handleToggleExpand = (href: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setExpanded((prev) => ({ ...prev, [href]: !prev[href] }))
+  }
 
   const drawerContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -147,44 +220,83 @@ export default function AdminLayout({ children, session, logo }: { children: Rea
       <Box sx={{ flex: 1, overflowY: 'auto', py: 1 }}>
         <List dense disablePadding>
           {visibleNavItems.map((item) => {
-            const isActive =
+            const hasSubItems = Boolean(item.subItems && item.subItems.length > 0)
+            const isParentActive =
               item.href === '/admin/dashboard'
                 ? pathname === '/admin/dashboard'
                 : pathname.startsWith(item.href)
 
+            const isSubExpanded = Boolean(expanded[item.href])
+
             return (
-              <ListItem key={item.href} disablePadding>
-                <ListItemButton
-                  selected={isActive}
-                  onClick={() => {
-                    router.push(item.href)
-                    setMobileOpen(false)
-                  }}
-                  sx={{ py: 1, px: 2 }}
-                >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: 36,
-                      color: isActive ? 'primary.dark' : 'text.secondary',
+              <Box key={item.href}>
+                <ListItem disablePadding>
+                  <ListItemButton
+                    selected={isParentActive && !hasSubItems}
+                    onClick={() => {
+                      if (hasSubItems) {
+                        setExpanded((prev) => ({ ...prev, [item.href]: !isSubExpanded }))
+                        if (!pathname.startsWith(item.href)) {
+                          router.push(item.href)
+                        }
+                      } else {
+                        router.push(item.href)
+                      }
+                      setMobileOpen(false)
                     }}
+                    sx={{ py: 1, px: 2 }}
                   >
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={item.label}
-                    primaryTypographyProps={{
-                      fontSize: '0.875rem',
-                      fontWeight: isActive ? 600 : 400,
-                    }}
-                  />
-                </ListItemButton>
-              </ListItem>
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 36,
+                        color: isParentActive ? 'primary.dark' : 'text.secondary',
+                      }}
+                    >
+                      {item.icon}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={item.label}
+                      primaryTypographyProps={{
+                        fontSize: '0.875rem',
+                        fontWeight: isParentActive ? 600 : 400,
+                      }}
+                    />
+                    {hasSubItems && (
+                      <IconButton
+                        size="small"
+                        onClick={(e) => handleToggleExpand(item.href, e)}
+                        sx={{ p: 0.25, color: 'text.secondary' }}
+                      >
+                        {isSubExpanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
+                      </IconButton>
+                    )}
+                  </ListItemButton>
+                </ListItem>
+
+                {hasSubItems && (
+                  <Collapse in={isSubExpanded} timeout="auto" unmountOnExit>
+                    <List dense disablePadding sx={{ pl: 4.5, pb: 0.5 }}>
+                      {item.subItems!.map((sub) => (
+                        <Suspense key={sub.href} fallback={null}>
+                          <SubItemLink
+                            sub={sub}
+                            item={item}
+                            pathname={pathname}
+                            onNavigate={(targetHref) => {
+                              router.push(targetHref)
+                              setMobileOpen(false)
+                            }}
+                          />
+                        </Suspense>
+                      ))}
+                    </List>
+                  </Collapse>
+                )}
+              </Box>
             )
           })}
         </List>
       </Box>
-
-
     </Box>
   )
 
@@ -225,10 +337,7 @@ export default function AdminLayout({ children, session, logo }: { children: Rea
       )}
 
       {/* Main Content */}
-      <Box
-        component="main"
-        sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}
-      >
+      <Box component="main" sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         {/* Top AppBar */}
         <AppBar position="static" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
           <Toolbar>

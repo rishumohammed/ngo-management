@@ -32,6 +32,9 @@ async function getDashboardData() {
       recentActivityRaw,
       orgSettings,
       recentDonations,
+      netLiquidFundsRaw,
+      expensesThisMonthRaw,
+      commercialThisMonthRaw,
     ] = await Promise.all([
       prisma.member.count({ where: { status: 'ACTIVE' } }).catch(() => 0),
       prisma.member.count({ where: { createdAt: { gte: startOfMonth } } }).catch(() => 0),
@@ -77,6 +80,18 @@ async function getDashboardData() {
         select: { date: true, amount: true },
         orderBy: { date: 'asc' },
       }).catch(() => []),
+      prisma.paymentAccount.aggregate({
+        where: { isArchived: false },
+        _sum: { currentBalance: true },
+      }).catch(() => ({ _sum: { currentBalance: null } })),
+      prisma.expense.aggregate({
+        where: { date: { gte: startOfMonth }, status: 'PAID' },
+        _sum: { amount: true },
+      }).catch(() => ({ _sum: { amount: null } })),
+      prisma.commercialRevenue.aggregate({
+        where: { date: { gte: startOfMonth } },
+        _sum: { amount: true },
+      }).catch(() => ({ _sum: { amount: null } })),
     ])
 
     // Compute monthly donation aggregations cleanly in JS (avoids BigInt serialization issues with $queryRaw)
@@ -99,14 +114,14 @@ async function getDashboardData() {
     }))
 
     // Check 80G expiry
-    const eightyGValidity = orgSettings.find((s) => s.key === 'eighty_g_validity')?.value
+    const eightyGValidity = orgSettings.find((s: { key: string; value: string }) => s.key === 'eighty_g_validity')?.value
     const eightyGExpiry = eightyGValidity ? new Date(eightyGValidity) : null
     const eightyGExpiringSoon = eightyGExpiry
       ? dayjs(eightyGExpiry).diff(dayjs(), 'day') <= 90
       : false
 
     // Safely serialize upcomingEvents (convert Dates to ISO strings)
-    const upcomingEvents = upcomingEventsRaw.map((e) => ({
+    const upcomingEvents = upcomingEventsRaw.map((e: { id: string; name: string; status: string; startDate: Date; endDate: Date | null; location: string | null }) => ({
       id: e.id,
       name: e.name,
       status: e.status,
@@ -116,7 +131,7 @@ async function getDashboardData() {
     }))
 
     // Safely serialize recentActivity
-    const recentActivity = recentActivityRaw.map((a) => ({
+    const recentActivity = recentActivityRaw.map((a: { id: string; action: string; entity: string; entityName: string | null; userName: string | null; timestamp: Date }) => ({
       id: a.id,
       action: a.action,
       entity: a.entity,
@@ -129,7 +144,7 @@ async function getDashboardData() {
       totalMembers,
       newMembersThisMonth,
       activeVolunteers,
-      volunteerPipeline: volunteerPipeline.map((v) => ({
+      volunteerPipeline: volunteerPipeline.map((v: { currentStage: string; _count: { currentStage: number } }) => ({
         currentStage: v.currentStage,
         _count: { currentStage: Number(v._count.currentStage) },
       })),
@@ -149,6 +164,9 @@ async function getDashboardData() {
       eightyGExpiry: eightyGExpiry?.toISOString() || null,
       eightyGExpiringSoon,
       monthlyDonations,
+      netLiquidFunds: Number(netLiquidFundsRaw._sum.currentBalance || 0),
+      expensesThisMonth: Number(expensesThisMonthRaw._sum.amount || 0),
+      commercialThisMonth: Number(commercialThisMonthRaw._sum.amount || 0),
     }
   } catch (error) {
     console.error('Error fetching dashboard data:', error)

@@ -206,22 +206,12 @@ export default function DashboardClient({ data }: { data: any }) {
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} lg={3}>
           <KpiCard
-            title="Active Members"
-            value={totalMembers.toLocaleString()}
-            subtitle={`+${newMembersThisMonth} this month`}
-            icon={<PeopleIcon />}
+            title="NET NGO LIQUID FUNDS"
+            value={formatCurrency(data.netLiquidFunds || 0)}
+            subtitle="Real-time Bank & Cash Treasury"
+            icon={<MonetizationOnIcon />}
             color="#00897B"
-            accent={`${newMembersThisMonth} new member${newMembersThisMonth !== 1 ? 's' : ''} joined this month`}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} lg={3}>
-          <KpiCard
-            title="Active Volunteers"
-            value={activeVolunteers.toLocaleString()}
-            subtitle={`${pendingPipeline} in pipeline`}
-            icon={<VolunteerActivismIcon />}
-            color="#43A047"
-            accent={`${pendingPipeline} awaiting approval`}
+            accent="Across all payment accounts"
           />
         </Grid>
         <Grid item xs={12} sm={6} lg={3}>
@@ -236,12 +226,22 @@ export default function DashboardClient({ data }: { data: any }) {
         </Grid>
         <Grid item xs={12} sm={6} lg={3}>
           <KpiCard
-            title="80G Receipts Issued"
-            value={receiptsThisMonth.toLocaleString()}
-            subtitle="This month"
+            title="Expenses This Month"
+            value={formatCurrency(data.expensesThisMonth || 0)}
+            subtitle="Paid operational expenses"
             icon={<ReceiptIcon />}
-            color="#0288D1"
-            accent={`${donationsThisMonth.count} donations recorded`}
+            color="#E53935"
+            accent={`Subsidiary Revenue: ${formatCurrency(data.commercialThisMonth || 0)}`}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} lg={3}>
+          <KpiCard
+            title="Active Volunteers"
+            value={activeVolunteers.toLocaleString()}
+            subtitle={`${pendingPipeline} in pipeline`}
+            icon={<VolunteerActivismIcon />}
+            color="#43A047"
+            accent={`${pendingPipeline} awaiting approval`}
           />
         </Grid>
       </Grid>

@@ -36,6 +36,7 @@ export async function GET(req: NextRequest) {
   const search = searchParams.get('search') || ''
   const status = searchParams.get('status') || ''
   const mode = searchParams.get('paymentMode') || ''
+  const fiscalYear = searchParams.get('fiscalYear') || ''
   const page = parseInt(searchParams.get('page') || '1')
   const pageSize = parseInt(searchParams.get('pageSize') || '25')
 
@@ -49,6 +50,7 @@ export async function GET(req: NextRequest) {
   }
   if (status) where.status = status
   if (mode) where.paymentMode = mode
+  if (fiscalYear && fiscalYear !== 'ALL') where.fiscalYear = fiscalYear
 
   const [donations, total] = await Promise.all([
     prisma.donation.findMany({

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import {
   Box,
   Typography,
@@ -41,6 +42,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import LockIcon from '@mui/icons-material/Lock'
 import { can } from '@/lib/permissions'
+import { getFiscalYearOptions } from '@/lib/utils'
 import { DEFAULT_INDIAN_STATES, DEFAULT_PIPELINE_STAGES, PipelineStageConfig } from '@/lib/constants'
 
 const DEFAULT_SETTINGS: Record<string, string> = {
@@ -54,6 +56,8 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   signatory_name: '',
   receipt_prefix: 'FMF',
   fy_start_month: '4',
+  active_fiscal_year: '2026-27',
+  locked_fiscal_years: '[]',
   email_provider: 'resend',
   email_api_key: '',
   email_from: 'no-reply@freemindfoundation.org.in',
@@ -76,10 +80,28 @@ const DEFAULT_SETTINGS: Record<string, string> = {
 
 export default function SettingsClient() {
   const { data: session } = useSession()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get('tab')
+
   const isSuperAdmin = session?.user?.role === 'SUPER_ADMIN'
   const canEdit = can(session?.user?.role || '', 'settings', 'update')
 
   const [tab, setTab] = useState(0)
+
+  useEffect(() => {
+    if (tabParam === 'fiscal' || tabParam === '1') setTab(1)
+    else if (tabParam === 'email' || tabParam === '2') setTab(2)
+    else if (tabParam === 'form' || tabParam === '3') setTab(3)
+    else if (tabParam === 'pipeline' || tabParam === '4') setTab(4)
+    else setTab(0)
+  }, [tabParam])
+
+  const handleTabChange = (_: React.SyntheticEvent, val: number) => {
+    setTab(val)
+    const tabKeys = ['org', 'fiscal', 'email', 'form', 'pipeline']
+    router.push(`/admin/settings?tab=${tabKeys[val]}`)
+  }
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -143,6 +165,27 @@ export default function SettingsClient() {
     setTimeout(() => setMsg(null), 5000)
   }
 
+  // Financial Year helper methods
+  const getLockedFYs = (): string[] => {
+    try {
+      const parsed = JSON.parse(settings.locked_fiscal_years || '[]')
+      return Array.isArray(parsed) ? parsed : []
+    } catch (e) {
+      return []
+    }
+  }
+
+  const toggleLockFY = (fy: string) => {
+    const currentLocked = getLockedFYs()
+    let updated: string[]
+    if (currentLocked.includes(fy)) {
+      updated = currentLocked.filter((item) => item !== fy)
+    } else {
+      updated = [...currentLocked, fy]
+    }
+    set('locked_fiscal_years', JSON.stringify(updated))
+  }
+
   // Pipeline stage helper methods
   const getPipelineStages = (): PipelineStageConfig[] => {
     try {
@@ -192,6 +235,38 @@ export default function SettingsClient() {
 
   const pipelineStages = getPipelineStages()
 
+  const getTabHeader = () => {
+    switch (tab) {
+      case 1:
+        return {
+          title: 'Donations, 80G & Financial Year Governance',
+          subtitle: 'Tax exemption registration, receipt numbering, default financial year, and audit locks',
+        }
+      case 2:
+        return {
+          title: 'Email Dispatch & Provider Config',
+          subtitle: 'Configure transactional email delivery via Resend, Brevo, or SendGrid',
+        }
+      case 3:
+        return {
+          title: 'Form Options & Governance Roles',
+          subtitle: 'Manage Indian states, districts, volunteer choices, and committee governance roles',
+        }
+      case 4:
+        return {
+          title: 'Volunteer Pipeline Stages',
+          subtitle: 'Configure stages for volunteer onboarding and verification workflow',
+        }
+      default:
+        return {
+          title: 'Organization Identity & Legal Details',
+          subtitle: 'Configure trust name, logo, PAN, FCRA, and official signatory details',
+        }
+    }
+  }
+
+  const headerInfo = getTabHeader()
+
   return (
     <Box>
       <Box
@@ -205,11 +280,11 @@ export default function SettingsClient() {
         }}
       >
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary', letterSpacing: -0.5 }}>
-            Organization Settings
+          <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary', letterSpacing: '-0.02em' }}>
+            {headerInfo.title}
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-            Configure organization identity, 80G tax settings, email dispatch, and volunteer workflow stages.
+            {headerInfo.subtitle}
           </Typography>
         </Box>
         {canEdit && (
@@ -231,19 +306,7 @@ export default function SettingsClient() {
         </Alert>
       )}
 
-      <Tabs
-        value={tab}
-        onChange={(_, v) => setTab(v)}
-        sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
-        variant="scrollable"
-        scrollButtons="auto"
-      >
-        <Tab icon={<BusinessIcon fontSize="small" />} iconPosition="start" label="Organization" />
-        <Tab icon={<ReceiptLongIcon fontSize="small" />} iconPosition="start" label="Donations & 80G" />
-        <Tab icon={<EmailIcon fontSize="small" />} iconPosition="start" label="Email" />
-        <Tab icon={<TuneIcon fontSize="small" />} iconPosition="start" label="Form Options" />
-        <Tab icon={<AccountTreeIcon fontSize="small" />} iconPosition="start" label="Volunteer Pipeline" />
-      </Tabs>
+
 
       {/* Organization Tab */}
       {tab === 0 && (
@@ -352,61 +415,143 @@ export default function SettingsClient() {
 
       {/* Donations & 80G Tab */}
       {tab === 1 && (
-        <Card>
-          <CardHeader
-            title="80G & Receipt Configuration"
-            subheader="Tax exemption registration & financial year settings"
-          />
-          <Divider />
-          <CardContent>
-            <Grid container spacing={2.5}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="80G Order / Registration Number"
-                  fullWidth
-                  value={settings.eighty_g_number}
-                  onChange={(e) => set('eighty_g_number', e.target.value)}
-                  disabled={!canEdit}
-                />
+        <Stack spacing={3}>
+          <Card>
+            <CardHeader
+              title="80G & Receipt Configuration"
+              subheader="Tax exemption registration & financial year settings"
+            />
+            <Divider />
+            <CardContent>
+              <Grid container spacing={2.5}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="80G Order / Registration Number"
+                    fullWidth
+                    value={settings.eighty_g_number}
+                    onChange={(e) => set('eighty_g_number', e.target.value)}
+                    disabled={!canEdit}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="80G Validity / Period"
+                    fullWidth
+                    value={settings.eighty_g_validity}
+                    onChange={(e) => set('eighty_g_validity', e.target.value)}
+                    disabled={!canEdit}
+                    placeholder="e.g. AY 2024-25 to 2026-27 or Perpetual"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    label="Receipt Number Prefix"
+                    fullWidth
+                    value={settings.receipt_prefix}
+                    onChange={(e) => set('receipt_prefix', e.target.value.toUpperCase())}
+                    disabled={!canEdit}
+                    helperText="Prefix (e.g. FMF)"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <FormControl fullWidth disabled={!canEdit}>
+                    <InputLabel>Active Default Financial Year</InputLabel>
+                    <Select
+                      label="Active Default Financial Year"
+                      value={settings.active_fiscal_year || '2026-27'}
+                      onChange={(e) => set('active_fiscal_year', e.target.value)}
+                    >
+                      {getFiscalYearOptions().map((fy) => (
+                        <MenuItem key={fy} value={fy}>
+                          FY {fy}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <FormControl fullWidth disabled={!canEdit}>
+                    <InputLabel>Financial Year Start Month</InputLabel>
+                    <Select
+                      label="Financial Year Start Month"
+                      value={settings.fy_start_month}
+                      onChange={(e) => set('fy_start_month', e.target.value)}
+                    >
+                      <MenuItem value="1">January (Calendar Year)</MenuItem>
+                      <MenuItem value="4">April (Indian Financial Year)</MenuItem>
+                      <MenuItem value="7">July</MenuItem>
+                      <MenuItem value="10">October</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="80G Validity / Period"
-                  fullWidth
-                  value={settings.eighty_g_validity}
-                  onChange={(e) => set('eighty_g_validity', e.target.value)}
-                  disabled={!canEdit}
-                  placeholder="e.g. AY 2024-25 to 2026-27 or Perpetual"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Receipt Number Prefix"
-                  fullWidth
-                  value={settings.receipt_prefix}
-                  onChange={(e) => set('receipt_prefix', e.target.value.toUpperCase())}
-                  disabled={!canEdit}
-                  helperText="Generated receipts will look like: FMF-2024-0001"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth disabled={!canEdit}>
-                  <InputLabel>Financial Year Start Month</InputLabel>
-                  <Select
-                    label="Financial Year Start Month"
-                    value={settings.fy_start_month}
-                    onChange={(e) => set('fy_start_month', e.target.value)}
-                  >
-                    <MenuItem value="1">January (Calendar Year)</MenuItem>
-                    <MenuItem value="4">April (Indian Financial Year)</MenuItem>
-                    <MenuItem value="7">July</MenuItem>
-                    <MenuItem value="10">October</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* Financial Year Audit Locking Registry */}
+          <Card>
+            <CardHeader
+              title="Financial Year Governance & Audit Locks"
+              subheader="Lock closed financial years to protect audited financial entries against unauthorized alterations"
+            />
+            <Divider />
+            <CardContent>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                Locking a Financial Year prevents modifications to expenses, revenues, and receipt vouchers for audit compliance.
+              </Typography>
+              <Stack spacing={1.5}>
+                {getFiscalYearOptions().map((fy) => {
+                  const isLocked = getLockedFYs().includes(fy)
+                  const isActive = settings.active_fiscal_year === fy
+
+                  return (
+                    <Paper
+                      key={fy}
+                      variant="outlined"
+                      sx={{
+                        p: 2,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        borderRadius: 2,
+                        borderColor: isLocked ? 'error.light' : 'divider',
+                        bgcolor: isLocked ? 'error.50' : 'background.paper',
+                      }}
+                    >
+                      <Box>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                            Financial Year {fy}
+                          </Typography>
+                          {isActive && <Chip label="ACTIVE DEFAULT" size="small" color="primary" sx={{ fontWeight: 700 }} />}
+                          {isLocked ? (
+                            <Chip label="LOCKED FOR AUDIT" size="small" color="error" icon={<LockIcon />} sx={{ fontWeight: 700 }} />
+                          ) : (
+                            <Chip label="OPEN FOR EDITS" size="small" color="success" variant="outlined" sx={{ fontWeight: 600 }} />
+                          )}
+                        </Stack>
+                        <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.5, display: 'block' }}>
+                          Period: 01 Apr {fy.split('-')[0]} — 31 Mar 20{fy.split('-')[1]}
+                        </Typography>
+                      </Box>
+                      {canEdit && (
+                        <Button
+                          size="small"
+                          variant={isLocked ? 'outlined' : 'contained'}
+                          color={isLocked ? 'primary' : 'warning'}
+                          startIcon={isLocked ? <CheckCircleOutlineIcon /> : <LockIcon />}
+                          onClick={() => toggleLockFY(fy)}
+                        >
+                          {isLocked ? 'Unlock FY' : 'Lock FY'}
+                        </Button>
+                      )}
+                    </Paper>
+                  )
+                })}
+              </Stack>
+            </CardContent>
+          </Card>
+        </Stack>
       )}
 
       {/* Email Tab */}

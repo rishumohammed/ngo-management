@@ -8,6 +8,8 @@ import { getEmailProvider, donationReceiptTemplate } from '@/lib/email'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { generateReceiptPdf } from '@/lib/pdf/receipt'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -176,6 +178,24 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
+    const existing = await prisma.donation.findUnique({ where: { id: params.id } })
+    if (!existing) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+
+    // Clean up associated DonationReceipt records
+    await prisma.donationReceipt.deleteMany({
+      where: { donationId: params.id },
+    })
+
+    // If donation was linked to a PaymentAccount and confirmed, decrement the balance back
+    if (existing.paymentAccountId && existing.status === 'CONFIRMED') {
+      await prisma.paymentAccount.update({
+        where: { id: existing.paymentAccountId },
+        data: { currentBalance: { decrement: existing.amount } },
+      })
+    }
+
     const donation = await prisma.donation.delete({
       where: { id: params.id },
     })
@@ -191,6 +211,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
     return NextResponse.json({ success: true })
   } catch (error) {
+    console.error('Failed to delete donation:', error)
     return NextResponse.json({ error: 'Failed to delete donation' }, { status: 500 })
   }
 }

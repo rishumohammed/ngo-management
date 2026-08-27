@@ -16,11 +16,10 @@ import MonetizationOnIcon from '@mui/icons-material/MonetizationOn'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { can } from '@/lib/permissions'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDate, getFiscalYear, getFiscalYearOptions } from '@/lib/utils'
 import { downloadCSV } from '@/lib/csv'
 
 const PAYMENT_MODES = ['CASH', 'CHEQUE', 'NEFT', 'RTGS', 'IMPS', 'UPI', 'DEMAND_DRAFT', 'ONLINE']
-
 
 type Donation = any
 
@@ -37,6 +36,9 @@ export default function DonationsClient() {
   const canCreate = can(role, 'donations', 'create')
   const canUpdate = can(role, 'donations', 'update')
   const canDelete = can(role, 'donations', 'delete')
+
+  const [selectedFiscalYear, setSelectedFiscalYear] = useState<string>(getFiscalYear())
+  const fiscalYearOptions = getFiscalYearOptions()
 
   const [donations, setDonations] = useState<Donation[]>([])
   const [total, setTotal] = useState(0)
@@ -59,12 +61,15 @@ export default function DonationsClient() {
     setLoading(true)
     try {
       const params = new URLSearchParams({ page: String(page + 1), pageSize: String(pageSize), search, paymentMode: modeFilter })
+      if (selectedFiscalYear && selectedFiscalYear !== 'ALL') {
+        params.set('fiscalYear', selectedFiscalYear)
+      }
       const res = await fetch(`/api/donations?${params}`)
       const data = await res.json()
       setDonations(data.donations || [])
       setTotal(data.total || 0)
     } finally { setLoading(false) }
-  }, [page, pageSize, search, modeFilter])
+  }, [page, pageSize, search, modeFilter, selectedFiscalYear])
 
   useEffect(() => { fetchDonations() }, [fetchDonations])
 
@@ -320,6 +325,17 @@ export default function DonationsClient() {
           sx={{ minWidth: 260 }}
           InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> }}
         />
+        <FormControl sx={{ minWidth: 170 }}>
+          <InputLabel>Financial Year</InputLabel>
+          <Select
+            label="Financial Year"
+            value={selectedFiscalYear}
+            onChange={(e) => { setSelectedFiscalYear(e.target.value); setPage(0) }}
+          >
+            <MenuItem value="ALL"><em>All Financial Years</em></MenuItem>
+            {fiscalYearOptions.map(fy => <MenuItem key={fy} value={fy}>FY {fy}</MenuItem>)}
+          </Select>
+        </FormControl>
         <FormControl sx={{ minWidth: 160 }}>
           <InputLabel>Payment Mode</InputLabel>
           <Select label="Payment Mode" value={modeFilter} onChange={(e) => { setModeFilter(e.target.value); setPage(0) }}>

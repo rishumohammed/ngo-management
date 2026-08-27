@@ -235,6 +235,8 @@ model Donation {
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 
+  paymentAccountId String?
+  paymentAccount   PaymentAccount? @relation(fields: [paymentAccountId], references: [id])
   receipt          DonationReceipt?
 
   @@map("donations")
@@ -243,7 +245,7 @@ model Donation {
 model DonationReceipt {
   id          String    @id @default(uuid())
   donationId  String    @unique
-  donation    Donation  @relation(fields: [donationId], references: [id])
+  donation    Donation  @relation(fields: [donationId], references: [id], onDelete: Cascade)
   pdfPath     String?   // server-side stored path
   generatedAt DateTime  @default(now())
 
@@ -483,3 +485,125 @@ model AuditLog {
   @@index([timestamp])
   @@map("audit_logs")
 }
+
+// ─────────────────────────────────────────────
+// FINANCIAL ACCOUNTS & TREASURY
+// ─────────────────────────────────────────────
+
+enum AccountType {
+  BANK_ACCOUNT
+  CASH_IN_HAND
+  DIGITAL_WALLET
+}
+
+enum ExpenseStatus {
+  PAID
+  PENDING
+  CANCELLED
+}
+
+enum CommercialRevenueType {
+  PROFIT_SHARE
+  DIVIDEND
+  SERVICE_FEE
+  ROYALTY
+  OTHER
+}
+
+model PaymentAccount {
+  id             String         @id @default(uuid())
+  accountName    String         // e.g. "SBI Main Account", "Main Cash Box"
+  accountType    AccountType    @default(BANK_ACCOUNT)
+  bankName       String?        // e.g. State Bank of India
+  accountNumber  String?        // Account No.
+  ifscCode       String?
+  branchName     String?
+  openingBalance Decimal        @default(0.00) @db.Decimal(12, 2)
+  currentBalance Decimal        @default(0.00) @db.Decimal(12, 2)
+  isDefault      Boolean        @default(false)
+  isArchived     Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  donations      Donation[]
+  expenses       Expense[]
+  commercialRevs CommercialRevenue[]
+
+  @@map("payment_accounts")
+}
+
+model ExpenseCategory {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?   @db.Text
+  budgetLimit Decimal?  @db.Decimal(12, 2)
+  isArchived  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  expenses    Expense[]
+
+  @@map("expense_categories")
+}
+
+model Expense {
+  id               String          @id @default(uuid())
+  voucherNo        String          @unique // e.g. FMF/EXP/2026-27/0001
+  fiscalYear       String
+  categoryId       String
+  category         ExpenseCategory @relation(fields: [categoryId], references: [id])
+  paymentAccountId String?
+  paymentAccount   PaymentAccount? @relation(fields: [paymentAccountId], references: [id])
+  amount           Decimal         @db.Decimal(12, 2)
+  date             DateTime
+  paymentMode      PaymentMode
+  payeeName        String          // Vendor or Person paid
+  referenceNo      String?         // UTR/Cheque/Invoice No
+  description      String?         @db.Text
+  receiptUrl       String?         // Uploaded bill/receipt document
+  status           ExpenseStatus   @default(PAID)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@map("expenses")
+}
+
+model CommercialEntity {
+  id            String              @id @default(uuid())
+  name          String              // Company/Enterprise Name
+  regNumber     String?             // CIN/Registration No.
+  entityType    String?             // e.g. Private Ltd, Social Enterprise, Business Unit
+  contactPerson String?
+  phone         String?
+  email         String?
+  notes         String?             @db.Text
+  isArchived    Boolean             @default(false)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  revenues      CommercialRevenue[]
+
+  @@map("commercial_entities")
+}
+
+model CommercialRevenue {
+  id               String                @id @default(uuid())
+  receiptNo        String                @unique // e.g. FMF/CR/2026-27/0001
+  fiscalYear       String
+  entityId         String
+  entity           CommercialEntity      @relation(fields: [entityId], references: [id])
+  paymentAccountId String?
+  paymentAccount   PaymentAccount?       @relation(fields: [paymentAccountId], references: [id])
+  amount           Decimal               @db.Decimal(12, 2)
+  date             DateTime
+  revenueType      CommercialRevenueType @default(PROFIT_SHARE)
+  paymentMode      PaymentMode
+  referenceNo      String?
+  notes            String?               @db.Text
+  documentUrl      String?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  @@map("commercial_revenues")
+}
+

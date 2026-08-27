@@ -17,6 +17,32 @@ export function getFiscalYear(date: Date = new Date(), fyStartMonth = 4): string
   }
 }
 
+export function getFiscalYearDateRange(fiscalYear: string): { startDate: Date; endDate: Date } | null {
+  if (!fiscalYear || fiscalYear === 'ALL') return null
+  const parts = fiscalYear.split('-')
+  if (parts.length !== 2) return null
+  const startYear = parseInt(parts[0], 10)
+  if (isNaN(startYear)) return null
+
+  const startDate = new Date(startYear, 3, 1, 0, 0, 0, 0) // April 1st of startYear
+  const endDate = new Date(startYear + 1, 2, 31, 23, 59, 59, 999) // March 31st of startYear + 1
+  return { startDate, endDate }
+}
+
+export function getFiscalYearOptions(pastYears = 4, futureYears = 3): string[] {
+  const currentFY = getFiscalYear(new Date())
+  const startYear = parseInt(currentFY.split('-')[0], 10)
+  const options = new Set<string>()
+
+  for (let i = -pastYears; i <= futureYears; i++) {
+    const y = startYear + i
+    const nextY = String(y + 1).slice(2)
+    options.add(`${y}-${nextY}`)
+  }
+
+  return Array.from(options).sort().reverse()
+}
+
 export function formatReceiptNumber(
   prefix: string,
   fiscalYear: string,

@@ -83,6 +83,15 @@ export const PERMISSIONS = {
     AUDITOR: [],
     VOLUNTEER: [],
   },
+  finance: {
+    SUPER_ADMIN: ['read', 'create', 'update', 'delete'],
+    PROGRAM_ADMIN: [],
+    FINANCE_ADMIN: ['read', 'create', 'update', 'delete'],
+    COMMITTEE_SECRETARY: [],
+    DATA_ENTRY_STAFF: [],
+    AUDITOR: ['read'],
+    VOLUNTEER: [],
+  },
 } as const
 
 type Module = keyof typeof PERMISSIONS
