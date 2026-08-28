@@ -44,12 +44,15 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const orgData = {
     orgName: getSetting('org_name') || 'Free Mind Foundation',
     orgAddress: getSetting('org_address') || '',
+    orgPhone: getSetting('org_phone') || '',
+    orgEmail: getSetting('org_email') || '',
     orgPan: getSetting('org_pan') || '',
     eightyGNumber: getSetting('eighty_g_number') || '',
     eightyGValidity: getSetting('eighty_g_validity') || '',
     signatory: getSetting('signatory_name') || '',
     fcraNumber: getSetting('fcra_number') || '',
   }
+
 
   if (action === 'pdf') {
     try {

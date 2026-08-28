@@ -86,3 +86,39 @@ export function isTermExpiringSoon(
 export function getMemberNumber(sequence: number): string {
   return `FMF-M-${String(sequence).padStart(4, '0')}`
 }
+
+export function numberToWords(amount: number | string): string {
+  const num = Math.floor(Math.abs(typeof amount === 'string' ? parseFloat(amount) : amount))
+  if (isNaN(num) || num === 0) return 'Zero Rupees Only'
+
+  const units = [
+    '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+    'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'
+  ]
+  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety']
+
+  function convertChunk(n: number): string {
+    if (n === 0) return ''
+    if (n < 20) return units[n]
+    if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + units[n % 10] : '')
+    return units[Math.floor(n / 100)] + ' Hundred' + (n % 100 !== 0 ? ' ' + convertChunk(n % 100) : '')
+  }
+
+  let result = ''
+  let remaining = num
+
+  const crore = Math.floor(remaining / 10000000)
+  remaining %= 10000000
+  const lakh = Math.floor(remaining / 100000)
+  remaining %= 100000
+  const thousand = Math.floor(remaining / 1000)
+  remaining %= 1000
+
+  if (crore > 0) result += convertChunk(crore) + ' Crore '
+  if (lakh > 0) result += convertChunk(lakh) + ' Lakh '
+  if (thousand > 0) result += convertChunk(thousand) + ' Thousand '
+  if (remaining > 0) result += convertChunk(remaining) + ' '
+
+  return result.trim() + ' Rupees Only'
+}
+

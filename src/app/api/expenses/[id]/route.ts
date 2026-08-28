@@ -19,6 +19,7 @@ const ExpenseUpdateSchema = z.object({
   description: z.string().optional().nullable(),
   receiptUrl: z.string().optional().nullable(),
   status: z.enum(['PAID', 'PENDING', 'CANCELLED']).optional(),
+  isVoucher: z.boolean().optional(),
 })
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
@@ -46,6 +47,24 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   const newStatus = parsed.data.status || existing.status
   const newAccountId = parsed.data.paymentAccountId !== undefined ? parsed.data.paymentAccountId : existing.paymentAccountId
   const newAmount = parsed.data.amount !== undefined ? parsed.data.amount : Number(existing.amount)
+
+  // Validate against maximum voucher limit setting only if it is a voucher
+  if (parsed.data.isVoucher) {
+    const maxLimitSetting = await prisma.orgSetting.findUnique({ where: { key: 'voucher_max_limit' } })
+    if (maxLimitSetting && maxLimitSetting.value) {
+      const maxLimit = parseFloat(maxLimitSetting.value)
+      if (!isNaN(maxLimit) && maxLimit > 0 && newAmount > maxLimit) {
+        return NextResponse.json(
+          {
+            error: `Voucher amount (₹${newAmount.toLocaleString('en-IN')}) exceeds maximum allowed voucher limit of ₹${maxLimit.toLocaleString('en-IN')} set in Organization Settings.`,
+          },
+          { status: 400 }
+        )
+      }
+    }
+  }
+
+
 
   const updated = await prisma.expense.update({
     where: { id: params.id },

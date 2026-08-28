@@ -124,11 +124,12 @@ const styles = StyleSheet.create({
 })
 
 interface ReceiptData {
-  
   donation: any
   orgData: {
     orgName: string
     orgAddress: string
+    orgPhone?: string
+    orgEmail?: string
     orgPan: string
     eightyGNumber: string
     eightyGValidity: string
@@ -152,8 +153,16 @@ export async function generateReceiptPdf({ donation, orgData }: ReceiptData): Pr
         <View style={styles.header}>
           <View>
             <Text style={styles.orgName}>{orgData.orgName}</Text>
-            <Text style={styles.orgDetails}>{orgData.orgAddress}</Text>
+            {orgData.orgAddress ? <Text style={styles.orgDetails}>{orgData.orgAddress}</Text> : null}
+            {(orgData.orgPhone || orgData.orgEmail) && (
+              <Text style={styles.orgDetails}>
+                {[orgData.orgPhone ? `Ph: ${orgData.orgPhone}` : '', orgData.orgEmail ? `Email: ${orgData.orgEmail}` : '']
+                  .filter(Boolean)
+                  .join(' | ')}
+              </Text>
+            )}
             {orgData.orgPan && <Text style={styles.orgDetails}>PAN: {orgData.orgPan}</Text>}
+
             {orgData.eightyGNumber && (
               <Text style={styles.orgDetails}>
                 80G Registration: {orgData.eightyGNumber}

@@ -20,7 +20,9 @@ const ExpenseSchema = z.object({
   description: z.string().optional().nullable(),
   receiptUrl: z.string().optional().nullable(),
   status: z.enum(['PAID', 'PENDING', 'CANCELLED']).optional(),
+  isVoucher: z.boolean().optional(),
 })
+
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -79,11 +81,27 @@ export async function POST(req: NextRequest) {
   if (!parsed.success)
     return NextResponse.json({ error: 'Validation failed', details: parsed.error.errors }, { status: 400 })
 
-  // Get settings for voucher format
+  // Get settings for voucher format and limit
   const settings = await prisma.orgSetting.findMany()
   const getSetting = (key: string) => settings.find((s: any) => s.key === key)?.value || ''
+
+  const maxLimitVal = getSetting('voucher_max_limit')
+  if (parsed.data.isVoucher && maxLimitVal) {
+    const maxLimit = parseFloat(maxLimitVal)
+    if (!isNaN(maxLimit) && maxLimit > 0 && parsed.data.amount > maxLimit) {
+      return NextResponse.json(
+        {
+          error: `Voucher amount (₹${parsed.data.amount.toLocaleString('en-IN')}) exceeds maximum allowed voucher limit of ₹${maxLimit.toLocaleString('en-IN')} set in Organization Settings.`,
+        },
+        { status: 400 }
+      )
+    }
+  }
+
+
   const prefix = (getSetting('receipt_prefix') || 'FMF') + '/EXP'
   const fyStartMonth = parseInt(getSetting('fy_start_month') || '4')
+
 
   const expenseDate = new Date(parsed.data.date)
   const fiscalYear = getFiscalYear(expenseDate, fyStartMonth)

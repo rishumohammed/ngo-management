@@ -52,6 +52,11 @@ import SearchIcon from '@mui/icons-material/Search'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import PaymentsIcon from '@mui/icons-material/Payments'
 import PointOfSaleIcon from '@mui/icons-material/PointOfSale'
+import PrintIcon from '@mui/icons-material/Print'
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
+import VisibilityIcon from '@mui/icons-material/Visibility'
+import WarningAmberIcon from '@mui/icons-material/WarningAmber'
+import CloseIcon from '@mui/icons-material/Close'
 
 import {
   ResponsiveContainer,
@@ -68,7 +73,8 @@ import {
 } from 'recharts'
 import { useSearchParams, useRouter } from 'next/navigation'
 import dayjs from 'dayjs'
-import { getFiscalYear, getFiscalYearOptions } from '@/lib/utils'
+import { getFiscalYear, getFiscalYearOptions, numberToWords } from '@/lib/utils'
+
 
 interface PaymentAccount {
   id: string
@@ -200,9 +206,39 @@ export default function FinanceClient() {
   const [openCategoryModal, setOpenCategoryModal] = useState(false)
   const [openEntityModal, setOpenEntityModal] = useState(false)
   const [openRevenueModal, setOpenRevenueModal] = useState(false)
+  const [openVoucherPrintModal, setOpenVoucherPrintModal] = useState(false)
 
-  // Edit states
+  // Edit & Voucher Print states
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null)
+  const [selectedVoucherForPrint, setSelectedVoucherForPrint] = useState<Expense | null>(null)
+  const [expenseFormMode, setExpenseFormMode] = useState<'EXPENSE' | 'VOUCHER'>('VOUCHER')
+
+
+  // Organization Settings state
+  const [orgSettings, setOrgSettings] = useState<Record<string, string>>({
+    org_name: 'Free Mind Foundation',
+    org_logo: '',
+    org_address: '',
+    org_phone: '',
+    org_email: '',
+    org_pan: '',
+    eighty_g_number: '',
+    signatory_name: 'Authorised Signatory',
+    voucher_max_limit: '50000',
+  })
+
+  const fetchSettings = useCallback(async () => {
+    try {
+      const res = await fetch('/api/settings')
+      if (res.ok) {
+        const data = await res.json()
+        setOrgSettings((prev) => ({ ...prev, ...data }))
+      }
+    } catch (e) {
+      console.error('Failed to load settings in FinanceClient', e)
+    }
+  }, [])
+
 
   // Form states
   const [accountForm, setAccountForm] = useState({
@@ -344,11 +380,13 @@ export default function FinanceClient() {
   }, [selectedFiscalYear])
 
   useEffect(() => {
+    fetchSettings()
     fetchSummary()
     fetchCategories()
     fetchExpenses()
     fetchEntitiesAndRevenues()
-  }, [fetchSummary, fetchCategories, fetchExpenses, fetchEntitiesAndRevenues])
+  }, [fetchSettings, fetchSummary, fetchCategories, fetchExpenses, fetchEntitiesAndRevenues])
+
 
   // Submit Account Form
   const handleSaveAccount = async () => {
@@ -417,8 +455,10 @@ export default function FinanceClient() {
         body: JSON.stringify({
           ...expenseForm,
           amount: parseFloat(expenseForm.amount),
+          isVoucher: expenseFormMode === 'VOUCHER',
         }),
       })
+
       if (res.ok) {
         setOpenExpenseModal(false)
         setSelectedExpense(null)
@@ -555,33 +595,61 @@ export default function FinanceClient() {
     switch (tabIndex) {
       case 1:
         return {
-          title: 'Expenses Log & Vouchers',
-          subtitle: 'Log operational costs, track expense categories, and manage voucher records',
+          title: 'Payment Vouchers & Expenses',
+          subtitle: 'Record operating expenses, issue payment vouchers, and print formal voucher receipts',
           actions: (
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={() => {
-                setSelectedExpense(null)
-                setExpenseForm({
-                  categoryId: categories[0]?.id || '',
-                  paymentAccountId: summary?.accounts[0]?.id || '',
-                  amount: '',
-                  date: dayjs().format('YYYY-MM-DD'),
-                  paymentMode: 'NEFT',
-                  payeeName: '',
-                  referenceNo: '',
-                  description: '',
-                  receiptUrl: '',
-                })
-                setOpenExpenseModal(true)
-              }}
-            >
-              Record New Expense
-            </Button>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Button
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={() => {
+                  setExpenseFormMode('EXPENSE')
+                  setSelectedExpense(null)
+                  setExpenseForm({
+                    categoryId: categories[0]?.id || '',
+                    paymentAccountId: summary?.accounts[0]?.id || '',
+                    amount: '',
+                    date: dayjs().format('YYYY-MM-DD'),
+                    paymentMode: 'NEFT',
+                    payeeName: '',
+                    referenceNo: '',
+                    description: '',
+                    receiptUrl: '',
+                  })
+                  setOpenExpenseModal(true)
+                }}
+              >
+                Record Expense
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<ReceiptLongIcon />}
+                onClick={() => {
+                  setExpenseFormMode('VOUCHER')
+                  setSelectedExpense(null)
+                  setExpenseForm({
+                    categoryId: categories[0]?.id || '',
+                    paymentAccountId: summary?.accounts[0]?.id || '',
+                    amount: '',
+                    date: dayjs().format('YYYY-MM-DD'),
+                    paymentMode: 'NEFT',
+                    payeeName: '',
+                    referenceNo: '',
+                    description: '',
+                    receiptUrl: '',
+                  })
+                  setOpenExpenseModal(true)
+                }}
+              >
+                Issue Payment Voucher
+              </Button>
+            </Stack>
           ),
         }
+
+
+
       case 2:
         return {
           title: 'Expense Categories',
@@ -926,124 +994,117 @@ export default function FinanceClient() {
         </Box>
       )}
 
-      {/* ─── TAB 1: EXPENSES LOG ─── */}
+      {/* ─── TAB 1: PAYMENT VOUCHERS & EXPENSES ─── */}
       {tabIndex === 1 && (
         <Paper sx={{ p: 3, borderRadius: 3 }}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" sx={{ mb: 3 }}>
-            <TextField
-              size="small"
-              placeholder="Search vendor, voucher, description..."
-              value={expenseSearch}
-              onChange={(e) => {
-                setExpenseSearch(e.target.value)
-                setExpensePage(0)
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ width: { xs: '100%', sm: 300 } }}
-            />
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={() => {
-                setSelectedExpense(null)
-                setExpenseForm({
-                  categoryId: categories[0]?.id || '',
-                  paymentAccountId: summary?.accounts[0]?.id || '',
-                  amount: '',
-                  date: dayjs().format('YYYY-MM-DD'),
-                  paymentMode: 'NEFT',
-                  payeeName: '',
-                  referenceNo: '',
-                  description: '',
-                  receiptUrl: '',
-                })
-                setOpenExpenseModal(true)
-              }}
-            >
-              Record New Expense
-            </Button>
-          </Stack>
 
-          {loadingExpenses ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-              <CircularProgress color="primary" />
-            </Box>
-          ) : (
-            <>
-              <TableContainer>
-                <Table size="medium">
-                  <TableHead sx={{ bgcolor: 'grey.50' }}>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 700 }}>Voucher No.</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Payee / Vendor</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Category</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Account Paid From</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }} align="right">
-                        Amount (₹)
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Mode</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }} align="center">
-                        Actions
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {expenses.length === 0 ? (
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" sx={{ mb: 3 }}>
+              <TextField
+                size="small"
+                placeholder="Search vendor, voucher, description..."
+                value={expenseSearch}
+                onChange={(e) => {
+                  setExpenseSearch(e.target.value)
+                  setExpensePage(0)
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ width: { xs: '100%', sm: 360 } }}
+              />
+            </Stack>
+
+
+            {loadingExpenses ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+                <CircularProgress color="primary" />
+              </Box>
+            ) : (
+              <>
+                <TableContainer>
+                  <Table size="medium">
+                    <TableHead sx={{ bgcolor: 'grey.50' }}>
                       <TableRow>
-                        <TableCell colSpan={8} align="center" sx={{ py: 4, color: 'text.secondary' }}>
-                          No expenses recorded matching your criteria.
+                        <TableCell sx={{ fontWeight: 700 }}>Voucher No.</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Payee / Vendor</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Category</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Account Paid From</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }} align="right">
+                          Amount (₹)
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Mode</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }} align="center">
+                          Actions
                         </TableCell>
                       </TableRow>
-                    ) : (
-                      expenses.map((exp) => (
-                        <TableRow key={exp.id} hover>
-                          <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>
-                            {exp.voucherNo}
+                    </TableHead>
+                    <TableBody>
+                      {expenses.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={8} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                            No payment vouchers recorded matching your criteria.
                           </TableCell>
-                          <TableCell>{dayjs(exp.date).format('DD MMM YYYY')}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{exp.payeeName}</TableCell>
-                          <TableCell>
-                            <Chip label={exp.category?.name || 'Category'} size="small" variant="outlined" />
-                          </TableCell>
-                          <TableCell>{exp.paymentAccount?.accountName || 'Cash / Unassigned'}</TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 700, color: 'error.main' }}>
-                            ₹{Number(exp.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                          </TableCell>
-                          <TableCell>
-                            <Chip label={exp.paymentMode} size="small" />
-                          </TableCell>
-                          <TableCell align="center">
-                            <Tooltip title="Edit Expense">
-                              <IconButton
-                                size="small"
-                                color="primary"
-                                onClick={() => {
-                                  setSelectedExpense(exp)
-                                  setExpenseForm({
-                                    categoryId: exp.categoryId,
-                                    paymentAccountId: exp.paymentAccountId || '',
-                                    amount: exp.amount.toString(),
-                                    date: dayjs(exp.date).format('YYYY-MM-DD'),
-                                    paymentMode: exp.paymentMode,
-                                    payeeName: exp.payeeName,
-                                    referenceNo: exp.referenceNo || '',
-                                    description: exp.description || '',
-                                    receiptUrl: exp.receiptUrl || '',
-                                  })
-                                  setOpenExpenseModal(true)
-                                }}
-                              >
-                                <EditIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
+                        </TableRow>
+                      ) : (
+                        expenses.map((exp) => (
+                          <TableRow key={exp.id} hover>
+                            <TableCell sx={{ fontWeight: 700, color: 'primary.main' }}>
+                              {exp.voucherNo}
+                            </TableCell>
+                            <TableCell>{dayjs(exp.date).format('DD MMM YYYY')}</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>{exp.payeeName}</TableCell>
+                            <TableCell>
+                              <Chip label={exp.category?.name || 'Category'} size="small" variant="outlined" />
+                            </TableCell>
+                            <TableCell>{exp.paymentAccount?.accountName || 'Cash / Unassigned'}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700, color: 'error.main' }}>
+                              ₹{Number(exp.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                            </TableCell>
+                            <TableCell>
+                              <Chip label={exp.paymentMode} size="small" />
+                            </TableCell>
+                            <TableCell align="center">
+                              <Tooltip title="View & Print Payment Voucher">
+                                <IconButton
+                                  size="small"
+                                  color="info"
+                                  onClick={() => {
+                                    setSelectedVoucherForPrint(exp)
+                                    setOpenVoucherPrintModal(true)
+                                  }}
+                                >
+                                  <ReceiptLongIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Edit Voucher Record">
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => {
+                                    setSelectedExpense(exp)
+                                    setExpenseForm({
+                                      categoryId: exp.categoryId,
+                                      paymentAccountId: exp.paymentAccountId || '',
+                                      amount: exp.amount.toString(),
+                                      date: dayjs(exp.date).format('YYYY-MM-DD'),
+                                      paymentMode: exp.paymentMode,
+                                      payeeName: exp.payeeName,
+                                      referenceNo: exp.referenceNo || '',
+                                      description: exp.description || '',
+                                      receiptUrl: exp.receiptUrl || '',
+                                    })
+                                    setOpenExpenseModal(true)
+                                  }}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+
                             <Tooltip title="Delete Expense">
                               <IconButton
                                 size="small"
@@ -1076,6 +1137,8 @@ export default function FinanceClient() {
           )}
         </Paper>
       )}
+
+
 
       {/* ─── TAB 2: EXPENSE CATEGORIES ─── */}
       {tabIndex === 2 && (
@@ -1329,12 +1392,31 @@ export default function FinanceClient() {
         </DialogActions>
       </Dialog>
 
-      {/* 2. Add Expense Modal */}
+      {/* 2. Record Expense / Issue Payment Voucher Modal */}
       <Dialog open={openExpenseModal} onClose={() => setOpenExpenseModal(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>{selectedExpense ? 'Edit Expense Record' : 'Record New Expense'}</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          {selectedExpense
+            ? 'Edit Expense / Payment Voucher Record'
+            : expenseFormMode === 'EXPENSE'
+            ? 'Record New Expense'
+            : 'Issue Payment Voucher'}
+        </DialogTitle>
+
         <DialogContent dividers>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <Grid container spacing={2}>
+
+          <Box sx={{ pt: 1 }}>
+            {/* Voucher Limit Alert if amount exceeds limit */}
+            {expenseFormMode === 'VOUCHER' &&
+              expenseForm.amount &&
+              parseFloat(expenseForm.amount) > parseFloat(orgSettings.voucher_max_limit || '50000') && (
+                <Alert severity="error" icon={<WarningAmberIcon />} sx={{ mb: 2.5 }}>
+                  Voucher amount (₹{parseFloat(expenseForm.amount).toLocaleString('en-IN')}) exceeds the maximum allowed
+                  voucher limit of ₹{parseFloat(orgSettings.voucher_max_limit || '50000').toLocaleString('en-IN')} set in
+                  Organization Settings.
+                </Alert>
+              )}
+
+            <Grid container spacing={2.5}>
               <Grid item xs={12} sm={6}>
                 <TextField
                   label="Date"
@@ -1343,6 +1425,7 @@ export default function FinanceClient() {
                   InputLabelProps={{ shrink: true }}
                   value={expenseForm.date}
                   onChange={(e) => setExpenseForm({ ...expenseForm, date: e.target.value })}
+                  helperText={expenseFormMode === 'VOUCHER' ? ' ' : undefined}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -1352,25 +1435,30 @@ export default function FinanceClient() {
                   fullWidth
                   value={expenseForm.amount}
                   onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })}
+                  helperText={
+                    expenseFormMode === 'VOUCHER'
+                      ? `Max amount ${parseFloat(orgSettings.voucher_max_limit || '50000').toLocaleString('en-IN')}`
+                      : undefined
+                  }
                 />
               </Grid>
-            </Grid>
 
-            <TextField
-              label="Payee / Vendor Name"
-              fullWidth
-              placeholder="e.g. Kerala State Electricity Board, Office Landlord"
-              value={expenseForm.payeeName}
-              onChange={(e) => setExpenseForm({ ...expenseForm, payeeName: e.target.value })}
-            />
+              <Grid item xs={12}>
+                <TextField
+                  label="Payee / Vendor Name"
+                  fullWidth
+                  placeholder="e.g. Kerala State Electricity Board, Office Landlord"
+                  value={expenseForm.payeeName}
+                  onChange={(e) => setExpenseForm({ ...expenseForm, payeeName: e.target.value })}
+                />
+              </Grid>
 
-            <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
-                  <InputLabel>Category</InputLabel>
+                  <InputLabel>Expense Category</InputLabel>
                   <Select
                     value={expenseForm.categoryId}
-                    label="Category"
+                    label="Expense Category"
                     onChange={(e) => setExpenseForm({ ...expenseForm, categoryId: e.target.value })}
                   >
                     {categories.map((c) => (
@@ -1397,9 +1485,7 @@ export default function FinanceClient() {
                   </Select>
                 </FormControl>
               </Grid>
-            </Grid>
 
-            <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
                   <InputLabel>Payment Mode</InputLabel>
@@ -1418,29 +1504,47 @@ export default function FinanceClient() {
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  label="Reference / UTR No."
+                  label="Reference / UTR / Cheque No."
                   fullWidth
                   value={expenseForm.referenceNo}
                   onChange={(e) => setExpenseForm({ ...expenseForm, referenceNo: e.target.value })}
                 />
               </Grid>
-            </Grid>
 
-            <TextField
-              label="Description / Purpose"
-              multiline
-              rows={2}
-              fullWidth
-              value={expenseForm.description}
-              onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })}
-            />
-          </Stack>
+              <Grid item xs={12}>
+                <TextField
+                  label="Particulars / Description"
+                  multiline
+                  rows={2}
+                  fullWidth
+                  value={expenseForm.description}
+                  onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })}
+                />
+              </Grid>
+            </Grid>
+          </Box>
         </DialogContent>
         <DialogActions>
+
           <Button onClick={() => setOpenExpenseModal(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSaveExpense}>Save Expense</Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveExpense}
+            disabled={
+              expenseFormMode === 'VOUCHER' &&
+              !!(
+                expenseForm.amount &&
+                parseFloat(expenseForm.amount) > parseFloat(orgSettings.voucher_max_limit || '50000')
+              )
+            }
+          >
+            {expenseFormMode === 'EXPENSE' ? 'Save Expense' : 'Issue Voucher'}
+          </Button>
         </DialogActions>
       </Dialog>
+
+
+
 
       {/* 3. Add Category Modal */}
       <Dialog open={openCategoryModal} onClose={() => setOpenCategoryModal(false)} maxWidth="xs" fullWidth>
@@ -1603,6 +1707,239 @@ export default function FinanceClient() {
           <Button variant="contained" onClick={handleSaveRevenue}>Record Profit</Button>
         </DialogActions>
       </Dialog>
+
+      {/* 6. Formal Printable NGO Payment Voucher Modal */}
+      <Dialog
+        open={openVoucherPrintModal}
+        onClose={() => setOpenVoucherPrintModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <ReceiptLongIcon color="primary" />
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              Payment Voucher — {selectedVoucherForPrint?.voucherNo}
+            </Typography>
+          </Stack>
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<PrintIcon />}
+              onClick={() => window.print()}
+            >
+              Print Voucher
+            </Button>
+            <IconButton onClick={() => setOpenVoucherPrintModal(false)}>
+              <CloseIcon />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+        <DialogContent dividers sx={{ bgcolor: 'grey.100', p: 3 }}>
+          {selectedVoucherForPrint && (
+            <Paper
+              id="printable-payment-voucher"
+              elevation={2}
+              sx={{
+                p: 4,
+                bgcolor: '#ffffff',
+                maxWidth: 760,
+                mx: 'auto',
+                border: '2px solid #00897B',
+                borderRadius: 2,
+                fontFamily: 'Roboto, sans-serif',
+              }}
+            >
+              {/* Header: Logo, Name, Address, Contact Phone & Email */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  pb: 2,
+                  mb: 2,
+                  borderBottom: '2px solid #00897B',
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  {orgSettings.org_logo ? (
+                    <Box
+                      component="img"
+                      src={orgSettings.org_logo}
+                      alt="Logo"
+                      sx={{ width: 64, height: 64, objectFit: 'contain' }}
+                    />
+                  ) : null}
+                  <Box>
+                    <Typography variant="h5" sx={{ fontWeight: 800, color: '#00897B', letterSpacing: '-0.02em' }}>
+                      {orgSettings.org_name || 'Free Mind Foundation'}
+                    </Typography>
+                    {orgSettings.org_address && (
+                      <Typography variant="body2" sx={{ color: 'text.secondary', whiteSpace: 'pre-line', fontSize: 13 }}>
+                        {orgSettings.org_address}
+                      </Typography>
+                    )}
+                    {(orgSettings.org_phone || orgSettings.org_email) && (
+                      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.5, fontWeight: 500 }}>
+                        {[orgSettings.org_phone ? `Phone: ${orgSettings.org_phone}` : '', orgSettings.org_email ? `Email: ${orgSettings.org_email}` : '']
+                          .filter(Boolean)
+                          .join(' | ')}
+                      </Typography>
+                    )}
+                    {orgSettings.org_pan && (
+                      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                        PAN: {orgSettings.org_pan} {orgSettings.eighty_g_number ? `| 80G Reg: ${orgSettings.eighty_g_number}` : ''}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+                <Box sx={{ textAlign: 'right' }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    Voucher Number
+                  </Typography>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#00897B' }}>
+                    {selectedVoucherForPrint.voucherNo}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                    Date: {dayjs(selectedVoucherForPrint.date).format('DD MMM YYYY')}
+                  </Typography>
+                  <Chip
+                    label={`FY ${selectedVoucherForPrint.fiscalYear}`}
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                    sx={{ mt: 0.5, fontWeight: 700 }}
+                  />
+                </Box>
+              </Box>
+
+              {/* Voucher Title */}
+              <Box sx={{ textAlign: 'center', my: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: '#004D40', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  PAYMENT VOUCHER
+                </Typography>
+              </Box>
+
+              {/* Financial Transaction Table */}
+              <TableContainer component={Paper} variant="outlined" sx={{ my: 2, borderRadius: 1.5 }}>
+                <Table size="small">
+                  <TableBody>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'grey.50', width: '30%' }}>Paid To (Payee)</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: '1rem', color: 'primary.dark' }}>
+                        {selectedVoucherForPrint.payeeName}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'grey.50' }}>Debit Account (Category)</TableCell>
+                      <TableCell>{selectedVoucherForPrint.category?.name || 'Expense Category'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'grey.50' }}>Credit Account (Paid From)</TableCell>
+                      <TableCell>{selectedVoucherForPrint.paymentAccount?.accountName || 'Cash in Hand / Bank'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'grey.50' }}>Payment Mode & Reference</TableCell>
+                      <TableCell>
+                        {selectedVoucherForPrint.paymentMode}{' '}
+                        {selectedVoucherForPrint.referenceNo ? `(Ref / UTR: ${selectedVoucherForPrint.referenceNo})` : ''}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'grey.50' }}>Particulars / Description</TableCell>
+                      <TableCell>{selectedVoucherForPrint.description || 'N/A'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'grey.50' }}>Amount in Figures</TableCell>
+                      <TableCell sx={{ fontWeight: 800, fontSize: '1.15rem', color: '#D32F2F' }}>
+                        ₹{Number(selectedVoucherForPrint.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'grey.50' }}>Amount in Words</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontStyle: 'italic', color: 'text.primary' }}>
+                        {numberToWords(selectedVoucherForPrint.amount)}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              {/* Signatures Section */}
+              <Box sx={{ mt: 5, pt: 2 }}>
+                <Grid container spacing={2} sx={{ textAlign: 'center' }}>
+                  <Grid item xs={3}>
+                    <Box sx={{ borderTop: '1px solid #777', pt: 1, mt: 4 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                        Prepared By
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={3}>
+                    <Box sx={{ borderTop: '1px solid #777', pt: 1, mt: 4 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                        Verified / Checked By
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={3}>
+                    <Box sx={{ borderTop: '1px solid #777', pt: 1, mt: 4 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                        Receiver Signature
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={3}>
+                    <Box sx={{ borderTop: '1px solid #777', pt: 1, mt: 4 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 700, color: 'primary.dark', display: 'block' }}>
+                        {orgSettings.signatory_name || 'Authorised Signatory'}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {orgSettings.org_name || 'Trustee'}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Print stylesheet override */}
+              <style jsx global>{`
+                @media print {
+                  body * {
+                    visibility: hidden;
+                  }
+                  #printable-payment-voucher,
+                  #printable-payment-voucher * {
+                    visibility: visible;
+                  }
+                  #printable-payment-voucher {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                    max-width: 100% !important;
+                    box-shadow: none !important;
+                    border: 2px solid #000 !important;
+                  }
+                }
+              `}</style>
+            </Paper>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenVoucherPrintModal(false)}>Close</Button>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<PrintIcon />}
+            onClick={() => window.print()}
+          >
+            Print Voucher
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }
+

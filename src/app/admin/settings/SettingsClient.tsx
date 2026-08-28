@@ -49,13 +49,17 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   org_name: 'Free Mind Foundation',
   org_logo: '',
   org_address: '',
+  org_phone: '',
+  org_email: '',
   org_pan: '',
   eighty_g_number: '',
   eighty_g_validity: '',
   fcra_number: '',
   signatory_name: '',
   receipt_prefix: 'FMF',
+  voucher_max_limit: '50000',
   fy_start_month: '4',
+
   active_fiscal_year: '2026-27',
   locked_fiscal_years: '[]',
   email_provider: 'resend',
@@ -378,6 +382,26 @@ export default function SettingsClient() {
                   helperText="Printed on receipts & formal communications"
                 />
               </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Contact Phone Number"
+                  fullWidth
+                  value={settings.org_phone || ''}
+                  onChange={(e) => set('org_phone', e.target.value)}
+                  disabled={!canEdit}
+                  helperText="Displayed on receipts, invoices & vouchers"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Contact Email Address"
+                  fullWidth
+                  value={settings.org_email || ''}
+                  onChange={(e) => set('org_email', e.target.value)}
+                  disabled={!canEdit}
+                  helperText="Official email displayed on receipts & vouchers"
+                />
+              </Grid>
               <Grid item xs={12}>
                 <TextField
                   label="Registered Address"
@@ -416,6 +440,33 @@ export default function SettingsClient() {
       {/* Donations & 80G Tab */}
       {tab === 1 && (
         <Stack spacing={3}>
+          {/* Payment Voucher & Financial Limits */}
+          <Card>
+            <CardHeader
+              title="Voucher & Payment Transaction Controls"
+              subheader="Configure maximum permissible limits for financial vouchers and disbursements"
+            />
+            <Divider />
+            <CardContent>
+              <Grid container spacing={2.5}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Maximum Voucher Amount Limit (₹)"
+                    fullWidth
+                    type="number"
+                    value={settings.voucher_max_limit || '50000'}
+                    onChange={(e) => set('voucher_max_limit', e.target.value)}
+                    disabled={!canEdit}
+                    helperText="Maximum transaction limit permitted per payment voucher generated in Finance."
+                    InputProps={{
+                      startAdornment: <Typography sx={{ mr: 1, color: 'text.secondary', fontWeight: 600 }}>₹</Typography>,
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader
               title="80G & Receipt Configuration"
@@ -484,6 +535,7 @@ export default function SettingsClient() {
                     </Select>
                   </FormControl>
                 </Grid>
+
               </Grid>
             </CardContent>
           </Card>
