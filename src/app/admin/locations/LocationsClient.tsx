@@ -7,7 +7,7 @@ import {
   Alert, CircularProgress, IconButton, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField, List, ListItem,
   ListItemText, ListItemSecondaryAction, Breadcrumbs, Link,
-  Paper, Tooltip
+  Paper, Tooltip, Chip
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import EditIcon from '@mui/icons-material/Edit'
@@ -15,6 +15,8 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import NavigateNextIcon from '@mui/icons-material/NavigateNext'
 import MapIcon from '@mui/icons-material/Map'
 import LocationCityIcon from '@mui/icons-material/LocationCity'
+import PeopleIcon from '@mui/icons-material/People'
+import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism'
 import { can } from '@/lib/permissions'
 import { DEFAULT_INDIAN_STATES } from '@/lib/constants'
 
@@ -24,6 +26,9 @@ export default function LocationsClient() {
 
   const [states, setStates] = useState<string[]>([])
   const [districtsMap, setDistrictsMap] = useState<Record<string, string[]>>({})
+  const [stateCounts, setStateCounts] = useState<Record<string, { members: number; volunteers: number }>>({})
+  const [districtCounts, setDistrictCounts] = useState<Record<string, { members: number; volunteers: number }>>({})
+  
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -39,14 +44,20 @@ export default function LocationsClient() {
   const [dialogOldValue, setDialogOldValue] = useState('')
 
   useEffect(() => {
-    fetch('/api/settings')
-      .then((r) => r.json())
-      .then((data) => {
-        setFullSettings(data)
-        setStates(JSON.parse(data.form_states || JSON.stringify(DEFAULT_INDIAN_STATES)))
-        setDistrictsMap(JSON.parse(data.form_districts || '{}'))
-        setLoading(false)
-      })
+    Promise.all([
+      fetch('/api/settings').then((r) => r.json()),
+      fetch('/api/locations/counts').then((r) => r.json()),
+    ]).then(([settingsData, countsData]) => {
+      setFullSettings(settingsData)
+      setStates(JSON.parse(settingsData.form_states || JSON.stringify(DEFAULT_INDIAN_STATES)))
+      setDistrictsMap(JSON.parse(settingsData.form_districts || '{}'))
+      if (countsData.stateCounts) setStateCounts(countsData.stateCounts)
+      if (countsData.districtCounts) setDistrictCounts(countsData.districtCounts)
+      setLoading(false)
+    }).catch(err => {
+      console.error(err)
+      setLoading(false)
+    })
   }, [])
 
   const handleSaveToServer = async (newStates: string[], newDistricts: Record<string, string[]>) => {
@@ -155,7 +166,7 @@ export default function LocationsClient() {
             )}
           </Breadcrumbs>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            {selectedState ? `Manage districts in ${selectedState}` : 'Manage states and union territories'}
+            {selectedState ? `Manage districts, members & volunteers in ${selectedState}` : 'Manage states, districts, and regional network counts'}
           </Typography>
         </Box>
         {canEdit && (
@@ -177,34 +188,67 @@ export default function LocationsClient() {
         <Grid container spacing={3}>
           {states.map(st => {
             const distCount = (districtsMap[st] || []).length
+            const stMembers = stateCounts[st]?.members || 0
+            const stVolunteers = stateCounts[st]?.volunteers || 0
+
             return (
               <Grid item xs={12} sm={6} md={4} key={st}>
-                <Card sx={{ height: '100%', transition: '0.2s', '&:hover': { boxShadow: 3 } }}>
-                  <CardContent>
+                <Card
+                  sx={{
+                    height: '100%',
+                    transition: '0.2s',
+                    cursor: 'pointer',
+                    borderRadius: 3,
+                    border: '1px solid #E2E8F0',
+                    '&:hover': { boxShadow: 4, transform: 'translateY(-2px)' }
+                  }}
+                  onClick={() => setSelectedState(st)}
+                >
+                  <CardContent sx={{ p: 2.5 }}>
                     <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer' }} onClick={() => setSelectedState(st)}>
-                        <Box sx={{ p: 1, bgcolor: 'primary.50', borderRadius: 1, color: 'primary.main', display: 'flex' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Box sx={{ p: 1.25, bgcolor: 'primary.50', borderRadius: 2, color: 'primary.main', display: 'flex' }}>
                           <MapIcon />
                         </Box>
                         <Box>
-                          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem' }}>{st}</Typography>
-                          <Typography variant="body2" color="text.secondary">{distCount} District{distCount !== 1 && 's'}</Typography>
+                          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.05rem', color: '#12446A' }}>{st}</Typography>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600}>{distCount} District{distCount !== 1 && 's'}</Typography>
                         </Box>
                       </Box>
                       {canEdit && (
-                        <Box>
+                        <Box onClick={(e) => e.stopPropagation()}>
                           <Tooltip title="Edit State">
-                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleOpenDialog('edit_state', st) }}>
+                            <IconButton size="small" onClick={() => handleOpenDialog('edit_state', st)}>
                               <EditIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
                           <Tooltip title="Delete State">
-                            <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); handleDeleteState(st) }}>
+                            <IconButton size="small" color="error" onClick={() => handleDeleteState(st)}>
                               <DeleteIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
                         </Box>
                       )}
+                    </Box>
+
+                    <Divider sx={{ my: 1.5 }} />
+
+                    {/* Member & Volunteer Count Chips */}
+                    <Box display="flex" gap={1.25} flexWrap="wrap">
+                      <Chip
+                        icon={<PeopleIcon sx={{ fontSize: '1rem !important' }} />}
+                        label={`Members: ${stMembers}`}
+                        size="small"
+                        color="primary"
+                        sx={{ fontWeight: 700, fontSize: '0.75rem', px: 0.5 }}
+                      />
+                      <Chip
+                        icon={<VolunteerActivismIcon sx={{ fontSize: '1rem !important' }} />}
+                        label={`Volunteers: ${stVolunteers}`}
+                        size="small"
+                        color="success"
+                        sx={{ fontWeight: 700, fontSize: '0.75rem', px: 0.5 }}
+                      />
                     </Box>
                   </CardContent>
                 </Card>
@@ -214,31 +258,71 @@ export default function LocationsClient() {
         </Grid>
       ) : (
         // DISTRICTS LIST
-        <Paper variant="outlined" sx={{ borderRadius: 2 }}>
+        <Paper variant="outlined" sx={{ borderRadius: 3 }}>
           <List>
-            {(districtsMap[selectedState] || []).map((dist, idx, arr) => (
-              <Box key={dist}>
-                <ListItem sx={{ py: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Box sx={{ p: 1, bgcolor: 'info.50', borderRadius: 1, color: 'info.main', display: 'flex' }}>
-                      <LocationCityIcon fontSize="small" />
+            {(districtsMap[selectedState] || []).map((dist, idx, arr) => {
+              const distKey = `${selectedState}___${dist}`
+              const dMembers = districtCounts[distKey]?.members || 0
+              const dVolunteers = districtCounts[distKey]?.volunteers || 0
+
+              return (
+                <Box key={dist}>
+                  <ListItem
+                    sx={{
+                      py: 2,
+                      px: 3,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: 2,
+                    }}
+                  >
+                    <Box
+                      sx={{ display: 'flex', alignItems: 'center', gap: 2, cursor: 'pointer' }}
+                      onClick={() => window.location.href = `/admin/network/${encodeURIComponent(selectedState!)}/${encodeURIComponent(dist)}`}
+                    >
+                      <Box sx={{ p: 1, bgcolor: 'info.50', borderRadius: 1.5, color: 'info.main', display: 'flex' }}>
+                        <LocationCityIcon fontSize="small" />
+                      </Box>
+                      <Box>
+                        <Typography variant="subtitle1" fontWeight={700} color="#12446A">
+                          {dist}
+                        </Typography>
+                        <Box display="flex" gap={1} sx={{ mt: 0.75 }}>
+                          <Chip icon={<PeopleIcon sx={{ fontSize: '0.9rem !important' }} />} label={`Members: ${dMembers}`} size="small" color="primary" sx={{ height: 24, fontSize: '0.72rem', fontWeight: 700 }} />
+                          <Chip icon={<VolunteerActivismIcon sx={{ fontSize: '0.9rem !important' }} />} label={`Volunteers: ${dVolunteers}`} size="small" color="success" sx={{ height: 24, fontSize: '0.72rem', fontWeight: 700 }} />
+                        </Box>
+                      </Box>
                     </Box>
-                    <ListItemText primary={dist} primaryTypographyProps={{ fontWeight: 500 }} />
-                  </Box>
-                  {canEdit && (
-                    <ListItemSecondaryAction>
-                      <IconButton size="small" onClick={() => handleOpenDialog('edit_district', dist)} sx={{ mr: 1 }}>
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton size="small" color="error" onClick={() => handleDeleteDistrict(dist)}>
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </ListItemSecondaryAction>
-                  )}
-                </ListItem>
-                {idx < arr.length - 1 && <Divider />}
-              </Box>
-            ))}
+
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        endIcon={<NavigateNextIcon fontSize="small" />}
+                        onClick={() => window.location.href = `/admin/network/${encodeURIComponent(selectedState!)}/${encodeURIComponent(dist)}`}
+                        sx={{ textTransform: 'none', fontWeight: 600 }}
+                      >
+                        View District Members & Volunteers
+                      </Button>
+
+                      {canEdit && (
+                        <>
+                          <IconButton size="small" onClick={() => handleOpenDialog('edit_district', dist)}>
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton size="small" color="error" onClick={() => handleDeleteDistrict(dist)}>
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </>
+                      )}
+                    </Box>
+                  </ListItem>
+                  {idx < arr.length - 1 && <Divider />}
+                </Box>
+              )
+            })}
             {(districtsMap[selectedState] || []).length === 0 && (
               <ListItem sx={{ py: 4, justifyContent: 'center' }}>
                 <Typography color="text.secondary">No districts configured for this state.</Typography>

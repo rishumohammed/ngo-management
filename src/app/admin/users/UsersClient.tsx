@@ -4,13 +4,16 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Box, Button, Typography, TextField, Select, MenuItem, FormControl, InputLabel,
   Dialog, DialogTitle, DialogContent, DialogActions, Chip, IconButton, Tooltip,
-  Alert, CircularProgress,
+  Alert, CircularProgress, Paper, Grid, InputAdornment, Stack
 } from '@mui/material'
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid'
 import AddIcon from '@mui/icons-material/Add'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import SecurityIcon from '@mui/icons-material/Security'
+import SearchIcon from '@mui/icons-material/Search'
+import ClearIcon from '@mui/icons-material/Clear'
+import FilterListIcon from '@mui/icons-material/FilterList'
 import { formatDate } from '@/lib/utils'
 import { useSession } from 'next-auth/react'
 
@@ -22,6 +25,11 @@ export default function UsersClient() {
 
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(false)
+
+  // Search & Filter State
+  const [searchQuery, setSearchQuery] = useState('')
+  const [roleFilter, setRoleFilter] = useState('ALL')
+  const [statusFilter, setStatusFilter] = useState('ALL')
   
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
@@ -41,6 +49,20 @@ export default function UsersClient() {
   }, [])
 
   useEffect(() => { fetchUsers() }, [fetchUsers])
+
+  // Filtered users calculation
+  const filteredUsers = users.filter((u) => {
+    if (roleFilter !== 'ALL' && u.role !== roleFilter) return false
+    if (statusFilter === 'ACTIVE' && !u.isActive) return false
+    if (statusFilter === 'INACTIVE' && u.isActive) return false
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim()
+      const nameMatch = u.name?.toLowerCase().includes(q)
+      const emailMatch = u.email?.toLowerCase().includes(q)
+      if (!nameMatch && !emailMatch) return false
+    }
+    return true
+  })
 
   const handleOpenDialog = (user: User | null = null) => {
     if (user) {
@@ -219,8 +241,69 @@ export default function UsersClient() {
         </Button>
       </Box>
 
+      {/* Search & Filters Bar */}
+      <Paper elevation={0} sx={{ p: 2, mb: 3, border: '1px solid #E2E8F0', borderRadius: 3, bgcolor: '#FFFFFF' }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} sm={6} md={6}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Search users by name, email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                  </InputAdornment>
+                ),
+                endAdornment: searchQuery && (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={() => setSearchQuery('')}>
+                      <ClearIcon fontSize="small" />
+                    </IconButton>
+                  </InputAdornment>
+                )
+              }}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={3} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Filter by Role</InputLabel>
+              <Select
+                value={roleFilter}
+                label="Filter by Role"
+                onChange={(e) => setRoleFilter(e.target.value)}
+              >
+                <MenuItem value="ALL">All Roles</MenuItem>
+                <MenuItem value="SUPER_ADMIN">Super Admin</MenuItem>
+                <MenuItem value="ADMIN">Admin</MenuItem>
+                <MenuItem value="VOLUNTEER">Volunteer</MenuItem>
+                <MenuItem value="USER">User</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} sm={3} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Filter by Status</InputLabel>
+              <Select
+                value={statusFilter}
+                label="Filter by Status"
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <MenuItem value="ALL">All Statuses</MenuItem>
+                <MenuItem value="ACTIVE">Active Only</MenuItem>
+                <MenuItem value="INACTIVE">Inactive Only</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
+      </Paper>
+
       <DataGrid
-        rows={users}
+        rows={filteredUsers}
         columns={columns}
         loading={loading}
         disableRowSelectionOnClick

@@ -48,6 +48,7 @@ import { DEFAULT_INDIAN_STATES, DEFAULT_PIPELINE_STAGES, PipelineStageConfig } f
 const DEFAULT_SETTINGS: Record<string, string> = {
   org_name: 'Free Mind Foundation',
   org_logo: '',
+  org_signature: '',
   org_address: '',
   org_phone: '',
   org_email: '',
@@ -56,6 +57,7 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   eighty_g_validity: '',
   fcra_number: '',
   signatory_name: '',
+  signatory_title: 'Authorised Signatory',
   receipt_prefix: 'FMF',
   voucher_max_limit: '50000',
   fy_start_month: '4',
@@ -143,6 +145,33 @@ export default function SettingsClient() {
         }
       } catch (err) {
         setMsg({ type: 'error', text: 'Error uploading logo.' })
+      } finally {
+        setSaving(false)
+      }
+    }
+  }
+
+  const handleSignatureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      setSaving(true)
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        })
+        const data = await res.json()
+        if (res.ok && data.path) {
+          set('org_signature', data.path)
+          setMsg({ type: 'success', text: 'Authorized Signature uploaded. Remember to click Save All Changes.' })
+        } else {
+          setMsg({ type: 'error', text: data.error || 'Failed to upload signature.' })
+        }
+      } catch (err) {
+        setMsg({ type: 'error', text: 'Error uploading signature.' })
       } finally {
         setSaving(false)
       }
@@ -315,13 +344,14 @@ export default function SettingsClient() {
       {/* Organization Tab */}
       {tab === 0 && (
         <Card>
-          <CardHeader title="Trust / Organization Details" subheader="Used in 80G receipts and official documents" />
+          <CardHeader title="Trust / Organization Details" subheader="Used in 80G donation receipts, financial vouchers, and official communications" />
           <Divider />
           <CardContent>
             <Grid container spacing={2.5}>
-              <Grid item xs={12}>
-                <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
-                  Organization Logo
+              {/* Logo & Signature Uploads Row */}
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary', fontWeight: 600 }}>
+                  Organization Logo (Printed on Header)
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   {settings.org_logo ? (
@@ -330,39 +360,99 @@ export default function SettingsClient() {
                       src={settings.org_logo}
                       alt="Logo"
                       sx={{
-                        width: 64,
-                        height: 64,
+                        width: 72,
+                        height: 72,
                         objectFit: 'contain',
                         border: '1px solid',
                         borderColor: 'divider',
-                        borderRadius: 1,
+                        borderRadius: 1.5,
+                        p: 0.5,
+                        bgcolor: '#fafafa',
                       }}
                     />
                   ) : (
                     <Box
                       sx={{
-                        width: 64,
-                        height: 64,
+                        width: 72,
+                        height: 72,
                         bgcolor: 'grey.100',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         border: '1px dashed',
                         borderColor: 'grey.400',
-                        borderRadius: 1,
+                        borderRadius: 1.5,
                       }}
                     >
                       <BusinessIcon color="disabled" />
                     </Box>
                   )}
                   {canEdit && (
-                    <Button variant="outlined" component="label" size="small">
-                      Upload Logo
-                      <input type="file" hidden accept="image/*" onChange={handleLogoUpload} />
-                    </Button>
+                    <Stack spacing={1}>
+                      <Button variant="outlined" component="label" size="small">
+                        Upload Logo
+                        <input type="file" hidden accept="image/*" onChange={handleLogoUpload} />
+                      </Button>
+                      <Typography variant="caption" color="text.secondary">
+                        PNG or JPG image
+                      </Typography>
+                    </Stack>
                   )}
                 </Box>
               </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary', fontWeight: 600 }}>
+                  Authorized Signature / Signatory Stamp
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  {settings.org_signature ? (
+                    <Box
+                      component="img"
+                      src={settings.org_signature}
+                      alt="Signature"
+                      sx={{
+                        width: 110,
+                        height: 72,
+                        objectFit: 'contain',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 1.5,
+                        p: 0.5,
+                        bgcolor: '#ffffff',
+                      }}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        width: 110,
+                        height: 72,
+                        bgcolor: 'grey.100',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px dashed',
+                        borderColor: 'grey.400',
+                        borderRadius: 1.5,
+                      }}
+                    >
+                      <Typography variant="caption" color="text.secondary">No Signature</Typography>
+                    </Box>
+                  )}
+                  {canEdit && (
+                    <Stack spacing={1}>
+                      <Button variant="outlined" component="label" size="small">
+                        Upload Signature
+                        <input type="file" hidden accept="image/*" onChange={handleSignatureUpload} />
+                      </Button>
+                      <Typography variant="caption" color="text.secondary">
+                        Digital signature / stamp image
+                      </Typography>
+                    </Stack>
+                  )}
+                </Box>
+              </Grid>
+
               <Grid item xs={12} sm={6}>
                 <TextField
                   label="Organization Name"
@@ -379,7 +469,17 @@ export default function SettingsClient() {
                   value={settings.signatory_name}
                   onChange={(e) => set('signatory_name', e.target.value)}
                   disabled={!canEdit}
-                  helperText="Printed on receipts & formal communications"
+                  helperText="Name printed under signature block on 80G receipts"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Signatory Role / Designation Title"
+                  fullWidth
+                  value={settings.signatory_title || ''}
+                  onChange={(e) => set('signatory_title', e.target.value)}
+                  disabled={!canEdit}
+                  helperText="e.g. Authorised Signatory / Managing Trustee / Treasurer"
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -402,6 +502,15 @@ export default function SettingsClient() {
                   helperText="Official email displayed on receipts & vouchers"
                 />
               </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="PAN Number"
+                  fullWidth
+                  value={settings.org_pan}
+                  onChange={(e) => set('org_pan', e.target.value.toUpperCase())}
+                  disabled={!canEdit}
+                />
+              </Grid>
               <Grid item xs={12}>
                 <TextField
                   label="Registered Address"
@@ -411,15 +520,7 @@ export default function SettingsClient() {
                   value={settings.org_address}
                   onChange={(e) => set('org_address', e.target.value)}
                   disabled={!canEdit}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="PAN Number"
-                  fullWidth
-                  value={settings.org_pan}
-                  onChange={(e) => set('org_pan', e.target.value.toUpperCase())}
-                  disabled={!canEdit}
+                  helperText="Official registered address printed in receipt header"
                 />
               </Grid>
               <Grid item xs={12} sm={6}>

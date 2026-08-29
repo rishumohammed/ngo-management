@@ -31,6 +31,7 @@ export default function CommitteesClient() {
   const [committees, setCommittees] = useState<Committee[]>([])
   const [districtsMap, setDistrictsMap] = useState<Record<string, string[]>>({})
   const [statesList, setStatesList] = useState<string[]>([])
+  const [stateCounts, setStateCounts] = useState<Record<string, { members: number; volunteers: number }>>({})
   const [loading, setLoading] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [formData, setFormData] = useState(emptyForm)
@@ -40,15 +41,18 @@ export default function CommitteesClient() {
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const [resC, resOpt] = await Promise.all([
+      const [resC, resOpt, resCounts] = await Promise.all([
         fetch(`/api/committees?includeArchived=false`),
-        fetch(`/api/public/form-options`)
+        fetch(`/api/public/form-options`),
+        fetch(`/api/locations/counts`)
       ])
       const dataC = await resC.json()
       const dataOpt = await resOpt.json()
+      const dataCounts = await resCounts.json()
       setCommittees(dataC || [])
       setDistrictsMap(dataOpt.districts || {})
       setStatesList(dataOpt.states || [])
+      if (dataCounts.stateCounts) setStateCounts(dataCounts.stateCounts)
     } finally { setLoading(false) }
   }, [])
 
@@ -81,22 +85,24 @@ export default function CommitteesClient() {
   const departments = committees.filter(c => c.type === 'DEPARTMENT')
 
   return (
-    <Box>
+    <Box sx={{ pb: 6 }}>
+      {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary', letterSpacing: -0.5 }}>
-          Organization Structure
+          Organization Structure & Network
         </Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-          Top-down view of central leadership, departments, and regional networks.
+          Manage Governing Board, Executive Leadership, Functional Wings, and Regional Network
         </Typography>
       </Box>
 
       {loading && <LinearProgress sx={{ mb: 2 }} />}
 
+      {/* Central Governance */}
       <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: 'primary.dark' }}>
         Central Governance
       </Typography>
-      <Grid container spacing={3} sx={{ mb: 5 }}>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
         {/* Governing Board */}
         <Grid item xs={12} sm={4}>
           <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -116,7 +122,7 @@ export default function CommitteesClient() {
               </Avatar>
               <Typography variant="h6" fontWeight={600}>Governing Board</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
-                The highest decision-making body of the organization.
+                The supreme decision-making body of the organization.
               </Typography>
               <Box flexGrow={1} />
               {governingBoard ? (
@@ -187,28 +193,39 @@ export default function CommitteesClient() {
         <Alert severity="info">No states have been configured yet. Configure districts in Settings to enable the regional network.</Alert>
       )}
       <Grid container spacing={3}>
-        {statesList.map(state => (
-          <Grid item xs={12} sm={6} md={4} key={state}>
-            <Card sx={{ height: '100%' }}>
-              <CardActionArea 
-                sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}
-                onClick={() => router.push(`/admin/network/${encodeURIComponent(state)}`)}
-              >
-                <Box display="flex" alignItems="center" gap={2} width="100%">
-                  <Avatar sx={{ bgcolor: 'success.main' }}>
-                    <MapIcon />
-                  </Avatar>
-                  <Box>
-                    <Typography variant="h6" fontWeight={600}>{state}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {districtsMap[state]?.length || 0} Districts
-                    </Typography>
+        {statesList.map(state => {
+          const dCount = districtsMap[state]?.length || 0
+          const stMembers = stateCounts[state]?.members || 0
+          const stVolunteers = stateCounts[state]?.volunteers || 0
+
+          return (
+            <Grid item xs={12} sm={6} md={4} key={state}>
+              <Card sx={{ height: '100%' }}>
+                <CardActionArea 
+                  sx={{ p: 2.5, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between' }}
+                  onClick={() => router.push(`/admin/network/${encodeURIComponent(state)}`)}
+                >
+                  <Box display="flex" alignItems="center" gap={2} width="100%">
+                    <Avatar sx={{ bgcolor: 'success.main' }}>
+                      <MapIcon />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="h6" fontWeight={700} color="#12446A">{state}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {dCount} District{dCount !== 1 && 's'}
+                      </Typography>
+                    </Box>
                   </Box>
-                </Box>
-              </CardActionArea>
-            </Card>
-          </Grid>
-        ))}
+
+                  <Box display="flex" gap={1} flexWrap="wrap" sx={{ mt: 2 }}>
+                    <Chip label={`Members: ${stMembers}`} size="small" color="primary" variant="outlined" sx={{ fontWeight: 600, fontSize: '0.75rem' }} />
+                    <Chip label={`Volunteers: ${stVolunteers}`} size="small" color="success" variant="outlined" sx={{ fontWeight: 600, fontSize: '0.75rem' }} />
+                  </Box>
+                </CardActionArea>
+              </Card>
+            </Grid>
+          )
+        })}
       </Grid>
 
       {/* Create Modal for Missing Core Committees */}

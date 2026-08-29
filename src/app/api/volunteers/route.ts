@@ -47,8 +47,8 @@ export async function GET(req: NextRequest) {
   if (stage) where.currentStage = stage
   if (statusFilter === 'SUSPENDED') where.isSuspended = true
   if (statusFilter === 'ACTIVE') where.isSuspended = false
-  if (filterState) where.state = filterState
-  if (filterDistrict) where.district = filterDistrict
+  if (filterState) where.state = { contains: filterState }
+  if (filterDistrict) where.district = { contains: filterDistrict }
 
   const [volunteers, total] = await Promise.all([
     prisma.volunteer.findMany({

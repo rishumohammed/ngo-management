@@ -93,6 +93,8 @@ interface ExpenseCategory {
   description?: string
   budgetLimit?: number
   _count?: { expenses: number }
+  expenseCount?: number
+  totalAmount?: number
 }
 
 interface Expense {
@@ -313,7 +315,11 @@ export default function FinanceClient() {
   const fetchCategories = useCallback(async () => {
     setLoadingCategories(true)
     try {
-      const res = await fetch('/api/expense-categories')
+      const query = new URLSearchParams()
+      if (selectedFiscalYear && selectedFiscalYear !== 'ALL') {
+        query.set('fiscalYear', selectedFiscalYear)
+      }
+      const res = await fetch(`/api/expense-categories?${query}`)
       if (res.ok) {
         const data = await res.json()
         setCategories(data.categories || [])
@@ -323,7 +329,7 @@ export default function FinanceClient() {
     } finally {
       setLoadingCategories(false)
     }
-  }, [])
+  }, [selectedFiscalYear])
 
   // Fetch expenses
   const fetchExpenses = useCallback(async () => {
@@ -1143,33 +1149,75 @@ export default function FinanceClient() {
       {/* ─── TAB 2: EXPENSE CATEGORIES ─── */}
       {tabIndex === 2 && (
         <Box>
-          <Grid container spacing={2}>
-            {categories.map((cat) => (
-              <Grid item xs={12} sm={6} md={4} key={cat.id}>
-                <Card variant="outlined" sx={{ borderRadius: 3, height: '100%' }}>
-                  <CardContent>
-                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                      <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                        {cat.name}
+          <Grid container spacing={2.5}>
+            {categories.map((cat) => {
+              const expCount = cat.expenseCount !== undefined ? cat.expenseCount : (cat._count?.expenses || 0)
+              const totalSpent = cat.totalAmount || 0
+              const isOverBudget = cat.budgetLimit && totalSpent > cat.budgetLimit
+
+              return (
+                <Grid item xs={12} sm={6} md={4} key={cat.id}>
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      borderRadius: 3,
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      border: isOverBudget ? '1.5px solid #EF4444' : '1px solid #E2E8F0',
+                    }}
+                  >
+                    <CardContent>
+                      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
+                        <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1rem', color: '#12446A' }}>
+                          {cat.name}
+                        </Typography>
+                        <CategoryIcon sx={{ color: '#00897B' }} />
+                      </Stack>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75, mb: 2, minHeight: 36, fontSize: '0.85rem' }}>
+                        {cat.description || 'No description provided.'}
                       </Typography>
-                      <CategoryIcon color="primary" />
-                    </Stack>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1, minHeight: 40 }}>
-                      {cat.description || 'No description provided.'}
-                    </Typography>
-                    <Divider sx={{ my: 1.5 }} />
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography variant="caption" color="text.secondary">
-                        Logged Expenses: <strong>{cat._count?.expenses || 0}</strong>
-                      </Typography>
-                      {cat.budgetLimit && (
-                        <Chip label={`Limit: ₹${cat.budgetLimit.toLocaleString('en-IN')}`} size="small" />
-                      )}
-                    </Stack>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
+
+                      {/* Total Expenses Amount Box for Financial Year */}
+                      <Box
+                        sx={{
+                          bgcolor: isOverBudget ? '#FEF2F2' : '#F8FAFC',
+                          p: 1.75,
+                          borderRadius: 2,
+                          border: `1px solid ${isOverBudget ? '#FCA5A5' : '#E2E8F0'}`,
+                          mb: 1.5,
+                        }}
+                      >
+                        <Typography variant="caption" color="text.secondary" display="block" fontWeight={600}>
+                          Total Spent ({selectedFiscalYear && selectedFiscalYear !== 'ALL' ? `FY ${selectedFiscalYear}` : 'All Time'})
+                        </Typography>
+                        <Typography variant="h6" fontWeight={800} color={isOverBudget ? 'error.main' : '#0F172A'} sx={{ mt: 0.25 }}>
+                          ₹{totalSpent.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </Typography>
+                      </Box>
+
+                      <Divider sx={{ my: 1.5 }} />
+
+                      <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                          Logged Expenses: <strong style={{ color: '#0F172A' }}>{expCount}</strong>
+                        </Typography>
+                        {cat.budgetLimit && (
+                          <Chip
+                            label={`Limit: ₹${cat.budgetLimit.toLocaleString('en-IN')}`}
+                            size="small"
+                            color={isOverBudget ? 'error' : 'default'}
+                            variant="outlined"
+                            sx={{ fontWeight: 600, fontSize: '0.75rem' }}
+                          />
+                        )}
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              )
+            })}
           </Grid>
         </Box>
       )}

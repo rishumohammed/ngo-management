@@ -1,5 +1,26 @@
 import { renderToBuffer, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { join } from 'path'
+import { existsSync } from 'fs'
+
+function resolveImagePath(imgPath?: string): string | null {
+  if (!imgPath || typeof imgPath !== 'string') return null
+  const trimmed = imgPath.trim()
+  if (!trimmed) return null
+  if (trimmed.startsWith('data:image')) return trimmed
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed
+
+  const relativePath = trimmed
+    .replace(/^\/api\/uploads\//, 'uploads/')
+    .replace(/^\/uploads\//, 'uploads/')
+    .replace(/^\//, '')
+
+  const absolutePath = join(process.cwd(), 'public', relativePath)
+  if (existsSync(absolutePath)) {
+    return absolutePath
+  }
+  return null
+}
 
 const styles = StyleSheet.create({
   page: {
@@ -17,15 +38,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
+  headerLeft: {
+    width: '65%',
+  },
+  logoImage: {
+    maxHeight: 48,
+    maxWidth: 160,
+    objectFit: 'contain',
+    marginBottom: 6,
+  },
   orgName: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'Helvetica-Bold',
     color: '#00897B',
   },
   orgDetails: {
     fontSize: 8,
     color: '#555',
-    marginTop: 4,
+    marginTop: 3,
     lineHeight: 1.4,
   },
   receiptTitle: {
@@ -91,26 +121,41 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-end',
   },
   footerNote: {
     fontSize: 7.5,
     color: '#888',
-    width: '60%',
+    width: '58%',
     lineHeight: 1.5,
   },
   signatureBlock: {
-    alignItems: 'flex-end',
-    width: '35%',
+    alignItems: 'center',
+    width: '38%',
+  },
+  signatureImage: {
+    maxHeight: 45,
+    maxWidth: 130,
+    objectFit: 'contain',
+    marginBottom: 4,
   },
   signatureLine: {
     borderTop: '1px solid #333',
     width: 120,
     marginBottom: 4,
+    marginTop: 2,
   },
   signatureText: {
-    fontSize: 8,
-    color: '#555',
+    fontSize: 8.5,
+    fontFamily: 'Helvetica-Bold',
+    color: '#333',
     textAlign: 'center',
+  },
+  signatureSubtext: {
+    fontSize: 7.5,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 1,
   },
   watermark: {
     position: 'absolute',
@@ -127,18 +172,24 @@ interface ReceiptData {
   donation: any
   orgData: {
     orgName: string
-    orgAddress: string
+    orgLogo?: string
+    orgSignature?: string
+    orgAddress?: string
     orgPhone?: string
     orgEmail?: string
-    orgPan: string
-    eightyGNumber: string
-    eightyGValidity: string
-    signatory: string
-    fcraNumber: string
+    orgPan?: string
+    eightyGNumber?: string
+    eightyGValidity?: string
+    signatory?: string
+    signatoryTitle?: string
+    fcraNumber?: string
   }
 }
 
 export async function generateReceiptPdf({ donation, orgData }: ReceiptData): Promise<Uint8Array> {
+  const logoPath = resolveImagePath(orgData.orgLogo)
+  const signaturePath = resolveImagePath(orgData.orgSignature)
+
   const doc = (
     <Document
       title={`80G Receipt — ${donation.receiptNumber}`}
@@ -151,7 +202,8 @@ export async function generateReceiptPdf({ donation, orgData }: ReceiptData): Pr
 
         {/* Header */}
         <View style={styles.header}>
-          <View>
+          <View style={styles.headerLeft}>
+            {logoPath ? <Image src={logoPath} style={styles.logoImage} /> : null}
             <Text style={styles.orgName}>{orgData.orgName}</Text>
             {orgData.orgAddress ? <Text style={styles.orgDetails}>{orgData.orgAddress}</Text> : null}
             {(orgData.orgPhone || orgData.orgEmail) && (
@@ -161,16 +213,17 @@ export async function generateReceiptPdf({ donation, orgData }: ReceiptData): Pr
                   .join(' | ')}
               </Text>
             )}
-            {orgData.orgPan && <Text style={styles.orgDetails}>PAN: {orgData.orgPan}</Text>}
+            {orgData.orgPan ? <Text style={styles.orgDetails}>PAN: {orgData.orgPan}</Text> : null}
 
-            {orgData.eightyGNumber && (
+            {orgData.eightyGNumber ? (
               <Text style={styles.orgDetails}>
                 80G Registration: {orgData.eightyGNumber}
-                {orgData.eightyGValidity ? ` (Valid till: ${formatDate(orgData.eightyGValidity)})` : ''}
+                {orgData.eightyGValidity ? ` (${orgData.eightyGValidity})` : ''}
               </Text>
-            )}
-            {orgData.fcraNumber && <Text style={styles.orgDetails}>FCRA: {orgData.fcraNumber}</Text>}
+            ) : null}
+            {orgData.fcraNumber ? <Text style={styles.orgDetails}>FCRA: {orgData.fcraNumber}</Text> : null}
           </View>
+
           <View style={{ alignItems: 'flex-end' }}>
             <Text style={{ fontSize: 9, color: '#555' }}>Receipt No.</Text>
             <Text style={{ fontSize: 12, fontFamily: 'Helvetica-Bold', color: '#00897B' }}>
@@ -246,9 +299,11 @@ export async function generateReceiptPdf({ donation, orgData }: ReceiptData): Pr
               'This is a computer-generated receipt and is valid without physical signature unless specified.'}
           </Text>
           <View style={styles.signatureBlock}>
+            {signaturePath ? <Image src={signaturePath} style={styles.signatureImage} /> : null}
             <View style={styles.signatureLine} />
             <Text style={styles.signatureText}>{orgData.signatory || 'Authorised Signatory'}</Text>
-            <Text style={styles.signatureText}>{orgData.orgName}</Text>
+            {orgData.signatoryTitle ? <Text style={styles.signatureSubtext}>{orgData.signatoryTitle}</Text> : null}
+            <Text style={styles.signatureSubtext}>{orgData.orgName}</Text>
           </View>
         </View>
       </Page>

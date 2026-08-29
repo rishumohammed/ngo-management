@@ -129,11 +129,16 @@ export async function POST(req: NextRequest) {
     try {
       const orgData = {
         orgName: getSetting('org_name') || 'Free Mind Foundation',
+        orgLogo: getSetting('org_logo') || '',
+        orgSignature: getSetting('org_signature') || '',
         orgAddress: getSetting('org_address') || '',
+        orgPhone: getSetting('org_phone') || '',
+        orgEmail: getSetting('org_email') || '',
         orgPan: getSetting('org_pan') || '',
         eightyGNumber: getSetting('eighty_g_number') || '',
         eightyGValidity: getSetting('eighty_g_validity') || '',
         signatory: getSetting('signatory_name') || '',
+        signatoryTitle: getSetting('signatory_title') || '',
         fcraNumber: getSetting('fcra_number') || '',
       }
 

@@ -13,7 +13,10 @@ const MemberSchema = z.object({
   email: z.string().email().optional().or(z.literal('')),
   address: z.string().optional(),
   city: z.string().optional(),
+  district: z.string().optional(),
   state: z.string().optional(),
+  gender: z.string().optional(),
+  education: z.string().optional(),
   joinDate: z.string().min(1, 'Join date is required'),
   membershipType: z.enum(['GENERAL', 'LIFE', 'HONORARY', 'PATRON']).default('GENERAL'),
   status: z.enum(['ACTIVE', 'INACTIVE', 'DECEASED']).default('ACTIVE'),
@@ -46,8 +49,8 @@ export async function GET(req: NextRequest) {
   }
   if (status) where.status = status
   if (membershipType) where.membershipType = membershipType
-  if (filterState) where.state = filterState
-  if (filterDistrict) where.district = filterDistrict
+  if (filterState) where.state = { contains: filterState }
+  if (filterDistrict) where.district = { contains: filterDistrict }
 
   const [members, total] = await Promise.all([
     prisma.member.findMany({

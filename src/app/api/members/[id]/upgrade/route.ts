@@ -37,9 +37,28 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         city: member.city,
         state: member.state,
         district: member.district,
+        gender: member.gender,
+        education: member.education,
         currentStage: 'APPLICATION',
         motivation: `Upgraded from Member (${member.memberNumber})`
       }
+    })
+
+    // Reassign committee memberships to new volunteer record if any
+    await prisma.committeeMember.updateMany({
+      where: { memberId: member.id },
+      data: { memberId: null, volunteerId: volunteer.id }
+    }).catch(() => {})
+
+    // Reassign meeting attendees to avoid foreign key errors
+    await prisma.meetingAttendee.updateMany({
+      where: { memberId: member.id },
+      data: { memberId: null }
+    }).catch(() => {})
+
+    // Remove member record from Members table so it moves completely to Volunteers
+    await prisma.member.delete({
+      where: { id: member.id }
     })
 
     await logAudit({
@@ -49,10 +68,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       entity: 'Member',
       entityId: member.id,
       entityName: member.name,
-      diff: { after: { newVolunteerId: volunteer.id } }
+      diff: { after: { action: 'UPGRADED_AND_MOVED_TO_VOLUNTEER', newVolunteerId: volunteer.id } }
     })
 
-    return NextResponse.json({ success: true, volunteer })
+    return NextResponse.json({ success: true, volunteer, moved: true })
   } catch (error) {
     console.error('Upgrade error:', error)
     return NextResponse.json({ error: 'Failed to upgrade to volunteer' }, { status: 500 })

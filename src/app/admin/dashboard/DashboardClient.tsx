@@ -45,6 +45,8 @@ interface KpiCardProps {
 }
 
 function KpiCard({ title, value, subtitle, icon, color, accent }: KpiCardProps) {
+  const isNegative = typeof value === 'string' && value.includes('-')
+
   return (
     <Card 
       sx={{ 
@@ -55,63 +57,74 @@ function KpiCard({ title, value, subtitle, icon, color, accent }: KpiCardProps) 
         boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
         transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
         overflow: 'hidden',
-        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
         '&:hover': {
-          transform: 'translateY(-4px)',
+          transform: 'translateY(-3px)',
           boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
           borderColor: color,
         }
       }}
     >
-      
-      <CardContent sx={{ p: 3, position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
-          <Box>
+      <CardContent sx={{ p: 2.5, display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+        <Box>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1, minHeight: 44 }}>
             <Typography 
               variant="overline" 
               sx={{ 
                 fontWeight: 700, 
                 color: 'text.secondary', 
-                letterSpacing: '0.1em',
-                lineHeight: 1
+                letterSpacing: '0.08em',
+                lineHeight: 1.25,
+                fontSize: '0.72rem',
+                textTransform: 'uppercase',
+                maxHeight: 36,
+                overflow: 'hidden',
               }}
             >
               {title}
             </Typography>
-            <Typography 
-              variant="h3" 
-              sx={{ 
-                fontWeight: 800, 
-                mt: 1, 
-                color: 'text.primary',
-                letterSpacing: '-0.03em'
+            <Avatar
+              sx={{
+                bgcolor: `${color}15`,
+                color: color,
+                width: 44,
+                height: 44,
+                flexShrink: 0,
+                boxShadow: `0 4px 12px ${color}10`,
               }}
             >
-              {value}
-            </Typography>
+              {icon}
+            </Avatar>
           </Box>
-          <Avatar
-            sx={{
-              bgcolor: `${color}15`,
-              color: color,
-              width: 52,
-              height: 52,
-              boxShadow: `0 4px 12px ${color}10`,
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+
+          <Typography 
+            variant="h4" 
+            sx={{ 
+              fontWeight: 800, 
+              mt: 1.5, 
+              mb: 0.5,
+              color: isNegative ? '#DC2626' : 'text.primary',
+              letterSpacing: '-0.02em',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              fontSize: { xs: '1.4rem', sm: '1.5rem', md: '1.65rem' }
             }}
           >
-            {icon}
-          </Avatar>
+            {value}
+          </Typography>
         </Box>
         
-        <Box sx={{ mt: 'auto' }}>
+        <Box sx={{ mt: 2 }}>
           {subtitle && (
             <Typography 
               variant="body2" 
               sx={{ 
                 fontWeight: 500,
                 color: 'text.secondary',
-                mb: accent ? 1.5 : 0
+                fontSize: '0.82rem',
+                mb: accent ? 1 : 0
               }}
             >
               {subtitle}
@@ -123,14 +136,15 @@ function KpiCard({ title, value, subtitle, icon, color, accent }: KpiCardProps) 
               sx={{ 
                 display: 'inline-flex',
                 alignItems: 'center',
-                px: 1.5,
-                py: 0.5,
-                borderRadius: 2,
+                px: 1.25,
+                py: 0.4,
+                borderRadius: 1.5,
                 bgcolor: `${color}12`,
                 color: color,
+                maxWidth: '100%',
               }}
             >
-              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+              <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.72rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {accent}
               </Typography>
             </Box>
@@ -154,7 +168,6 @@ export default function DashboardClient({ data }: { data: any }) {
     upcomingEvents,
     overdueActionItems,
     expiringTerms,
-    recentActivity,
     eightyGExpiry,
     eightyGExpiringSoon,
     monthlyDonations,
@@ -324,7 +337,7 @@ export default function DashboardClient({ data }: { data: any }) {
         </Grid>
 
         {/* Volunteer Pipeline */}
-        <Grid item xs={12} md={5}>
+        <Grid item xs={12}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
@@ -345,41 +358,6 @@ export default function DashboardClient({ data }: { data: any }) {
                     </Box>
                   ))}
                 </Stack>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Recent Activity Feed */}
-        <Grid item xs={12} md={7}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 1.5 }}>Recent Activity</Typography>
-              {recentActivity.length === 0 ? (
-                <Typography color="text.secondary" variant="body2">No recent activity.</Typography>
-              ) : (
-                <List disablePadding>
-                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                  {recentActivity.map((log: any, idx: number) => (
-                    <Box key={log.id}>
-                      <ListItem disablePadding sx={{ py: 0.75 }}>
-                        <ListItemText
-                          primary={
-                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-                              <Chip label={log.action} size="small" sx={{ fontSize: '0.65rem', height: 18 }} />
-                              <Typography variant="body2" component="span">
-                                {log.entity}{log.entityName ? `: ${log.entityName}` : ''}
-                              </Typography>
-                            </Box>
-                          }
-                          secondary={`${log.userName || 'System'} · ${formatDateTime(log.timestamp)}`}
-                          secondaryTypographyProps={{ fontSize: '0.72rem' }}
-                        />
-                      </ListItem>
-                      {idx < recentActivity.length - 1 && <Divider />}
-                    </Box>
-                  ))}
-                </List>
               )}
             </CardContent>
           </Card>

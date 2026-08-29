@@ -52,12 +52,16 @@ export function formatReceiptNumber(
 }
 
 export function formatCurrency(amount: number | string): string {
-  const num = typeof amount === 'string' ? parseFloat(amount) : amount
-  return new Intl.NumberFormat('en-IN', {
+  const num = typeof amount === 'string' ? parseFloat(amount) : (amount || 0)
+  if (isNaN(num)) return '₹0.00'
+  const isNegative = num < 0
+  const absFormatted = new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
     maximumFractionDigits: 2,
-  }).format(num)
+  }).format(Math.abs(num))
+
+  return isNegative ? `-${absFormatted}` : absFormatted
 }
 
 export function formatDate(date: Date | string, format = 'DD MMM YYYY'): string {

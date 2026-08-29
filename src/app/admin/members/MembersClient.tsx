@@ -24,6 +24,10 @@ import {
   CircularProgress,
   Stack,
   Autocomplete,
+  Divider,
+  Avatar,
+  Card,
+  CardContent,
 } from '@mui/material'
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid'
 import AddIcon from '@mui/icons-material/Add'
@@ -31,7 +35,15 @@ import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import SearchIcon from '@mui/icons-material/Search'
 import PersonIcon from '@mui/icons-material/Person'
+import VisibilityIcon from '@mui/icons-material/Visibility'
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism'
+import PhoneIcon from '@mui/icons-material/Phone'
+import EmailIcon from '@mui/icons-material/Email'
+import LocationOnIcon from '@mui/icons-material/LocationOn'
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
+import BadgeIcon from '@mui/icons-material/Badge'
+import StickyNote2Icon from '@mui/icons-material/StickyNote2'
+
 import { can } from '@/lib/permissions'
 import { formatDate } from '@/lib/utils'
 import { downloadCSV } from '@/lib/csv'
@@ -56,12 +68,18 @@ interface Member {
   name: string
   phone: string | null
   email: string | null
+  address: string | null
   city: string | null
+  district: string | null
   state: string | null
+  gender: string | null
+  education: string | null
   joinDate: string
   membershipType: string
   status: string
   notes: string | null
+  createdAt?: string
+  updatedAt?: string
 }
 
 const emptyForm = {
@@ -70,7 +88,10 @@ const emptyForm = {
   email: '',
   address: '',
   city: '',
+  district: '',
   state: '',
+  gender: '',
+  education: '',
   joinDate: new Date().toISOString().split('T')[0],
   membershipType: 'GENERAL',
   status: 'ACTIVE',
@@ -99,6 +120,9 @@ export default function MembersClient() {
   const [formData, setFormData] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
+
+  const [viewDialogOpen, setViewDialogOpen] = useState(false)
+  const [viewingMember, setViewingMember] = useState<Member | null>(null)
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deletingMember, setDeletingMember] = useState<Member | null>(null)
@@ -141,6 +165,11 @@ export default function MembersClient() {
 
   useEffect(() => { fetchMembers() }, [fetchMembers])
 
+  const openViewDialog = (member: Member) => {
+    setViewingMember(member)
+    setViewDialogOpen(true)
+  }
+
   const openAddDialog = () => {
     setEditingMember(null)
     setFormData(emptyForm)
@@ -154,10 +183,13 @@ export default function MembersClient() {
       name: member.name,
       phone: member.phone || '',
       email: member.email || '',
-      address: '',
+      address: member.address || '',
       city: member.city || '',
+      district: member.district || '',
       state: member.state || '',
-      joinDate: member.joinDate.split('T')[0],
+      gender: member.gender || '',
+      education: member.education || '',
+      joinDate: member.joinDate ? member.joinDate.split('T')[0] : new Date().toISOString().split('T')[0],
       membershipType: member.membershipType,
       status: member.status,
       notes: member.notes || '',
@@ -210,7 +242,8 @@ export default function MembersClient() {
         return
       }
       setUpgradeDialogOpen(false)
-      alert(`Successfully added ${upgradingMember.name} to the Volunteer pipeline!`)
+      fetchMembers()
+      alert(`Successfully upgraded ${upgradingMember.name} to a Volunteer! The record has been moved to the Volunteer pipeline.`)
     } catch (e) {
       alert('Error upgrading to volunteer')
     } finally {
@@ -222,7 +255,6 @@ export default function MembersClient() {
     { field: 'memberNumber', headerName: 'Member #', minWidth: 120, flex: 0.8 },
     { field: 'name', headerName: 'Name', flex: 1.2, minWidth: 160 },
     { field: 'phone', headerName: 'Phone', minWidth: 130, flex: 0.9, valueGetter: (v) => v || '—' },
-    { field: 'email', headerName: 'Email', flex: 1.2, minWidth: 180, valueGetter: (v) => v || '—' },
     { field: 'city', headerName: 'City', minWidth: 120, flex: 0.8, valueGetter: (v) => v || '—' },
     {
       field: 'membershipType',
@@ -256,13 +288,18 @@ export default function MembersClient() {
     {
       field: 'actions',
       headerName: 'Actions',
-      minWidth: 100,
-      flex: 0.7,
+      minWidth: 130,
+      flex: 0.9,
       sortable: false,
       align: 'center',
       headerAlign: 'center',
       renderCell: (p: GridRenderCellParams) => (
         <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center', width: '100%' }}>
+          <Tooltip title="View Details">
+            <IconButton size="small" color="info" onClick={() => openViewDialog(p.row as Member)}>
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
           {canUpdate && (
             <Tooltip title="Edit">
               <IconButton size="small" onClick={() => openEditDialog(p.row as Member)}>
@@ -338,7 +375,7 @@ export default function MembersClient() {
       {/* Filters */}
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mb: 2 }}>
         <TextField
-          placeholder="Search name, email, phone..."
+          placeholder="Search name, phone, member #..."
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0) }}
           sx={{ minWidth: 260 }}
@@ -394,6 +431,287 @@ export default function MembersClient() {
         sx={{ bgcolor: 'background.paper' }}
       />
 
+      {/* View Details Dialog */}
+      <Dialog open={viewDialogOpen} onClose={() => setViewDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ p: 3, pb: 2, bgcolor: '#F8FAFC' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Avatar
+                sx={{
+                  width: 56,
+                  height: 56,
+                  bgcolor: 'primary.main',
+                  fontSize: '1.5rem',
+                  fontWeight: 700,
+                  boxShadow: '0 4px 12px rgba(0,137,123,0.2)'
+                }}
+              >
+                {viewingMember?.name?.charAt(0).toUpperCase() || 'M'}
+              </Avatar>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', lineHeight: 1.2 }}>
+                  {viewingMember?.name}
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.75, flexWrap: 'wrap' }}>
+                  <Chip
+                    label={`ID: ${viewingMember?.memberNumber}`}
+                    size="small"
+                    sx={{
+                      fontWeight: 700,
+                      fontFamily: 'monospace',
+                      bgcolor: '#E2E8F0',
+                      color: '#334155',
+                      fontSize: '0.75rem'
+                    }}
+                  />
+                  <Chip
+                    label={viewingMember?.status || 'ACTIVE'}
+                    size="small"
+                    color={STATUS_COLORS[viewingMember?.status || 'ACTIVE'] || 'default'}
+                    sx={{ fontWeight: 700, fontSize: '0.72rem' }}
+                  />
+                  <Chip
+                    label={`${MEMBERSHIP_TYPE_LABELS[viewingMember?.membershipType || 'GENERAL'] || viewingMember?.membershipType} Member`}
+                    size="small"
+                    variant="outlined"
+                    color="primary"
+                    sx={{ fontWeight: 600, fontSize: '0.72rem' }}
+                  />
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ p: 3, bgcolor: '#FFFFFF' }}>
+          {viewingMember && (
+            <Grid container spacing={2.5}>
+              {/* Card 1: Personal & Contact Information */}
+              <Grid item xs={12} md={6}>
+                <Card variant="outlined" sx={{ borderRadius: 2.5, height: '100%', borderColor: '#E2E8F0' }}>
+                  <CardContent sx={{ p: 2.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, color: 'primary.main' }}>
+                      <PersonIcon fontSize="small" />
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                        Contact & Personal Details
+                      </Typography>
+                    </Box>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12}>
+                        <Typography variant="caption" color="text.secondary" display="block" fontWeight={600}>
+                          PHONE NUMBER
+                        </Typography>
+                        {viewingMember.phone ? (
+                          <Box
+                            component="a"
+                            href={`tel:${viewingMember.phone}`}
+                            sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              color: 'primary.main',
+                              textDecoration: 'none',
+                              fontWeight: 600,
+                              fontSize: '0.95rem',
+                              mt: 0.25,
+                              '&:hover': { textDecoration: 'underline' }
+                            }}
+                          >
+                            <PhoneIcon fontSize="inherit" />
+                            {viewingMember.phone}
+                          </Box>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary" fontStyle="italic" sx={{ mt: 0.25 }}>Not provided</Typography>
+                        )}
+                      </Grid>
+
+                      <Grid item xs={12}>
+                        <Typography variant="caption" color="text.secondary" display="block" fontWeight={600}>
+                          EMAIL ADDRESS
+                        </Typography>
+                        {viewingMember.email ? (
+                          <Box
+                            component="a"
+                            href={`mailto:${viewingMember.email}`}
+                            sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              color: 'primary.main',
+                              textDecoration: 'none',
+                              fontWeight: 600,
+                              fontSize: '0.95rem',
+                              mt: 0.25,
+                              '&:hover': { textDecoration: 'underline' }
+                            }}
+                          >
+                            <EmailIcon fontSize="inherit" />
+                            {viewingMember.email}
+                          </Box>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary" fontStyle="italic" sx={{ mt: 0.25 }}>Not provided</Typography>
+                        )}
+                      </Grid>
+
+                      <Grid item xs={6}>
+                        <Typography variant="caption" color="text.secondary" display="block" fontWeight={600}>
+                          GENDER
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.25 }}>
+                          {viewingMember.gender || <span style={{ color: '#94A3B8', fontStyle: 'italic' }}>Not specified</span>}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Typography variant="caption" color="text.secondary" display="block" fontWeight={600}>
+                          EDUCATION
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.25 }}>
+                          {viewingMember.education || <span style={{ color: '#94A3B8', fontStyle: 'italic' }}>Not specified</span>}
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Card 2: Membership & Governance */}
+              <Grid item xs={12} md={6}>
+                <Card variant="outlined" sx={{ borderRadius: 2.5, height: '100%', borderColor: '#E2E8F0' }}>
+                  <CardContent sx={{ p: 2.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, color: 'primary.main' }}>
+                      <BadgeIcon fontSize="small" />
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                        Membership Info
+                      </Typography>
+                    </Box>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12}>
+                        <Typography variant="caption" color="text.secondary" display="block" fontWeight={600}>
+                          MEMBER NUMBER
+                        </Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 700, color: 'text.primary', mt: 0.25 }}>
+                          {viewingMember.memberNumber}
+                        </Typography>
+                      </Grid>
+
+                      <Grid item xs={6}>
+                        <Typography variant="caption" color="text.secondary" display="block" fontWeight={600}>
+                          MEMBERSHIP TIER
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.25 }}>
+                          {MEMBERSHIP_TYPE_LABELS[viewingMember.membershipType] || viewingMember.membershipType}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Typography variant="caption" color="text.secondary" display="block" fontWeight={600}>
+                          JOIN DATE
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.25 }}>
+                          <CalendarTodayIcon fontSize="inherit" color="action" />
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {formatDate(viewingMember.joinDate)}
+                          </Typography>
+                        </Box>
+                      </Grid>
+
+                      <Grid item xs={12}>
+                        <Typography variant="caption" color="text.secondary" display="block" fontWeight={600}>
+                          STATUS
+                        </Typography>
+                        <Chip
+                          label={viewingMember.status}
+                          size="small"
+                          color={STATUS_COLORS[viewingMember.status] || 'default'}
+                          sx={{ fontWeight: 700, mt: 0.5 }}
+                        />
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Card 3: Address & Location Details */}
+              <Grid item xs={12}>
+                <Card variant="outlined" sx={{ borderRadius: 2.5, borderColor: '#E2E8F0' }}>
+                  <CardContent sx={{ p: 2.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5, color: 'primary.main' }}>
+                      <LocationOnIcon fontSize="small" />
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                        Address & Location
+                      </Typography>
+                    </Box>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="caption" color="text.secondary" display="block" fontWeight={600}>
+                          STREET ADDRESS
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.25 }}>
+                          {viewingMember.address || <span style={{ color: '#94A3B8', fontStyle: 'italic' }}>Not provided</span>}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="caption" color="text.secondary" display="block" fontWeight={600}>
+                          CITY / DISTRICT / STATE
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.25 }}>
+                          {[viewingMember.city, viewingMember.district, viewingMember.state].filter(Boolean).join(', ') || (
+                            <span style={{ color: '#94A3B8', fontStyle: 'italic' }}>Not provided</span>
+                          )}
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Card 4: Notes (if present) */}
+              {viewingMember.notes && (
+                <Grid item xs={12}>
+                  <Box sx={{ bgcolor: '#FFFBEB', border: '1px solid #FDE68A', p: 2, borderRadius: 2.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, color: '#D97706' }}>
+                      <StickyNote2Icon fontSize="small" />
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                        Member Notes
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2" sx={{ color: '#92400E', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+                      {viewingMember.notes}
+                    </Typography>
+                  </Box>
+                </Grid>
+              )}
+            </Grid>
+          )}
+        </DialogContent>
+        <Divider />
+        <DialogActions sx={{ p: 2.5, px: 3, bgcolor: '#F8FAFC', justifyContent: 'space-between' }}>
+          <Stack direction="row" spacing={1.5}>
+            {canUpdate && viewingMember && (
+              <Button
+                variant="outlined"
+                startIcon={<EditIcon />}
+                onClick={() => { setViewDialogOpen(false); openEditDialog(viewingMember) }}
+              >
+                Edit Details
+              </Button>
+            )}
+            {canUpdate && viewingMember && (
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<VolunteerActivismIcon />}
+                onClick={() => { setViewDialogOpen(false); setUpgradingMember(viewingMember); setUpgradeDialogOpen(true) }}
+              >
+                Upgrade to Volunteer
+              </Button>
+            )}
+          </Stack>
+          <Button onClick={() => setViewDialogOpen(false)} variant="text" color="inherit">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -428,6 +746,24 @@ export default function MembersClient() {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
             </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Gender"
+                fullWidth
+                value={formData.gender}
+                placeholder="Male / Female / Other"
+                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Education"
+                fullWidth
+                value={formData.education}
+                placeholder="Degree / Qualification"
+                onChange={(e) => setFormData({ ...formData, education: e.target.value })}
+              />
+            </Grid>
             <Grid item xs={12}>
               <TextField
                 label="Address"
@@ -438,7 +774,7 @@ export default function MembersClient() {
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={4}>
               <TextField
                 label="City"
                 fullWidth
@@ -446,7 +782,15 @@ export default function MembersClient() {
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                label="District"
+                fullWidth
+                value={formData.district}
+                onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
               <Autocomplete
                 options={statesList}
                 value={formData.state || null}
@@ -550,9 +894,7 @@ export default function MembersClient() {
         <DialogContent>
           <Typography>
             Are you sure you want to upgrade <strong>{upgradingMember?.name}</strong> to a Volunteer? 
-            They will be added to the Volunteer pipeline in the <strong>APPLICATION</strong> stage.
-            <br/><br/>
-            (Their original Member record will remain intact).
+            They will be moved to the Volunteer pipeline in the <strong>APPLICATION</strong> stage, and removed from the Members directory.
           </Typography>
         </DialogContent>
         <DialogActions>

@@ -40,6 +40,7 @@ import FavoriteIcon from '@mui/icons-material/Favorite'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
+import BusinessIcon from '@mui/icons-material/Business'
 import ExpandLess from '@mui/icons-material/ExpandLess'
 import ExpandMore from '@mui/icons-material/ExpandMore'
 import { ROLE_LABELS } from '@/lib/permissions'
@@ -75,8 +76,17 @@ const NAV_ITEMS: NavItem[] = [
       { label: 'Treasury Overview', href: '/admin/finance?tab=overview', tabKey: 'overview' },
       { label: 'Expenses Log', href: '/admin/finance?tab=expenses', tabKey: 'expenses' },
       { label: 'Expense Categories', href: '/admin/finance?tab=categories', tabKey: 'categories' },
-      { label: 'Commercial Subsidiaries', href: '/admin/finance?tab=commercial', tabKey: 'commercial' },
       { label: 'Financial Statement', href: '/admin/finance?tab=statement', tabKey: 'statement' },
+    ],
+  },
+  {
+    label: 'Commercial Subsidiaries',
+    icon: <BusinessIcon />,
+    href: '/admin/commercial-subsidiaries',
+    module: 'finance',
+    subItems: [
+      { label: 'Companies Registry', href: '/admin/commercial-subsidiaries' },
+      { label: 'Revenue Distributions', href: '/admin/commercial-subsidiaries/revenues' },
     ],
   },
   { label: 'Meeting Minutes', icon: <ArticleIcon />, href: '/admin/minutes', module: 'minutes' },
@@ -107,7 +117,7 @@ function SubItemLink({ sub, item, pathname, onNavigate }: { sub: SubNavItem; ite
   const isSubActive =
     pathname === item.href &&
     (currentTab === sub.tabKey ||
-      (!currentTab && (sub.tabKey === 'overview' || sub.tabKey === 'org')))
+      (!currentTab && (sub.tabKey === 'overview' || sub.tabKey === 'org' || sub.tabKey === 'companies')))
 
   return (
     <ListItem disablePadding>

@@ -65,6 +65,7 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 import RestartAltIcon from '@mui/icons-material/RestartAlt'
+import RateReviewIcon from '@mui/icons-material/RateReview'
 import { can } from '@/lib/permissions'
 import { formatDate } from '@/lib/utils'
 import { DEFAULT_INDIAN_STATES, DEFAULT_PIPELINE_STAGES, PipelineStageConfig } from '@/lib/constants'
@@ -596,8 +597,8 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                 </Button>
                 <Button
                   variant="outlined"
-                  color="info"
-                  startIcon={<RestartAltIcon />}
+                  color="primary"
+                  startIcon={<LockResetIcon />}
                   sx={{
                     textTransform: 'none',
                     fontWeight: 600,
@@ -606,13 +607,10 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                     py: 0.75,
                     height: 38,
                   }}
-                  onClick={() => {
-                    setResetCustomPassword('')
-                    setResetSendEmail(true)
-                    setResetAccountDialogOpen(true)
-                  }}
+                  onClick={() => handleCredentialsAction('RESET_ACCOUNT', true)}
+                  disabled={passwordActionLoading}
                 >
-                  Reset Account
+                  Reset Password
                 </Button>
                 {volunteer.isSuspended ? (
                   <Button
@@ -720,7 +718,7 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                     const isCurrent = stageIndex === idx && !isApproved && !isRejected
 
                     return (
-                      <Step key={s} completed={isCompleted}>
+                      <Step key={s} completed={isCompleted} expanded={true}>
                         <StepLabel
                           StepIconProps={{
                             icon: isCompleted ? (
@@ -755,21 +753,33 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                                 Guideline: {stageConfig.description}
                               </Typography>
                             )}
-                            {stageRecord?.notes && (
-                              <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                <strong>Notes:</strong> {stageRecord.notes}
+
+                            {/* Recorded Stage Details (Notes, Reviewer, Completed Date) */}
+                            {stageRecord && (stageRecord.notes || stageRecord.conductedBy || stageRecord.completedAt) ? (
+                              <Box sx={{ bgcolor: '#F8FAFC', border: '1px solid #E2E8F0', p: 1.5, borderRadius: 2, my: 1 }}>
+                                {stageRecord.notes && (
+                                  <Typography variant="body2" sx={{ color: '#0F172A', fontWeight: 500, mb: 0.5 }}>
+                                    💬 <strong>Review Remarks:</strong> {stageRecord.notes}
+                                  </Typography>
+                                )}
+                                <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="center" sx={{ mt: 0.5 }}>
+                                  {stageRecord.conductedBy && (
+                                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                                      👤 Reviewer: <span style={{ color: '#0F172A', fontWeight: 700 }}>{stageRecord.conductedBy}</span>
+                                    </Typography>
+                                  )}
+                                  {stageRecord.completedAt && (
+                                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                                      📅 Completed: <span style={{ color: '#0F172A' }}>{formatDate(stageRecord.completedAt)}</span>
+                                    </Typography>
+                                  )}
+                                </Stack>
+                              </Box>
+                            ) : isCompleted ? (
+                              <Typography variant="caption" color="text.secondary" fontStyle="italic" display="block" sx={{ my: 0.5 }}>
+                                Stage marked as completed.
                               </Typography>
-                            )}
-                            {stageRecord?.conductedBy && (
-                              <Typography variant="caption" color="text.secondary" display="block">
-                                Conducted by: {stageRecord.conductedBy}
-                              </Typography>
-                            )}
-                            {stageRecord?.completedAt && (
-                              <Typography variant="caption" color="text.secondary" display="block">
-                                Completed: {formatDate(stageRecord.completedAt)}
-                              </Typography>
-                            )}
+                            ) : null}
                           </Box>
                         </StepContent>
                       </Step>
@@ -982,66 +992,31 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
                           color="primary"
                           startIcon={<KeyIcon />}
                           sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2, px: 2, py: 0.75, height: 38 }}
-                          onClick={() => handleCredentialsAction('CREATE_ACCOUNT')}
+                          onClick={() => handleCredentialsAction('RESET_ACCOUNT', true)}
                           disabled={passwordActionLoading}
                         >
-                          Create Volunteer Account
+                          {passwordActionLoading ? <CircularProgress size={18} color="inherit" /> : 'Create Account & Send Setup Email'}
                         </Button>
                       ) : (
                         <>
                           <Button
                             variant="contained"
-                            color="info"
-                            startIcon={<RestartAltIcon />}
-                            sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2, px: 2, py: 0.75, height: 38 }}
-                            onClick={() => {
-                              setResetCustomPassword('')
-                              setResetSendEmail(true)
-                              setResetAccountDialogOpen(true)
-                            }}
-                            disabled={passwordActionLoading}
-                          >
-                            Reset Account
-                          </Button>
-                          <Button
-                            variant="contained"
                             color="primary"
-                            startIcon={<LockResetIcon />}
+                            startIcon={passwordActionLoading ? <CircularProgress size={18} color="inherit" /> : <LockResetIcon />}
                             sx={{
                               textTransform: 'none',
                               fontWeight: 600,
                               borderRadius: 2,
-                              px: 2,
+                              px: 2.5,
                               py: 0.75,
                               height: 38,
                               bgcolor: '#12446A',
                               '&:hover': { bgcolor: '#0d3250' },
                             }}
-                            onClick={() => {
-                              generateStrongPassword()
-                              setPasswordDialogOpen(true)
-                            }}
+                            onClick={() => handleCredentialsAction('RESET_ACCOUNT', true)}
                             disabled={passwordActionLoading}
                           >
-                            Set / Reset Password
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            startIcon={<RefreshIcon />}
-                            sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2, px: 2, py: 0.75, height: 38 }}
-                            onClick={() => handleCredentialsAction('GENERATE_INVITE', false)}
-                            disabled={passwordActionLoading}
-                          >
-                            Generate Setup Link
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            startIcon={<SendIcon />}
-                            sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2, px: 2, py: 0.75, height: 38 }}
-                            onClick={() => handleCredentialsAction('GENERATE_INVITE', true)}
-                            disabled={passwordActionLoading}
-                          >
-                            Email Setup Invite
+                            Reset Password & Send Setup Email
                           </Button>
                           <Button
                             variant="outlined"

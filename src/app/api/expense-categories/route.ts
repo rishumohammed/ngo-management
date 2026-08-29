@@ -30,10 +30,28 @@ export async function GET(req: NextRequest) {
   if (!can(session.user.role, 'finance', 'read'))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
+  const { searchParams } = new URL(req.url)
+  const fiscalYear = searchParams.get('fiscalYear')
+
+  const whereExpenses: any = {}
+  if (fiscalYear && fiscalYear !== 'ALL') {
+    whereExpenses.fiscalYear = fiscalYear
+  }
+
   let categories = await prisma.expenseCategory.findMany({
     where: { isArchived: false },
     include: {
-      _count: { select: { expenses: true } },
+      expenses: {
+        where: whereExpenses,
+        select: { amount: true },
+      },
+      _count: {
+        select: {
+          expenses: {
+            where: whereExpenses,
+          },
+        },
+      },
     },
     orderBy: { name: 'asc' },
   })
@@ -47,13 +65,34 @@ export async function GET(req: NextRequest) {
     categories = await prisma.expenseCategory.findMany({
       where: { isArchived: false },
       include: {
-        _count: { select: { expenses: true } },
+        expenses: {
+          where: whereExpenses,
+          select: { amount: true },
+        },
+        _count: {
+          select: {
+            expenses: {
+              where: whereExpenses,
+            },
+          },
+        },
       },
       orderBy: { name: 'asc' },
     })
   }
 
-  return NextResponse.json({ categories })
+  const mappedCategories = categories.map((cat) => {
+    const totalAmount = cat.expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0)
+    const expenseCount = cat.expenses.length
+    const { expenses, ...catData } = cat
+    return {
+      ...catData,
+      expenseCount,
+      totalAmount,
+    }
+  })
+
+  return NextResponse.json({ categories: mappedCategories })
 }
 
 export async function POST(req: NextRequest) {

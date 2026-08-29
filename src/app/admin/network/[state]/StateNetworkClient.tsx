@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import {
-  Box, Typography, Grid, Card, CardActionArea, Avatar, LinearProgress, IconButton, Dialog, DialogTitle, DialogContent, Alert, TextField, DialogActions, Button, CircularProgress
+  Box, Typography, Grid, Card, CardActionArea, Avatar, LinearProgress, IconButton, Dialog, DialogTitle, DialogContent, Alert, TextField, DialogActions, Button, CircularProgress, Chip
 } from '@mui/material'
 import MapIcon from '@mui/icons-material/Map'
 import LocationCityIcon from '@mui/icons-material/LocationCity'
@@ -18,6 +18,7 @@ export default function StateNetworkClient({ state }: { state: string }) {
   const router = useRouter()
   const [districts, setDistricts] = useState<string[]>([])
   const [committees, setCommittees] = useState<any[]>([])
+  const [districtCounts, setDistrictCounts] = useState<Record<string, { members: number; volunteers: number }>>({})
   const [loading, setLoading] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [formData, setFormData] = useState(emptyForm)
@@ -44,14 +45,17 @@ export default function StateNetworkClient({ state }: { state: string }) {
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const [resOpt, resC] = await Promise.all([
+      const [resOpt, resC, resCounts] = await Promise.all([
         fetch(`/api/public/form-options`),
-        fetch(`/api/committees?includeArchived=false`)
+        fetch(`/api/committees?includeArchived=false`),
+        fetch(`/api/locations/counts`)
       ])
       const dataOpt = await resOpt.json()
       const dataC = await resC.json()
+      const dataCounts = await resCounts.json()
       setDistricts(dataOpt.districts?.[state] || [])
       setCommittees(dataC.filter((c: any) => c.state === state) || [])
+      if (dataCounts.districtCounts) setDistrictCounts(dataCounts.districtCounts)
     } finally { setLoading(false) }
   }, [state])
 
@@ -137,28 +141,38 @@ export default function StateNetworkClient({ state }: { state: string }) {
         Districts ({districts.length})
       </Typography>
       <Grid container spacing={3}>
-        {districts.map(district => (
-          <Grid item xs={12} sm={6} md={4} key={district}>
-            <Card sx={{ height: '100%' }}>
-              <CardActionArea 
-                sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}
-                onClick={() => router.push(`/admin/network/${encodeURIComponent(state)}/${encodeURIComponent(district)}`)}
-              >
-                <Box display="flex" alignItems="center" gap={2} width="100%">
-                  <Avatar sx={{ bgcolor: 'info.main' }}>
-                    <LocationCityIcon />
-                  </Avatar>
-                  <Box>
-                    <Typography variant="h6" fontWeight={600}>{district}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Manage district members & volunteers
-                    </Typography>
+        {districts.map(district => {
+          const distKey = `${state}___${district}`
+          const dMembers = districtCounts[distKey]?.members || 0
+          const dVolunteers = districtCounts[distKey]?.volunteers || 0
+
+          return (
+            <Grid item xs={12} sm={6} md={4} key={district}>
+              <Card sx={{ height: '100%' }}>
+                <CardActionArea 
+                  sx={{ p: 2.5, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between' }}
+                  onClick={() => router.push(`/admin/network/${encodeURIComponent(state)}/${encodeURIComponent(district)}`)}
+                >
+                  <Box display="flex" alignItems="center" gap={2} width="100%">
+                    <Avatar sx={{ bgcolor: 'info.main' }}>
+                      <LocationCityIcon />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="h6" fontWeight={700} color="#12446A">{district}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        District Network Node
+                      </Typography>
+                    </Box>
                   </Box>
-                </Box>
-              </CardActionArea>
-            </Card>
-          </Grid>
-        ))}
+                  <Box display="flex" gap={1} flexWrap="wrap" sx={{ mt: 2 }}>
+                    <Chip label={`Members: ${dMembers}`} size="small" color="primary" variant="outlined" sx={{ fontWeight: 600, fontSize: '0.75rem' }} />
+                    <Chip label={`Volunteers: ${dVolunteers}`} size="small" color="success" variant="outlined" sx={{ fontWeight: 600, fontSize: '0.75rem' }} />
+                  </Box>
+                </CardActionArea>
+              </Card>
+            </Grid>
+          )
+        })}
       </Grid>
       
       {!loading && districts.length === 0 && (

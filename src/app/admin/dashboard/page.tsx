@@ -29,7 +29,6 @@ async function getDashboardData() {
       upcomingEventsRaw,
       overdueActionItems,
       expiringTerms,
-      recentActivityRaw,
       orgSettings,
       recentDonations,
       netLiquidFundsRaw,
@@ -68,10 +67,6 @@ async function getDashboardData() {
       prisma.committeeMember.count({
         where: { termEnd: { gte: now, lte: next30Days }, isActive: true },
       }).catch(() => 0),
-      prisma.auditLog.findMany({
-        orderBy: { timestamp: 'desc' },
-        take: 10,
-      }).catch(() => []),
       prisma.orgSetting.findMany({
         where: { key: { in: ['eighty_g_validity', 'org_name'] } },
       }).catch(() => []),
@@ -130,15 +125,6 @@ async function getDashboardData() {
       location: e.location,
     }))
 
-    // Safely serialize recentActivity
-    const recentActivity = recentActivityRaw.map((a: { id: string; action: string; entity: string; entityName: string | null; userName: string | null; timestamp: Date }) => ({
-      id: a.id,
-      action: a.action,
-      entity: a.entity,
-      entityName: a.entityName,
-      userName: a.userName,
-      timestamp: a.timestamp.toISOString(),
-    }))
 
     return {
       totalMembers,
@@ -160,7 +146,6 @@ async function getDashboardData() {
       upcomingEvents,
       overdueActionItems,
       expiringTerms,
-      recentActivity,
       eightyGExpiry: eightyGExpiry?.toISOString() || null,
       eightyGExpiringSoon,
       monthlyDonations,
@@ -181,7 +166,6 @@ async function getDashboardData() {
       upcomingEvents: [],
       overdueActionItems: 0,
       expiringTerms: 0,
-      recentActivity: [],
       eightyGExpiry: null,
       eightyGExpiringSoon: false,
       monthlyDonations: [],
