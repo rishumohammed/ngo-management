@@ -66,6 +66,38 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
 
 
+  // Validate new account balance if new status is PAID
+  if (newAccountId && newStatus === 'PAID') {
+    const targetAccount = await prisma.paymentAccount.findUnique({ where: { id: newAccountId } })
+    if (!targetAccount) {
+      // Rollback previous revert
+      if (existing.paymentAccountId && existing.status === 'PAID') {
+        await prisma.paymentAccount.update({
+          where: { id: existing.paymentAccountId },
+          data: { currentBalance: { decrement: Number(existing.amount) } },
+        })
+      }
+      return NextResponse.json({ error: 'Selected payment account not found.' }, { status: 404 })
+    }
+
+    const availableBal = Number(targetAccount.currentBalance)
+    if (availableBal < newAmount) {
+      // Rollback previous revert
+      if (existing.paymentAccountId && existing.status === 'PAID') {
+        await prisma.paymentAccount.update({
+          where: { id: existing.paymentAccountId },
+          data: { currentBalance: { decrement: Number(existing.amount) } },
+        })
+      }
+      return NextResponse.json(
+        {
+          error: `Insufficient funds in "${targetAccount.accountName}". Available balance: ₹${availableBal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}, requested: ₹${newAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}. Bank balance & Cash in hand cannot be negative.`,
+        },
+        { status: 400 }
+      )
+    }
+  }
+
   const updated = await prisma.expense.update({
     where: { id: params.id },
     data: {

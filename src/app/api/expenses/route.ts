@@ -111,6 +111,28 @@ export async function POST(req: NextRequest) {
 
   const status = parsed.data.status || 'PAID'
   const accountId = parsed.data.paymentAccountId || null
+  const amount = parsed.data.amount
+
+  if (amount <= 0) {
+    return NextResponse.json({ error: 'Expense amount must be greater than zero.' }, { status: 400 })
+  }
+
+  // Validate payment account balance if PAID
+  if (accountId && status === 'PAID') {
+    const pAccount = await prisma.paymentAccount.findUnique({ where: { id: accountId } })
+    if (!pAccount) {
+      return NextResponse.json({ error: 'Selected payment account was not found.' }, { status: 404 })
+    }
+    const currentBal = Number(pAccount.currentBalance)
+    if (currentBal < amount) {
+      return NextResponse.json(
+        {
+          error: `Insufficient funds in "${pAccount.accountName}". Available balance: ₹${currentBal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}, but requested: ₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}. Bank balance & Cash in hand cannot be negative.`,
+        },
+        { status: 400 }
+      )
+    }
+  }
 
   const expense = await prisma.expense.create({
     data: {
@@ -118,7 +140,7 @@ export async function POST(req: NextRequest) {
       fiscalYear,
       categoryId: parsed.data.categoryId,
       paymentAccountId: accountId,
-      amount: parsed.data.amount,
+      amount: amount,
       date: expenseDate,
       paymentMode: parsed.data.paymentMode,
       payeeName: parsed.data.payeeName,
@@ -137,7 +159,7 @@ export async function POST(req: NextRequest) {
   if (accountId && status === 'PAID') {
     await prisma.paymentAccount.update({
       where: { id: accountId },
-      data: { currentBalance: { decrement: parsed.data.amount } },
+      data: { currentBalance: { decrement: amount } },
     })
   }
 

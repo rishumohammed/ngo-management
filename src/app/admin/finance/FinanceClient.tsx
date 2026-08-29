@@ -57,6 +57,7 @@ import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 import CloseIcon from '@mui/icons-material/Close'
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz'
 
 import {
   ResponsiveContainer,
@@ -204,11 +205,24 @@ export default function FinanceClient() {
 
   // Dialog states
   const [openAccountModal, setOpenAccountModal] = useState(false)
+  const [openTransferModal, setOpenTransferModal] = useState(false)
   const [openExpenseModal, setOpenExpenseModal] = useState(false)
   const [openCategoryModal, setOpenCategoryModal] = useState(false)
   const [openEntityModal, setOpenEntityModal] = useState(false)
   const [openRevenueModal, setOpenRevenueModal] = useState(false)
   const [openVoucherPrintModal, setOpenVoucherPrintModal] = useState(false)
+
+  // Fund Transfer State
+  const [transferForm, setTransferForm] = useState({
+    fromAccountId: '',
+    toAccountId: '',
+    amount: '',
+    date: dayjs().format('YYYY-MM-DD'),
+    referenceNo: '',
+    notes: '',
+  })
+  const [transferSaving, setTransferSaving] = useState(false)
+  const [transferError, setTransferError] = useState<string | null>(null)
 
   // Edit & Voucher Print states
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null)
@@ -422,6 +436,62 @@ export default function FinanceClient() {
       }
     } catch (e) {
       console.error(e)
+    }
+  }
+
+  // Submit Fund Transfer
+  const handleSaveTransfer = async () => {
+    const amt = parseFloat(transferForm.amount)
+    if (isNaN(amt) || amt <= 0) {
+      setTransferError('Only positive transfer amounts are permitted.')
+      return
+    }
+
+    if (transferForm.fromAccountId === transferForm.toAccountId) {
+      setTransferError('Source and destination accounts must be different.')
+      return
+    }
+
+    const fromAcc = summary?.accounts.find((a) => a.id === transferForm.fromAccountId)
+    if (fromAcc && fromAcc.currentBalance < amt) {
+      setTransferError(
+        `Insufficient balance in "${fromAcc.accountName}". Available balance: ₹${fromAcc.currentBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}, requested: ₹${amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}. Bank balance & Cash in hand cannot be negative.`
+      )
+      return
+    }
+
+    setTransferSaving(true)
+    setTransferError(null)
+
+    try {
+      const res = await fetch('/api/finance/transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...transferForm,
+          amount: amt,
+        }),
+      })
+
+      const data = await res.json()
+      if (res.ok) {
+        setOpenTransferModal(false)
+        setTransferForm({
+          fromAccountId: '',
+          toAccountId: '',
+          amount: '',
+          date: dayjs().format('YYYY-MM-DD'),
+          referenceNo: '',
+          notes: '',
+        })
+        fetchSummary()
+      } else {
+        setTransferError(data.error || 'Failed to transfer funds')
+      }
+    } catch (e: any) {
+      setTransferError(e.message || 'Server error occurred')
+    } finally {
+      setTransferSaving(false)
     }
   }
 
@@ -889,14 +959,35 @@ export default function FinanceClient() {
                         Running balances for each financial account
                       </Typography>
                     </Box>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      startIcon={<AddIcon />}
-                      onClick={() => setOpenAccountModal(true)}
-                    >
-                      Add Account
-                    </Button>
+                    <Stack direction="row" spacing={1.5}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<SwapHorizIcon />}
+                        onClick={() => {
+                          setTransferForm({
+                            fromAccountId: summary.accounts[0]?.id || '',
+                            toAccountId: summary.accounts[1]?.id || summary.accounts[0]?.id || '',
+                            amount: '',
+                            date: dayjs().format('YYYY-MM-DD'),
+                            referenceNo: '',
+                            notes: '',
+                          })
+                          setTransferError(null)
+                          setOpenTransferModal(true)
+                        }}
+                      >
+                        Transfer Funds
+                      </Button>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<AddIcon />}
+                        onClick={() => setOpenAccountModal(true)}
+                      >
+                        Add Account
+                      </Button>
+                    </Stack>
                   </Stack>
 
                   <Grid container spacing= {2}>
@@ -1984,6 +2075,101 @@ export default function FinanceClient() {
             onClick={() => window.print()}
           >
             Print Voucher
+          </Button>
+      </Dialog>
+
+      {/* Transfer Funds Modal */}
+      <Dialog open={openTransferModal} onClose={() => setOpenTransferModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, color: '#12446A', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <SwapHorizIcon color="primary" /> Transfer Funds Between Accounts
+        </DialogTitle>
+        <DialogContent dividers>
+          {transferError && <Alert severity="error" sx={{ mb: 2 }}>{transferError}</Alert>}
+
+          <Box display="flex" flexDirection="column" gap= {2} sx={{ mt: 1 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel>From Account (Source)</InputLabel>
+              <Select
+                value={transferForm.fromAccountId}
+                label="From Account (Source)"
+                onChange={(e) => setTransferForm({ ...transferForm, fromAccountId: e.target.value })}
+              >
+                {summary?.accounts.map((acc) => (
+                  <MenuItem key={acc.id} value={acc.id}>
+                    {acc.accountName} — Available: ₹{acc.currentBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth size="small">
+              <InputLabel>To Account (Destination)</InputLabel>
+              <Select
+                value={transferForm.toAccountId}
+                label="To Account (Destination)"
+                onChange={(e) => setTransferForm({ ...transferForm, toAccountId: e.target.value })}
+              >
+                {summary?.accounts
+                  .filter((acc) => acc.id !== transferForm.fromAccountId)
+                  .map((acc) => (
+                    <MenuItem key={acc.id} value={acc.id}>
+                      {acc.accountName} — Current: ₹{acc.currentBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+
+            <TextField
+              label="Transfer Amount (₹)"
+              type="number"
+              size="small"
+              fullWidth
+              value={transferForm.amount}
+              onChange={(e) => setTransferForm({ ...transferForm, amount: e.target.value })}
+              helperText="Only positive transfer amounts are permitted"
+            />
+
+            <TextField
+              label="Transfer Date"
+              type="date"
+              size="small"
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              value={transferForm.date}
+              onChange={(e) => setTransferForm({ ...transferForm, date: e.target.value })}
+            />
+
+            <TextField
+              label="Reference / Cheque / UTR No"
+              size="small"
+              fullWidth
+              placeholder="e.g. UTR123456 / Cash Withdrawal"
+              value={transferForm.referenceNo}
+              onChange={(e) => setTransferForm({ ...transferForm, referenceNo: e.target.value })}
+            />
+
+            <TextField
+              label="Notes / Purpose"
+              size="small"
+              fullWidth
+              multiline
+              rows={2}
+              placeholder="e.g. Cash withdrawal from SBI bank for petty cash box"
+              value={transferForm.notes}
+              onChange={(e) => setTransferForm({ ...transferForm, notes: e.target.value })}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setOpenTransferModal(false)} disabled={transferSaving}>Cancel</Button>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<SwapHorizIcon />}
+            onClick={handleSaveTransfer}
+            disabled={transferSaving}
+          >
+            {transferSaving ? <CircularProgress size={20} color="inherit" /> : 'Confirm Transfer'}
           </Button>
         </DialogActions>
       </Dialog>
