@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
-
-const prisma = new PrismaClient();
+import { generateVolunteerCardPdf } from '@/lib/pdf/volunteerCard';
+import { getEmailProvider, volunteerWelcomeTemplate } from '@/lib/email';
 
 const volunteerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -63,6 +63,49 @@ export async function POST(request: Request) {
         notes: 'Submitted via public form',
       },
     });
+
+    // Send Volunteer Card via email if email provided
+    if (newVolunteer.email) {
+      try {
+        const orgSettingsList = await prisma.orgSetting.findMany({
+          where: {
+            key: { in: ['org_name', 'org_logo', 'org_signature', 'org_qr_code', 'signatory_name', 'signatory_title'] },
+          },
+        });
+
+        const orgData = {
+          orgName: orgSettingsList.find((s) => s.key === 'org_name')?.value || 'Free Mind Foundation',
+          orgLogo: orgSettingsList.find((s) => s.key === 'org_logo')?.value || undefined,
+          orgSignature: orgSettingsList.find((s) => s.key === 'org_signature')?.value || undefined,
+          orgQrCode: orgSettingsList.find((s) => s.key === 'org_qr_code')?.value || undefined,
+          signatory: orgSettingsList.find((s) => s.key === 'signatory_name')?.value || 'Authorised Signatory',
+          signatoryTitle: orgSettingsList.find((s) => s.key === 'signatory_title')?.value || undefined,
+        };
+
+        const pdfBuffer = await generateVolunteerCardPdf({ volunteer: newVolunteer, orgData });
+        const emailProvider = await getEmailProvider();
+        const template = volunteerWelcomeTemplate({
+          name: newVolunteer.name,
+          orgName: orgData.orgName,
+        });
+
+        await emailProvider.send({
+          to: newVolunteer.email,
+          subject: template.subject,
+          html: template.html,
+          text: template.text,
+          attachments: [
+            {
+              filename: `Volunteer_Card_${newVolunteer.name.replace(/\s+/g, '_')}.pdf`,
+              content: Buffer.from(pdfBuffer),
+              contentType: 'application/pdf',
+            },
+          ],
+        });
+      } catch (emailErr) {
+        console.error('Failed to send public volunteer card email:', emailErr);
+      }
+    }
 
     return NextResponse.json({ success: true, volunteer: newVolunteer }, { status: 201 });
   } catch (error: any) {

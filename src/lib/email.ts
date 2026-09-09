@@ -224,6 +224,35 @@ export function membershipWelcomeTemplate(params: {
   }
 }
 
+export function volunteerWelcomeTemplate(params: {
+  name: string
+  orgName: string
+}) {
+  return {
+    subject: `Welcome to ${params.orgName} — Volunteer ID Card`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+        <div style="background: #08284D; padding: 24px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 22px;">${params.orgName}</h1>
+        </div>
+        <div style="padding: 32px; background: #ffffff;">
+          <h2 style="color: #1a1a1a; margin-top: 0;">Welcome, ${params.name}!</h2>
+          <p style="color: #444; line-height: 1.6;">
+            Thank you for registering as a volunteer with <strong>${params.orgName}</strong>. Your application has been received successfully!
+          </p>
+          <p style="color: #444; line-height: 1.6;">
+            Please find your official <strong>Volunteer Card</strong> attached to this email as a printable PDF.
+          </p>
+        </div>
+        <div style="padding: 16px; background: #f9f9f9; text-align: center;">
+          <p style="color: #aaa; font-size: 12px; margin: 0;">${params.orgName}</p>
+        </div>
+      </div>
+    `,
+    text: `Welcome ${params.name}! Thank you for registering as a volunteer with ${params.orgName}. Your Volunteer Card is attached.`,
+  }
+}
+
 export function volunteerInviteTemplate(params: {
   name: string
   inviteUrl: string
