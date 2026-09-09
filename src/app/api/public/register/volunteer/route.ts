@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
-import { generateVolunteerCardPdf } from '@/lib/pdf/volunteerCard';
-import { getEmailProvider, volunteerWelcomeTemplate } from '@/lib/email';
+import { getEmailProvider, volunteerApplicationReceivedTemplate } from '@/lib/email';
 
 const volunteerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -64,29 +63,18 @@ export async function POST(request: Request) {
       },
     });
 
-    // Send Volunteer Card via email if email provided
+    // Send Application Received email (Card is sent upon onboarding pipeline approval)
     if (newVolunteer.email) {
       try {
-        const orgSettingsList = await prisma.orgSetting.findMany({
-          where: {
-            key: { in: ['org_name', 'org_logo', 'org_signature', 'org_qr_code', 'signatory_name', 'signatory_title'] },
-          },
+        const orgSetting = await prisma.orgSetting.findUnique({
+          where: { key: 'org_name' },
         });
 
-        const orgData = {
-          orgName: orgSettingsList.find((s) => s.key === 'org_name')?.value || 'Free Mind Foundation',
-          orgLogo: orgSettingsList.find((s) => s.key === 'org_logo')?.value || undefined,
-          orgSignature: orgSettingsList.find((s) => s.key === 'org_signature')?.value || undefined,
-          orgQrCode: orgSettingsList.find((s) => s.key === 'org_qr_code')?.value || undefined,
-          signatory: orgSettingsList.find((s) => s.key === 'signatory_name')?.value || 'Authorised Signatory',
-          signatoryTitle: orgSettingsList.find((s) => s.key === 'signatory_title')?.value || undefined,
-        };
-
-        const pdfBuffer = await generateVolunteerCardPdf({ volunteer: newVolunteer, orgData });
+        const orgName = orgSetting?.value || 'Free Mind Foundation';
         const emailProvider = await getEmailProvider();
-        const template = volunteerWelcomeTemplate({
+        const template = volunteerApplicationReceivedTemplate({
           name: newVolunteer.name,
-          orgName: orgData.orgName,
+          orgName,
         });
 
         await emailProvider.send({
@@ -94,16 +82,9 @@ export async function POST(request: Request) {
           subject: template.subject,
           html: template.html,
           text: template.text,
-          attachments: [
-            {
-              filename: `Volunteer_Card_${newVolunteer.name.replace(/\s+/g, '_')}.pdf`,
-              content: Buffer.from(pdfBuffer),
-              contentType: 'application/pdf',
-            },
-          ],
         });
       } catch (emailErr) {
-        console.error('Failed to send public volunteer card email:', emailErr);
+        console.error('Failed to send public volunteer application email:', emailErr);
       }
     }
 

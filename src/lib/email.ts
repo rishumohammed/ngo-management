@@ -253,6 +253,35 @@ export function volunteerWelcomeTemplate(params: {
   }
 }
 
+export function volunteerApplicationReceivedTemplate(params: {
+  name: string
+  orgName: string
+}) {
+  return {
+    subject: `Application Received — ${params.orgName} Volunteer Program`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+        <div style="background: #08284D; padding: 24px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 22px;">${params.orgName}</h1>
+        </div>
+        <div style="padding: 32px; background: #ffffff;">
+          <h2 style="color: #1a1a1a; margin-top: 0;">Application Received, ${params.name}!</h2>
+          <p style="color: #444; line-height: 1.6;">
+            Thank you for applying to be a volunteer with <strong>${params.orgName}</strong>.
+          </p>
+          <p style="color: #444; line-height: 1.6;">
+            Your application is currently under review by our onboarding team. Once your onboarding pipeline steps (Document Verification, Interview, and Training) are successfully completed and approved, you will receive your official <strong>Volunteer ID Card</strong> and portal login credentials via email.
+          </p>
+        </div>
+        <div style="padding: 16px; background: #f9f9f9; text-align: center;">
+          <p style="color: #aaa; font-size: 12px; margin: 0;">${params.orgName}</p>
+        </div>
+      </div>
+    `,
+    text: `Thank you ${params.name}! Your volunteer application with ${params.orgName} has been received and is under review. Your Volunteer Card will be issued upon approval of your onboarding pipeline.`,
+  }
+}
+
 export function volunteerInviteTemplate(params: {
   name: string
   inviteUrl: string
