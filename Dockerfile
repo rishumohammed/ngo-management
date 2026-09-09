@@ -23,8 +23,8 @@ RUN npx prisma generate
 # Next.js telemetry is disabled
 ENV NEXT_TELEMETRY_DISABLED 1
 
-# Set Node memory limit for 1GB VPS
-ENV NODE_OPTIONS="--max-old-space-size=512"
+# Set Node memory limit for VPS build
+ENV NODE_OPTIONS="--max-old-space-size=1536"
 
 RUN npm run build
 
