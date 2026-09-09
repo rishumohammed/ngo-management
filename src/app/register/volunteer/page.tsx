@@ -60,6 +60,14 @@ export default function VolunteerRegistration() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // OTP State
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpVerifying, setOtpVerifying] = useState(false);
+  const [otpMessage, setOtpMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   useEffect(() => {
     fetch('/api/public/volunteer-form-options')
       .then(res => res.json())
@@ -91,10 +99,70 @@ export default function VolunteerRegistration() {
     });
   };
 
+  const handleSendOtp = async () => {
+    if (!formData.email || !formData.email.includes('@')) {
+      setOtpMessage({ type: 'error', text: 'Please enter a valid email address first.' });
+      return;
+    }
+    setOtpSending(true);
+    setOtpMessage(null);
+    try {
+      const res = await fetch('/api/auth/otp/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email, purpose: 'VOLUNTEER_REGISTRATION' })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setOtpSent(true);
+        setOtpMessage({ type: 'success', text: data.message || 'Verification OTP sent to your email.' });
+      } else {
+        setOtpMessage({ type: 'error', text: data.error || data.warning || 'Failed to send OTP.' });
+      }
+    } catch (err) {
+      setOtpMessage({ type: 'error', text: 'Error sending OTP. Please check your network connection.' });
+    } finally {
+      setOtpSending(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otpCode || otpCode.length < 6) {
+      setOtpMessage({ type: 'error', text: 'Please enter the 6-digit OTP code.' });
+      return;
+    }
+    setOtpVerifying(true);
+    setOtpMessage(null);
+    try {
+      const res = await fetch('/api/auth/otp/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email, code: otpCode, purpose: 'VOLUNTEER_REGISTRATION' })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setOtpVerified(true);
+        setOtpMessage({ type: 'success', text: 'Email verified successfully!' });
+      } else {
+        setOtpMessage({ type: 'error', text: data.error || 'Invalid verification code.' });
+      }
+    } catch (err) {
+      setOtpMessage({ type: 'error', text: 'Error verifying OTP.' });
+    } finally {
+      setOtpVerifying(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+
+    if (formData.email && !otpVerified) {
+      setError('Please verify your email address using the OTP code before submitting application.');
+      return;
+    }
+
+    setLoading(true);
 
     const payload = {
       ...formData,
@@ -322,15 +390,80 @@ export default function VolunteerRegistration() {
               </Select>
             </FormControl>
 
-            <TextField
-              required
-              label="Email Address"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              fullWidth
-            />
+            <Box sx={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+                <TextField
+                  required
+                  label="Email Address"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => {
+                    handleChange(e);
+                    if (otpVerified || otpSent) {
+                      setOtpVerified(false);
+                      setOtpSent(false);
+                      setOtpCode('');
+                      setOtpMessage(null);
+                    }
+                  }}
+                  fullWidth
+                  disabled={otpVerified}
+                  helperText={otpVerified ? 'Email verified ✓' : 'Enter your email to receive a 6-digit verification OTP'}
+                />
+                {formData.email && formData.email.includes('@') && !otpVerified && (
+                  <Button
+                    variant="outlined"
+                    onClick={handleSendOtp}
+                    disabled={otpSending}
+                    sx={{ height: 56, minWidth: 140, whitespace: 'nowrap' }}
+                  >
+                    {otpSending ? <CircularProgress size={20} /> : (otpSent ? 'Resend OTP' : 'Send OTP')}
+                  </Button>
+                )}
+                {otpVerified && (
+                  <Chip
+                    icon={<CheckCircleOutlineIcon />}
+                    label="Verified"
+                    color="success"
+                    sx={{ height: 48, px: 1, fontWeight: 'bold' }}
+                  />
+                )}
+              </Box>
+
+              {otpSent && !otpVerified && (
+                <Paper variant="outlined" sx={{ p: 2, bgcolor: '#f0f9ff', borderColor: '#0284c7', borderRadius: 2, mt: 0.5 }}>
+                  <Typography variant="subtitle2" color="primary.dark" sx={{ mb: 1, fontWeight: 600 }}>
+                    Enter 6-Digit OTP Code Sent to {formData.email}
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                    <TextField
+                      size="small"
+                      label="6-Digit OTP"
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value)}
+                      placeholder="e.g. 123456"
+                      inputProps={{ maxLength: 6 }}
+                      sx={{ width: 180, bgcolor: 'white' }}
+                    />
+                    <Button
+                      variant="contained"
+                      onClick={handleVerifyOtp}
+                      disabled={otpVerifying || otpCode.length < 6}
+                      size="medium"
+                    >
+                      {otpVerifying ? <CircularProgress size={20} color="inherit" /> : 'Verify OTP'}
+                    </Button>
+                  </Box>
+                </Paper>
+              )}
+
+              {otpMessage && (
+                <Alert severity={otpMessage.type} sx={{ mt: 0.5 }}>
+                  {otpMessage.text}
+                </Alert>
+              )}
+            </Box>
 
 
             <TextField
