@@ -99,5 +99,53 @@ export async function POST(req: NextRequest) {
     diff: { after: member as unknown as Record<string, unknown> },
   })
 
+  // Automatically dispatch Membership Card email if email provided
+  if (member.email) {
+    try {
+      const orgSettingsList = await prisma.orgSetting.findMany({
+        where: {
+          key: { in: ['org_name', 'org_logo', 'org_signature', 'org_qr_code', 'signatory_name', 'signatory_title'] },
+        },
+      })
+
+      const orgData = {
+        orgName: orgSettingsList.find((s) => s.key === 'org_name')?.value || 'Free Mind Foundation',
+        orgLogo: orgSettingsList.find((s) => s.key === 'org_logo')?.value || undefined,
+        orgSignature: orgSettingsList.find((s) => s.key === 'org_signature')?.value || undefined,
+        orgQrCode: orgSettingsList.find((s) => s.key === 'org_qr_code')?.value || undefined,
+        signatory: orgSettingsList.find((s) => s.key === 'signatory_name')?.value || 'Authorised Signatory',
+        signatoryTitle: orgSettingsList.find((s) => s.key === 'signatory_title')?.value || undefined,
+      }
+
+      const { generateMembershipCardPdf } = await import('@/lib/pdf/membershipCard')
+      const { getEmailProvider, membershipWelcomeTemplate } = await import('@/lib/email')
+
+      const pdfBuffer = await generateMembershipCardPdf({ member, orgData })
+      const emailProvider = await getEmailProvider()
+      const template = membershipWelcomeTemplate({
+        memberName: member.name,
+        memberNumber: member.memberNumber,
+        orgName: orgData.orgName,
+      })
+
+      await emailProvider.send({
+        to: member.email,
+        subject: template.subject,
+        html: template.html,
+        text: template.text,
+        attachments: [
+          {
+            filename: `Membership_Card_${member.memberNumber}.pdf`,
+            content: Buffer.from(pdfBuffer),
+            contentType: 'application/pdf',
+          },
+        ],
+      })
+    } catch (err) {
+      console.error('Failed to send automatic Membership Card email:', err)
+    }
+  }
+
   return NextResponse.json(member, { status: 201 })
 }
+

@@ -156,6 +156,74 @@ export async function getEmailProvider(): Promise<EmailProvider> {
 
 // ─── Email Templates ──────────────────────────────────────────────────────────
 
+export function otpEmailTemplate(params: {
+  code: string
+  purpose: string
+  orgName: string
+}) {
+  return {
+    subject: `${params.code} is your ${params.orgName} Verification Code`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+        <div style="background: #00897B; padding: 24px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 22px;">${params.orgName}</h1>
+        </div>
+        <div style="padding: 32px; background: #ffffff; text-align: center;">
+          <h2 style="color: #1a1a1a; margin-top: 0;">Email Verification</h2>
+          <p style="color: #555; line-height: 1.6;">
+            Please use the following 6-digit verification code to complete your ${params.purpose.toLowerCase().replace('_', ' ')}:
+          </p>
+          <div style="margin: 28px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #00897B; background: #E0F2F1; padding: 12px 24px; border-radius: 8px; display: inline-block;">
+              ${params.code}
+            </span>
+          </div>
+          <p style="color: #888; font-size: 13px;">
+            This code will expire in 10 minutes. If you did not request this verification, please ignore this email.
+          </p>
+        </div>
+        <div style="padding: 16px; background: #f9f9f9; text-align: center;">
+          <p style="color: #aaa; font-size: 12px; margin: 0;">${params.orgName}</p>
+        </div>
+      </div>
+    `,
+    text: `Your ${params.orgName} verification code is ${params.code}. Valid for 10 minutes.`,
+  }
+}
+
+export function membershipWelcomeTemplate(params: {
+  memberName: string
+  memberNumber: string
+  orgName: string
+}) {
+  return {
+    subject: `Welcome to ${params.orgName} — Membership Card ${params.memberNumber}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+        <div style="background: #00897B; padding: 24px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 22px;">${params.orgName}</h1>
+        </div>
+        <div style="padding: 32px; background: #ffffff;">
+          <h2 style="color: #1a1a1a; margin-top: 0;">Welcome, ${params.memberName}!</h2>
+          <p style="color: #444; line-height: 1.6;">
+            Your membership registration with <strong>${params.orgName}</strong> has been completed successfully.
+          </p>
+          <div style="background: #F4F7F6; border-left: 4px solid #00897B; padding: 16px; margin: 20px 0; border-radius: 4px;">
+            <p style="margin: 0; font-weight: bold; color: #00695C;">Member ID: ${params.memberNumber}</p>
+          </div>
+          <p style="color: #444; line-height: 1.6;">
+            Please find your official <strong>Membership Card</strong> attached to this email as a printable PDF.
+          </p>
+        </div>
+        <div style="padding: 16px; background: #f9f9f9; text-align: center;">
+          <p style="color: #aaa; font-size: 12px; margin: 0;">${params.orgName}</p>
+        </div>
+      </div>
+    `,
+    text: `Welcome ${params.memberName}! Your ${params.orgName} Membership ID is ${params.memberNumber}. Your card is attached.`,
+  }
+}
+
 export function volunteerInviteTemplate(params: {
   name: string
   inviteUrl: string
@@ -164,15 +232,18 @@ export function volunteerInviteTemplate(params: {
   return {
     subject: `Welcome to ${params.orgName} — Set Up Your Volunteer Account`,
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
         <div style="background: #00897B; padding: 24px; text-align: center;">
           <h1 style="color: white; margin: 0; font-size: 22px;">${params.orgName}</h1>
         </div>
         <div style="padding: 32px; background: #ffffff;">
-          <h2 style="color: #1a1a1a;">Welcome, ${params.name}!</h2>
+          <h2 style="color: #1a1a1a; margin-top: 0;">Welcome, ${params.name}!</h2>
           <p style="color: #444; line-height: 1.6;">
-            Congratulations! You have been approved as a volunteer with ${params.orgName}.
-            Please click the button below to set up your account password.
+            Congratulations! You have completed all registration and onboarding tasks successfully and have been approved as a volunteer with <strong>${params.orgName}</strong>.
+          </p>
+          <p style="color: #444; line-height: 1.6;">
+            Your official <strong>Volunteer ID Card</strong> is attached to this email as a PDF.
+            Please click the button below to set up your volunteer portal password:
           </p>
           <div style="text-align: center; margin: 32px 0;">
             <a href="${params.inviteUrl}"
@@ -183,15 +254,15 @@ export function volunteerInviteTemplate(params: {
             </a>
           </div>
           <p style="color: #888; font-size: 13px;">
-            This link expires in 48 hours. If you did not expect this email, please ignore it.
+            This setup link expires in 48 hours. You can also log into the Volunteer Portal at any time to access your profile and download your ID card.
           </p>
         </div>
-        <div style="padding: 16px; background: #f5f5f5; text-align: center;">
+        <div style="padding: 16px; background: #f9f9f9; text-align: center;">
           <p style="color: #aaa; font-size: 12px; margin: 0;">${params.orgName}</p>
         </div>
       </div>
     `,
-    text: `Welcome ${params.name}! Set up your volunteer account: ${params.inviteUrl}`,
+    text: `Welcome ${params.name}! Set up your volunteer account: ${params.inviteUrl}. Your Volunteer Card is attached.`,
   }
 }
 
@@ -205,12 +276,12 @@ export function donationReceiptTemplate(params: {
   return {
     subject: `Donation Receipt ${params.receiptNumber} — ${params.orgName}`,
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
         <div style="background: #00897B; padding: 24px; text-align: center;">
           <h1 style="color: white; margin: 0; font-size: 22px;">${params.orgName}</h1>
         </div>
         <div style="padding: 32px; background: #ffffff;">
-          <h2 style="color: #1a1a1a;">Thank You, ${params.donorName}!</h2>
+          <h2 style="color: #1a1a1a; margin-top: 0;">Thank You, ${params.donorName}!</h2>
           <p style="color: #444; line-height: 1.6;">
             We have received your donation of <strong>${params.amount}</strong> on ${params.date}.
             Please find your 80G receipt attached to this email.
@@ -233,7 +304,7 @@ export function donationReceiptTemplate(params: {
             This receipt is valid for 80G tax deduction purposes.
           </p>
         </div>
-        <div style="padding: 16px; background: #f5f5f5; text-align: center;">
+        <div style="padding: 16px; background: #f9f9f9; text-align: center;">
           <p style="color: #aaa; font-size: 12px; margin: 0;">${params.orgName}</p>
         </div>
       </div>
@@ -241,3 +312,4 @@ export function donationReceiptTemplate(params: {
     text: `Thank you ${params.donorName} for your donation of ${params.amount}. Receipt: ${params.receiptNumber}`,
   }
 }
+

@@ -402,15 +402,44 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
           data: { token, userId: user.id, expiresAt },
         })
 
-        // Send invite email
+        // Send invite email with Volunteer Card attachment
         try {
-          const orgName = (await prisma.orgSetting.findUnique({ where: { key: 'org_name' } }))?.value || 'Free Mind Foundation'
-          const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-          const inviteUrl = `${appUrl}/auth/setup-password?token=${token}`
-          const { subject, html, text } = volunteerInviteTemplate({ name: volunteer.name, inviteUrl, orgName })
-          await (await getEmailProvider()).send({ to: volunteer.email, subject, html, text })
+          const orgSettingsList = await prisma.orgSetting.findMany({
+            where: {
+              key: { in: ['org_name', 'org_logo', 'org_signature', 'signatory_name', 'signatory_title', 'app_url'] },
+            },
+          })
+
+          const orgData = {
+            orgName: orgSettingsList.find((s) => s.key === 'org_name')?.value || 'Free Mind Foundation',
+            orgLogo: orgSettingsList.find((s) => s.key === 'org_logo')?.value || undefined,
+            orgSignature: orgSettingsList.find((s) => s.key === 'org_signature')?.value || undefined,
+            signatory: orgSettingsList.find((s) => s.key === 'signatory_name')?.value || 'Authorised Signatory',
+            signatoryTitle: orgSettingsList.find((s) => s.key === 'signatory_title')?.value || undefined,
+            appUrl: orgSettingsList.find((s) => s.key === 'app_url')?.value || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+          }
+
+          const inviteUrl = `${orgData.appUrl}/auth/setup-password?token=${token}`
+
+          const { generateVolunteerCardPdf } = await import('@/lib/pdf/volunteerCard')
+          const pdfBuffer = await generateVolunteerCardPdf({ volunteer, orgData })
+
+          const template = volunteerInviteTemplate({ name: volunteer.name, inviteUrl, orgName: orgData.orgName })
+          await (await getEmailProvider()).send({
+            to: volunteer.email,
+            subject: template.subject,
+            html: template.html,
+            text: template.text,
+            attachments: [
+              {
+                filename: `Volunteer_Card_${volunteer.name.replace(/\s+/g, '_')}.pdf`,
+                content: Buffer.from(pdfBuffer),
+                contentType: 'application/pdf',
+              },
+            ],
+          })
         } catch (emailErr) {
-          console.error('Failed to send invite email:', emailErr)
+          console.error('Failed to send invite email with Volunteer Card:', emailErr)
         }
       }
 

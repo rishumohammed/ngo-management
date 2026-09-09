@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Free Mind Foundation - Membership Card
+    </title>
+
+
+    <!-- =========================
+         GOOGLE FONTS
+    ========================== -->
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+
+    <style>
+
+        /* =========================================
+           ROOT
+        ========================================= */
+
+        :root {
+
+            --navy: #102d54;
+
+            --navy-light: #244d7d;
+
+            --text: #14243b;
+
+            --muted: #718198;
+
+            --line: #dce4ed;
+
+            --soft: #f3f6f9;
+
+            --white: #ffffff;
+
+        }
+
+
+        /* =========================================
+           RESET
+        ========================================= */
+
+        * {
+
+            box-sizing: border-box;
+
+            margin: 0;
+
+            padding: 0;
+
+        }
+
+
+        /* =========================================
+           BODY
+        ========================================= */
+
+        body {
+
+            min-height: 100vh;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            padding: 40px;
+
+            background:
+
+                radial-gradient(
+                    circle at 20% 20%,
+                    rgba(35, 78, 120, 0.10),
+                    transparent 35%
+                ),
+
+                linear-gradient(
+                    135deg,
+                    #edf2f7,
+                    #ffffff
+                );
+
+            font-family: "Inter", sans-serif;
+
+        }
+
+
+        /* =========================================
+           CARD
+        ========================================= */
+
+        .membership-card {
+
+            position: relative;
+
+            width: 450px;
+
+            height: 600px;
+
+            overflow: hidden;
+
+            background: var(--white);
+
+            border-radius: 28px;
+
+            border: 1px solid rgba(255,255,255,0.9);
+
+            box-shadow:
+
+                0 35px 80px
+                rgba(16,45,84,0.15),
+
+                0 8px 25px
+                rgba(16,45,84,0.06);
+
+        }
+
+
+        /* =========================================
+           BACKGROUND
+        ========================================= */
+
+        .background-circle {
+
+            position: absolute;
+
+            width: 430px;
+
+            height: 430px;
+
+            right: -260px;
+
+            top: 130px;
+
+            border-radius: 50%;
+
+            background:
+
+                radial-gradient(
+                    circle,
+                    rgba(28,75,120,0.07),
+                    transparent 68%
+                );
+
+            pointer-events: none;
+
+        }
+
+
+        .background-line {
+
+            position: absolute;
+
+            width: 500px;
+
+            height: 1px;
+
+            right: -120px;
+
+            top: 300px;
+
+            transform: rotate(-45deg);
+
+            background:
+
+                linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(16,45,84,0.06),
+                    transparent
+                );
+
+        }
+
+
+        /* =========================================
+           TOP AREA
+        ========================================= */
+
+        /* =========================================
+           TOP AREA
+        ========================================= */
+
+        .top {
+
+            position: relative;
+
+            z-index: 2;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: flex-start;
+
+            padding: 30px 36px 0;
+
+        }
+
+
+        /* =========================================
+           LOGO
+        ========================================= */
+
+        .logo {
+
+            width: 100px;
+
+            height: 50px;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            border: 1px dashed #9baabd;
+
+            color: #708198;
+
+            font-size: 8px;
+
+            letter-spacing: 3px;
+
+            text-transform: uppercase;
+
+            overflow: hidden;
+
+        }
+
+
+        .logo img {
+
+            width: 100%;
+
+            height: 100%;
+
+            object-fit: contain;
+
+        }
+
+
+        /* =========================================
+           TOP RIGHT MESSAGE
+        ========================================= */
+
+        .top-message {
+
+            text-align: right;
+
+            font-size: 7.5px;
+
+            line-height: 2.0;
+
+            letter-spacing: 3.5px;
+
+            color: var(--muted);
+
+            text-transform: uppercase;
+
+        }
+
+
+        /* =========================================
+           FOUNDATION
+        ========================================= */
+
+        .foundation {
+
+            position: relative;
+
+            z-index: 2;
+
+            margin-top: 15px;
+
+            text-align: center;
+
+        }
+
+
+        .foundation-name {
+
+            font-family: "Manrope", sans-serif;
+
+            font-size: 14px;
+
+            font-weight: 500;
+
+            letter-spacing: 5px;
+
+            color: var(--navy);
+
+        }
+
+
+        .foundation-tagline {
+
+            margin-top: 6px;
+
+            font-size: 7.5px;
+
+            letter-spacing: 2.5px;
+
+            color: var(--muted);
+
+            text-transform: uppercase;
+
+        }
+
+
+        .divider {
+
+            width: 30px;
+
+            height: 1px;
+
+            margin: 12px auto 0;
+
+            background: var(--navy);
+
+        }
+
+
+        /* =========================================
+           SIDE MESSAGE
+        ========================================= */
+
+        .side-message {
+
+            position: absolute;
+
+            left: 17px;
+
+            top: 245px;
+
+            writing-mode: vertical-rl;
+
+            transform: rotate(180deg);
+
+            font-size: 7px;
+
+            letter-spacing: 3px;
+
+            color: #a0adbc;
+
+            text-transform: uppercase;
+
+            z-index: 2;
+
+        }
+
+
+        /* =========================================
+           MEMBER IDENTITY
+        ========================================= */
+
+        .member-section {
+
+            position: relative;
+
+            z-index: 2;
+
+            margin-top: 20px;
+
+            text-align: center;
+
+        }
+
+
+        /* =========================================
+           MEMBER NAME
+        ========================================= */
+
+        .member-name {
+
+            font-family: "Manrope", sans-serif;
+
+            font-size: 34px;
+
+            font-weight: 600;
+
+            letter-spacing: 3px;
+
+            color: var(--navy);
+
+            text-transform: uppercase;
+
+            padding-left: 4px;
+
+        }
+
+
+        /* =========================================
+           MEMBER ROLE
+        ========================================= */
+
+        .member-role {
+
+            margin-top: 6px;
+
+            font-size: 11px;
+
+            font-weight: 700;
+
+            letter-spacing: 4.5px;
+
+            color: var(--muted);
+
+            text-transform: uppercase;
+
+        }
+
+
+        /* =========================================
+           MEMBER LINE
+        ========================================= */
+
+        .member-line {
+
+            width: 30px;
+
+            height: 1px;
+
+            margin: 12px auto;
+
+            background: var(--navy);
+
+        }
+
+
+        /* =========================================
+           MESSAGE
+        ========================================= */
+
+        .member-message {
+
+            font-size: 8.5px;
+
+            line-height: 1.7;
+
+            letter-spacing: 3.5px;
+
+            color: #405776;
+
+            text-transform: uppercase;
+
+        }
+
+
+        /* =========================================
+           MEMBER INFORMATION
+        ========================================= */
+
+        .member-info {
+
+            position: relative;
+
+            z-index: 2;
+
+            margin:
+
+                18px 36px 0;
+
+            padding:
+
+                12px 10px;
+
+            display: grid;
+
+            grid-template-columns:
+
+                1fr
+                1px
+                1fr;
+
+            align-items: center;
+
+            background:
+
+                linear-gradient(
+                    135deg,
+                    #f8fafc,
+                    #eef3f8
+                );
+
+            border-radius: 14px;
+
+            border:
+
+                1px solid
+                rgba(16,45,84,0.06);
+
+        }
+
+
+        /* =========================================
+           INFO
+        ========================================= */
+
+        .info {
+
+            text-align: center;
+
+        }
+
+
+        .info-label {
+
+            font-size: 7px;
+
+            letter-spacing: 3px;
+
+            color: var(--muted);
+
+            text-transform: uppercase;
+
+        }
+
+
+        .info-value {
+
+            margin-top: 5px;
+
+            font-size: 12px;
+
+            font-weight: 500;
+
+            letter-spacing: 2px;
+
+            color: var(--text);
+
+        }
+
+
+        /* =========================================
+           DIVIDER
+        ========================================= */
+
+        .info-divider {
+
+            width: 1px;
+
+            height: 30px;
+
+            background: var(--line);
+
+        }
+
+
+        /* =========================================
+           SIGNATURE
+        ========================================= */
+
+        .signature-section {
+
+            position: absolute;
+
+            left: 36px;
+
+            bottom: 66px;
+
+            z-index: 5;
+
+        }
+
+
+        .signature-box {
+
+            width: 140px;
+
+            height: 40px;
+
+            display: flex;
+
+            align-items: flex-end;
+
+        }
+
+
+        /* SIGNATURE IMAGE */
+
+        .signature-box img {
+
+            max-width: 135px;
+
+            max-height: 38px;
+
+            object-fit: contain;
+
+        }
+
+
+        /* SIGNATURE PLACEHOLDER */
+
+        .signature-placeholder {
+
+            width: 135px;
+
+            height: 34px;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: flex-end;
+
+            padding-bottom: 5px;
+
+            border-bottom:
+
+                1px solid
+                #718198;
+
+            color: #a0adbc;
+
+            font-size: 7px;
+
+            letter-spacing: 2px;
+
+        }
+
+
+        .signature-label {
+
+            margin-top: 5px;
+
+            font-size: 7px;
+
+            letter-spacing: 2.5px;
+
+            color: var(--muted);
+
+            text-transform: uppercase;
+
+        }
+
+
+        /* =========================================
+           QR CODE
+        ========================================= */
+
+        .qr-section {
+
+            position: absolute;
+
+            right: 36px;
+
+            bottom: 64px;
+
+            z-index: 5;
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: flex-end;
+
+        }
+
+
+        .qr-box {
+
+            width: 64px;
+
+            height: 64px;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+        }
+
+
+        .qr-box img {
+
+            width: 64px;
+
+            height: 64px;
+
+            object-fit: contain;
+
+            border-radius: 4px;
+
+        }
+
+
+        .qr-placeholder {
+
+            width: 64px;
+
+            height: 64px;
+
+            border: 1px dashed #718198;
+
+            border-radius: 6px;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            color: #a0adbc;
+
+            font-size: 7px;
+
+            letter-spacing: 1px;
+
+            text-align: center;
+
+        }
+
+
+        /* =========================================
+           FOOTER
+        ========================================= */
+
+        .footer {
+
+            position: absolute;
+
+            left: 0;
+
+            right: 0;
+
+            bottom: 0;
+
+            height: 58px;
+
+            background:
+
+                linear-gradient(
+                    135deg,
+                    var(--navy),
+                    var(--navy-light)
+                );
+
+            clip-path:
+
+                polygon(
+                    0 35%,
+                    58% 35%,
+                    70% 0,
+                    100% 0,
+                    100% 100%,
+                    0 100%
+                );
+
+            z-index: 4;
+
+        }
+
+
+        /* =========================================
+           FOOTER NAME
+        ========================================= */
+
+        .footer-name {
+
+            position: absolute;
+
+            left: 36px;
+
+            bottom: 15px;
+
+            font-size: 7px;
+
+            letter-spacing: 3px;
+
+            color: white;
+
+            text-transform: uppercase;
+
+        }
+
+
+        /* =========================================
+           FOOTER MESSAGE
+        ========================================= */
+
+        .footer-message {
+
+            position: absolute;
+
+            right: 28px;
+
+            bottom: 10px;
+
+            text-align: right;
+
+            font-size: 6px;
+
+            line-height: 1.8;
+
+            letter-spacing: 2px;
+
+            color:
+
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.65
+                );
+
+            text-transform: uppercase;
+
+        }
+
+
+        /* =========================================
+           PRINT
+        ========================================= */
+
+        @media print {
+
+            body {
+
+                padding: 0;
+
+                background: white;
+
+            }
+
+
+            .membership-card {
+
+                box-shadow: none;
+
+                border: none;
+
+            }
+
+        }
+
+
+        /* =========================================
+           MOBILE
+        ========================================= */
+
+        @media(max-width: 520px) {
+
+            body {
+
+                padding: 15px;
+
+            }
+
+
+            .membership-card {
+
+                width: 100%;
+
+                max-width: 450px;
+
+                height: auto;
+
+                aspect-ratio: 3 / 4;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- =========================================
+     MEMBERSHIP CARD
+========================================== -->
+
+<div class="membership-card">
+
+
+    <!-- BACKGROUND -->
+
+    <div class="background-circle"></div>
+
+    <div class="background-line"></div>
+
+
+    <!-- =====================================
+         SIDE MESSAGE
+    ====================================== -->
+
+    <div class="side-message">
+
+        A KINDER • BRIGHTER • STRONGER YOU
+
+    </div>
+
+
+    <!-- =====================================
+         TOP
+    ====================================== -->
+
+    <div class="top">
+
+
+        <!--
+            LOGO PLACEHOLDER
+
+            Replace with:
+
+            <img src="logo.png"
+                 alt="Free Mind Foundation">
+        -->
+
+        <div
+            class="logo"
+            id="logoArea"
+        >
+
+            <span>
+
+                LOGO HERE
+
+            </span>
+
+        </div>
+
+
+        <!-- TOP RIGHT -->
+
+        <div class="top-message">
+
+            PEOPLE<br>
+
+            MINDS<br>
+
+            BRIGHTER<br>
+
+            TOMORROWS
+
+        </div>
+
+
+    </div>
+
+
+    <!-- =====================================
+         FOUNDATION
+    ====================================== -->
+
+    <div class="foundation">
+
+
+        <div class="foundation-name">
+
+            FREE MIND FOUNDATION
+
+        </div>
+
+
+        <div class="foundation-tagline">
+
+            FREEING MINDS THROUGH AWARENESS
+
+        </div>
+
+
+        <div class="divider"></div>
+
+
+    </div>
+
+
+    <!-- =====================================
+         MEMBER IDENTITY
+    ====================================== -->
+
+    <div class="member-section">
+
+
+        <!-- MEMBER NAME -->
+
+        <div
+            class="member-name"
+            id="memberName"
+        >
+
+            RISHU
+
+        </div>
+
+
+        <!-- ROLE -->
+
+        <div class="member-role" id="memberRole">
+
+            COMMUNITY MEMBER
+
+        </div>
+
+
+        <!-- DIVIDER -->
+
+        <div class="member-line"></div>
+
+
+        <!-- MESSAGE -->
+
+        <div class="member-message">
+
+            TOGETHER FOR<br>
+
+            A BRIGHTER TOMORROW
+
+        </div>
+
+
+    </div>
+
+
+    <!-- =====================================
+         MEMBER INFORMATION
+    ====================================== -->
+
+    <div class="member-info">
+
+
+        <!-- MEMBER ID -->
+
+        <div class="info">
+
+
+            <div class="info-label">
+
+                MEMBER ID
+
+            </div>
+
+
+            <div
+                class="info-value"
+                id="memberId"
+            >
+
+                FMF0001
+
+            </div>
+
+
+        </div>
+
+
+        <!-- DIVIDER -->
+
+        <div class="info-divider"></div>
+
+
+        <!-- JOINED DATE -->
+
+        <div class="info">
+
+
+            <div class="info-label">
+
+                JOINED DATE
+
+            </div>
+
+
+            <div
+                class="info-value"
+                id="joinedDate"
+            >
+
+                07 SEP 2026
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+    <!-- =====================================
+         SIGNATURE
+    ====================================== -->
+
+    <div class="signature-section">
+
+
+        <div
+            class="signature-box"
+            id="signatureArea"
+        >
+
+            <div class="signature-placeholder">
+
+                SIGNATURE
+
+            </div>
+
+
+        </div>
+
+
+        <div class="signature-label">
+
+            AUTHORIZED SIGNATURE
+
+        </div>
+
+
+    </div>
+
+
+    <!-- =====================================
+         QR CODE
+    ====================================== -->
+
+    <div class="qr-section">
+
+
+        <div
+            class="qr-box"
+            id="qrArea"
+        >
+
+            <div class="qr-placeholder">
+
+                QR CODE
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+    <!-- =====================================
+         FOOTER
+    ====================================== -->
+
+    <div class="footer">
+
+
+        <div class="footer-name">
+
+            FREE MIND FOUNDATION
+
+        </div>
+
+
+        <div class="footer-message">
+
+            MIND<br>
+
+            PEOPLE<br>
+
+            POSSIBILITIES
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+
+<!-- =========================================
+     JAVASCRIPT
+========================================== -->
+
+<script>
+
+
+/* =========================================
+   MEMBER DATA
+========================================= */
+
+const params = new URLSearchParams(window.location.search);
+
+const member = {
+
+    name: params.get("name") || "RISHU",
+
+    id: params.get("id") || "FMF0001",
+
+    joinedDate: params.get("date") || "07 SEP 2026",
+
+    role: params.get("role") || "COMMUNITY MEMBER",
+
+    logo: params.get("logo") || "",
+
+    signature: params.get("signature") || "",
+
+    qrCode: params.get("qrcode") || params.get("qr") || ""
+
+};
+
+
+
+/* =========================================
+   LOAD MEMBER DATA
+========================================= */
+
+function loadMember(data) {
+
+
+    /*
+        MEMBER NAME
+    */
+
+    document
+        .getElementById("memberName")
+        .textContent =
+        data.name;
+
+
+    /*
+        MEMBER ROLE
+    */
+
+    document
+        .getElementById("memberRole")
+        .textContent =
+        data.role;
+
+
+    /*
+        MEMBER ID
+    */
+
+    document
+        .getElementById("memberId")
+        .textContent =
+        data.id;
+
+
+    /*
+        JOINED DATE
+    */
+
+    document
+        .getElementById("joinedDate")
+        .textContent =
+        data.joinedDate;
+
+
+
+    /*
+        LOGO
+    */
+
+    if (data.logo) {
+
+        setLogo(data.logo);
+
+    }
+
+
+
+    /*
+        SIGNATURE
+    */
+
+    if (data.signature) {
+
+        setSignature(data.signature);
+
+    }
+
+
+
+    /*
+        QR CODE
+    */
+
+    if (data.qrCode) {
+
+        setQrCode(data.qrCode);
+
+    }
+
+}
+
+
+
+/* =========================================
+   SET LOGO
+========================================= */
+
+function setLogo(imagePath) {
+
+
+    const logoArea =
+        document.getElementById(
+            "logoArea"
+        );
+
+
+    logoArea.innerHTML = "";
+    logoArea.style.border = "none";
+
+
+    const image =
+        document.createElement("img");
+
+
+    image.src =
+        imagePath;
+
+
+    image.alt =
+        "Free Mind Foundation";
+
+
+    logoArea.appendChild(
+        image
+    );
+
+}
+
+
+
+/* =========================================
+   SET SIGNATURE
+========================================= */
+
+function setSignature(imagePath) {
+
+
+    const signatureArea =
+        document.getElementById(
+            "signatureArea"
+        );
+
+
+    signatureArea.innerHTML = "";
+
+
+    const image =
+        document.createElement("img");
+
+
+    image.src =
+        imagePath;
+
+
+    image.alt =
+        "Authorized Signature";
+
+
+    signatureArea.appendChild(
+        image
+    );
+
+}
+
+
+
+/* =========================================
+   SET QR CODE
+========================================= */
+
+function setQrCode(imagePath) {
+
+
+    const qrArea =
+        document.getElementById(
+            "qrArea"
+        );
+
+
+    qrArea.innerHTML = "";
+
+
+    const image =
+        document.createElement("img");
+
+
+    image.src =
+        imagePath;
+
+
+    image.alt =
+        "Verification QR Code";
+
+
+    qrArea.appendChild(
+        image
+    );
+
+}
+
+
+
+/* =========================================
+   INITIALIZE
+========================================= */
+
+loadMember(member);
+
+
+</script>
+
+
+</body>
+
+</html>

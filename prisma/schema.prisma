@@ -54,6 +54,19 @@ model InviteToken {
   @@map("invite_tokens")
 }
 
+model EmailOtp {
+  id         String    @id @default(uuid())
+  email      String
+  code       String
+  purpose    String    // MEMBER_REGISTRATION | VOLUNTEER_REGISTRATION | EMAIL_VERIFICATION
+  expiresAt  DateTime
+  verifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([email, code, purpose])
+  @@map("email_otps")
+}
+
 // ─────────────────────────────────────────────
 // MEMBERS
 // ─────────────────────────────────────────────

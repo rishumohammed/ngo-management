@@ -17,6 +17,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism'
+import BadgeIcon from '@mui/icons-material/Badge'
 import { formatDate } from '@/lib/utils'
 
 export default function VolunteerDashboardClient() {
@@ -186,6 +187,23 @@ export default function VolunteerDashboardClient() {
           </Grid>
 
           <Grid item xs={12} md={4} sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' }, gap: 1.5, flexWrap: 'wrap' }}>
+            {profile && (
+              <Button
+                variant="outlined"
+                startIcon={<BadgeIcon />}
+                onClick={() => window.open(`/api/volunteers/${profile.id}/card`, '_blank')}
+                sx={{
+                  borderColor: 'rgba(255, 255, 255, 0.6)',
+                  color: 'white',
+                  fontWeight: 700,
+                  '&:hover': { borderColor: 'white', bgcolor: 'rgba(255, 255, 255, 0.1)' },
+                  px: 2.5,
+                  py: 1,
+                }}
+              >
+                Download ID Card
+              </Button>
+            )}
             <Button
               variant="contained"
               startIcon={<AddIcon />}

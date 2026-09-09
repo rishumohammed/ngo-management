@@ -152,11 +152,24 @@ echo -e "\n${BLUE}▶ Step 7: Waiting for services to initialize...${NC}"
 sleep 8
 docker compose ps
 
+# 8. Setup Automated Daily 2:00 AM Database Backup Cron Job
+echo -e "\n${BLUE}▶ Step 8: Configuring Automated Daily 2:00 AM Database Backup Cron Job...${NC}"
+chmod +x "$APP_DIR/scripts/backup.sh" 2>/dev/null || true
+mkdir -p /root/fmf-backups
+
+cat <<EOF > /etc/cron.d/fmf-db-backup
+# Free Mind Foundation — Daily 2:00 AM Database Backup & 7-Day Pruning
+0 2 * * * root ${APP_DIR}/scripts/backup.sh >> /root/fmf-backups/backup.log 2>&1
+EOF
+chmod 644 /etc/cron.d/fmf-db-backup
+echo -e "${GREEN}  ✓ Automated Daily 2:00 AM Backup Cron configured with 7-day auto-pruning!${NC}"
+
 echo -e "\n${PURPLE}================================================================${NC}"
 echo -e "${GREEN}   🎉 DEPLOYMENT COMPLETE!${NC}"
 echo -e "${PURPLE}================================================================${NC}"
 echo -e "   🌐 Portal URL:     ${CYAN}https://${DOMAIN}${NC}"
 echo -e "   🔑 Super Admin:    ${CYAN}admin@freemindfoundation.org.in${NC}"
 echo -e "   🔒 Default Pass:   ${CYAN}Admin@FMF2024${NC}"
+echo -e "   💾 Auto Backups:   ${CYAN}Daily at 2:00 AM (/root/fmf-backups, 7-day retention)${NC}"
 echo -e "   ⚠️  Please log in and update your password immediately."
 echo -e "${PURPLE}================================================================${NC}\n"

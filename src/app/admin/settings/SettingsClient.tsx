@@ -33,6 +33,7 @@ import {
 import SaveIcon from '@mui/icons-material/Save'
 import BusinessIcon from '@mui/icons-material/Business'
 import EmailIcon from '@mui/icons-material/Email'
+import DownloadIcon from '@mui/icons-material/Download'
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
 import TuneIcon from '@mui/icons-material/Tune'
 import RestartAltIcon from '@mui/icons-material/RestartAlt'
@@ -49,6 +50,7 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   org_name: 'Free Mind Foundation',
   org_logo: '',
   org_signature: '',
+  org_qr_code: '',
   org_address: '',
   org_phone: '',
   org_email: '',
@@ -100,18 +102,40 @@ export default function SettingsClient() {
     else if (tabParam === 'email' || tabParam === '2') setTab(2)
     else if (tabParam === 'form' || tabParam === '3') setTab(3)
     else if (tabParam === 'pipeline' || tabParam === '4') setTab(4)
+    else if (tabParam === 'backup' || tabParam === '5') setTab(5)
     else setTab(0)
   }, [tabParam])
 
   const handleTabChange = (_: React.SyntheticEvent, val: number) => {
     setTab(val)
-    const tabKeys = ['org', 'fiscal', 'email', 'form', 'pipeline']
+    const tabKeys = ['org', 'fiscal', 'email', 'form', 'pipeline', 'backup']
     router.push(`/admin/settings?tab=${tabKeys[val]}`)
   }
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  const [testEmail, setTestEmail] = useState('freemindfoundation786@gmail.com')
+  const [testEmailSending, setTestEmailSending] = useState(false)
+
+  const handleSendTestEmail = async () => {
+    setTestEmailSending(true)
+    try {
+      const res = await fetch('/api/settings/test-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetEmail: testEmail }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to send test email')
+      setMsg({ type: 'success', text: data.message })
+    } catch (err: any) {
+      setMsg({ type: 'error', text: err.message })
+    } finally {
+      setTestEmailSending(false)
+    }
+  }
 
   useEffect(() => {
     fetch('/api/settings')
@@ -172,6 +196,33 @@ export default function SettingsClient() {
         }
       } catch (err) {
         setMsg({ type: 'error', text: 'Error uploading signature.' })
+      } finally {
+        setSaving(false)
+      }
+    }
+  }
+
+  const handleQrCodeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      setSaving(true)
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        })
+        const data = await res.json()
+        if (res.ok && data.path) {
+          set('org_qr_code', data.path)
+          setMsg({ type: 'success', text: 'Verification QR Code uploaded. Remember to click Save All Changes.' })
+        } else {
+          setMsg({ type: 'error', text: data.error || 'Failed to upload QR Code.' })
+        }
+      } catch (err) {
+        setMsg({ type: 'error', text: 'Error uploading QR Code.' })
       } finally {
         setSaving(false)
       }
@@ -290,6 +341,11 @@ export default function SettingsClient() {
           title: 'Volunteer Pipeline Stages',
           subtitle: 'Configure stages for volunteer onboarding and verification workflow',
         }
+      case 5:
+        return {
+          title: 'Automated Database Backups & Retention',
+          subtitle: 'Daily 2:00 AM database backups, 7-day auto-pruning retention policy, and instant database downloads',
+        }
       default:
         return {
           title: 'Organization Identity & Legal Details',
@@ -339,6 +395,17 @@ export default function SettingsClient() {
         </Alert>
       )}
 
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs value={tab} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
+          <Tab label="Organization Identity" />
+          <Tab label="Donations & 80G" />
+          <Tab label="Email Dispatch" />
+          <Tab label="Form Options" />
+          <Tab label="Volunteer Pipeline" />
+          <Tab label="Database Backups & Retention" />
+        </Tabs>
+      </Box>
+
 
 
       {/* Organization Tab */}
@@ -349,9 +416,9 @@ export default function SettingsClient() {
           <CardContent>
             <Grid container spacing={2.5}>
               {/* Logo & Signature Uploads Row */}
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={4}>
                 <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary', fontWeight: 600 }}>
-                  Organization Logo (Printed on Header)
+                  Organization Logo
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   {settings.org_logo ? (
@@ -401,9 +468,9 @@ export default function SettingsClient() {
                 </Box>
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={4}>
                 <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary', fontWeight: 600 }}>
-                  Authorized Signature / Signatory Stamp
+                  Authorized Signature
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   {settings.org_signature ? (
@@ -412,7 +479,7 @@ export default function SettingsClient() {
                       src={settings.org_signature}
                       alt="Signature"
                       sx={{
-                        width: 110,
+                        width: 90,
                         height: 72,
                         objectFit: 'contain',
                         border: '1px solid',
@@ -425,7 +492,7 @@ export default function SettingsClient() {
                   ) : (
                     <Box
                       sx={{
-                        width: 110,
+                        width: 90,
                         height: 72,
                         bgcolor: 'grey.100',
                         display: 'flex',
@@ -446,7 +513,59 @@ export default function SettingsClient() {
                         <input type="file" hidden accept="image/*" onChange={handleSignatureUpload} />
                       </Button>
                       <Typography variant="caption" color="text.secondary">
-                        Digital signature / stamp image
+                        Digital signature / stamp
+                      </Typography>
+                    </Stack>
+                  )}
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={4}>
+                <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary', fontWeight: 600 }}>
+                  Verification QR Code
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  {settings.org_qr_code ? (
+                    <Box
+                      component="img"
+                      src={settings.org_qr_code}
+                      alt="QR Code"
+                      sx={{
+                        width: 72,
+                        height: 72,
+                        objectFit: 'contain',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 1.5,
+                        p: 0.5,
+                        bgcolor: '#ffffff',
+                      }}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        width: 72,
+                        height: 72,
+                        bgcolor: 'grey.100',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px dashed',
+                        borderColor: 'grey.400',
+                        borderRadius: 1.5,
+                      }}
+                    >
+                      <Typography variant="caption" color="text.secondary">No QR</Typography>
+                    </Box>
+                  )}
+                  {canEdit && (
+                    <Stack spacing={1}>
+                      <Button variant="outlined" component="label" size="small">
+                        Upload QR Code
+                        <input type="file" hidden accept="image/*" onChange={handleQrCodeUpload} />
+                      </Button>
+                      <Typography variant="caption" color="text.secondary">
+                        Verification QR image
                       </Typography>
                     </Stack>
                   )}
@@ -709,62 +828,99 @@ export default function SettingsClient() {
 
       {/* Email Tab */}
       {tab === 2 && (
-        <Card>
-          <CardHeader
-            title="Email Provider Settings"
-            subheader="Configure transactional email delivery (Brevo / SendGrid / SMTP)"
-          />
-          <Divider />
-          <CardContent>
-            <Grid container spacing={2.5}>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth disabled={!canEdit}>
-                  <InputLabel>Email Provider</InputLabel>
-                  <Select
-                    name="email_provider"
-                    value={settings.email_provider}
-                    onChange={(e) => set('email_provider', e.target.value)}
-                    label="Email Provider"
+        <Stack spacing={3}>
+          <Card>
+            <CardHeader
+              title="Email Provider Settings"
+              subheader="Configure transactional email delivery (Resend / Brevo / SendGrid / SMTP)"
+            />
+            <Divider />
+            <CardContent>
+              <Grid container spacing={2.5}>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth disabled={!canEdit}>
+                    <InputLabel>Email Provider</InputLabel>
+                    <Select
+                      name="email_provider"
+                      value={settings.email_provider}
+                      onChange={(e) => set('email_provider', e.target.value)}
+                      label="Email Provider"
+                    >
+                      <MenuItem value="resend">Resend (REST API)</MenuItem>
+                      <MenuItem value="brevo">Brevo (formerly Sendinblue)</MenuItem>
+                      <MenuItem value="sendgrid">SendGrid</MenuItem>
+                      <MenuItem value="smtp">Custom SMTP</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="API Key / Password"
+                    type="password"
+                    fullWidth
+                    value={settings.email_api_key}
+                    onChange={(e) => set('email_api_key', e.target.value)}
+                    disabled={!canEdit}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="From Email"
+                    fullWidth
+                    type="email"
+                    value={settings.email_from}
+                    onChange={(e) => set('email_from', e.target.value)}
+                    disabled={!canEdit}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="From Sender Name"
+                    fullWidth
+                    value={settings.email_from_name}
+                    onChange={(e) => set('email_from_name', e.target.value)}
+                    disabled={!canEdit}
+                  />
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="Test Email Dispatch & Provider Diagnostics"
+              subheader="Verify that your API keys and transactional email settings are sending correctly"
+            />
+            <Divider />
+            <CardContent>
+              <Grid container spacing={2.5} alignItems="center">
+                <Grid item xs={12} sm={8}>
+                  <TextField
+                    label="Test Recipient Email Address"
+                    fullWidth
+                    type="email"
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    helperText="A diagnostic test message will be sent to this email address using current provider settings."
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    fullWidth
+                    size="large"
+                    onClick={handleSendTestEmail}
+                    disabled={testEmailSending || !testEmail}
+                    startIcon={testEmailSending ? <CircularProgress size={20} color="inherit" /> : undefined}
                   >
-                    <MenuItem value="resend">Resend (REST API)</MenuItem>
-                    <MenuItem value="brevo">Brevo (formerly Sendinblue)</MenuItem>
-                    <MenuItem value="sendgrid">SendGrid</MenuItem>
-                    <MenuItem value="smtp">Custom SMTP</MenuItem>
-                  </Select>
-                </FormControl>
+                    {testEmailSending ? 'Sending Test Email...' : 'Send Test Email'}
+                  </Button>
+                </Grid>
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="API Key / Password"
-                  type="password"
-                  fullWidth
-                  value={settings.email_api_key}
-                  onChange={(e) => set('email_api_key', e.target.value)}
-                  disabled={!canEdit}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="From Email"
-                  fullWidth
-                  type="email"
-                  value={settings.email_from}
-                  onChange={(e) => set('email_from', e.target.value)}
-                  disabled={!canEdit}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="From Sender Name"
-                  fullWidth
-                  value={settings.email_from_name}
-                  onChange={(e) => set('email_from_name', e.target.value)}
-                  disabled={!canEdit}
-                />
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Stack>
       )}
 
       {/* Form Options & States Tab */}
@@ -1328,6 +1484,88 @@ export default function SettingsClient() {
             </Stack>
           </CardContent>
         </Card>
+      )}
+
+      {/* Database Backup Tab */}
+      {tab === 5 && (
+        <Stack spacing={3}>
+          <Card>
+            <CardHeader
+              title="Automated 2:00 AM Database Backup & 7-Day Retention"
+              subheader="System-level automated MySQL database backups with automatic 7-day retention cleanup"
+            />
+            <Divider />
+            <CardContent>
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6} md={4}>
+                  <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2, bgcolor: '#F0FDF4', borderColor: '#BBF7D0' }}>
+                    <Typography variant="caption" color="#166534" fontWeight={700} display="block" sx={{ mb: 0.5 }}>
+                      AUTOMATED BACKUP SCHEDULE
+                    </Typography>
+                    <Typography variant="h6" fontWeight={800} color="#14532D">
+                      Daily at 2:00 AM
+                    </Typography>
+                    <Chip label="Active Cron (0 2 * * *)" color="success" size="small" sx={{ mt: 1, fontWeight: 700 }} />
+                  </Paper>
+                </Grid>
+
+                <Grid item xs={12} sm={6} md={4}>
+                  <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2, bgcolor: '#FEF3C7', borderColor: '#FDE68A' }}>
+                    <Typography variant="caption" color="#92400E" fontWeight={700} display="block" sx={{ mb: 0.5 }}>
+                      RETENTION & CLEANUP POLICY
+                    </Typography>
+                    <Typography variant="h6" fontWeight={800} color="#78350F">
+                      7-Day Auto-Cleanup
+                    </Typography>
+                    <Chip label="Auto-Prunes > 7 Days" color="warning" size="small" sx={{ mt: 1, fontWeight: 700 }} />
+                  </Paper>
+                </Grid>
+
+                <Grid item xs={12} sm={6} md={4}>
+                  <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2, bgcolor: '#F0F9FF', borderColor: '#BAE6FD' }}>
+                    <Typography variant="caption" color="#075985" fontWeight={700} display="block" sx={{ mb: 0.5 }}>
+                      BACKUP FORMAT & STORAGE
+                    </Typography>
+                    <Typography variant="h6" fontWeight={800} color="#0C4A6E">
+                      GZIP Compressed (.sql.gz)
+                    </Typography>
+                    <Chip label="Location: /root/fmf-backups" color="info" size="small" sx={{ mt: 1, fontWeight: 700 }} />
+                  </Paper>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="Instant Database Export & Manual Backup Download"
+              subheader="Generate and download a complete JSON/SQL database dump directly to your web browser"
+            />
+            <Divider />
+            <CardContent>
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+                <Box>
+                  <Typography variant="subtitle1" fontWeight={700}>
+                    Full System Database Export
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Downloads an instant backup snapshot containing all members, volunteers, donations, expenses, meeting minutes, and system settings.
+                  </Typography>
+                </Box>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  startIcon={<DownloadIcon />}
+                  onClick={() => window.open('/api/settings/backup/download', '_blank')}
+                  sx={{ px: 3, py: 1.2, fontWeight: 700, whiteSpace: 'nowrap' }}
+                >
+                  Download Database Backup
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        </Stack>
       )}
     </Box>
   )

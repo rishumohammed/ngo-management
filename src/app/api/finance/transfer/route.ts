@@ -82,10 +82,13 @@ export async function POST(req: NextRequest) {
     entityId: fromAccountId,
     entityName: `Fund Transfer: ₹${amount} from ${fromAccount.accountName} to ${toAccount.accountName}`,
     diff: {
-      fromAccount: { before: availableBalance, after: Number(updatedFrom.currentBalance) },
-      toAccount: { before: Number(toAccount.currentBalance), after: Number(updatedTo.currentBalance) },
-      referenceNo,
-      notes,
+      before: { fromAccountBalance: availableBalance, toAccountBalance: Number(toAccount.currentBalance) },
+      after: {
+        fromAccountBalance: Number(updatedFrom.currentBalance),
+        toAccountBalance: Number(updatedTo.currentBalance),
+        referenceNo,
+        notes,
+      },
     },
   })
 

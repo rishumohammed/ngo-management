@@ -2076,6 +2076,7 @@ export default function FinanceClient() {
           >
             Print Voucher
           </Button>
+        </DialogActions>
       </Dialog>
 
       {/* Transfer Funds Modal */}

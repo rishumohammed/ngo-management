@@ -43,6 +43,7 @@ import LocationOnIcon from '@mui/icons-material/LocationOn'
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import BadgeIcon from '@mui/icons-material/Badge'
 import StickyNote2Icon from '@mui/icons-material/StickyNote2'
+import DownloadIcon from '@mui/icons-material/Download'
 
 import { can } from '@/lib/permissions'
 import { formatDate } from '@/lib/utils'
@@ -133,6 +134,67 @@ export default function MembersClient() {
 
   const [statesList, setStatesList] = useState<string[]>(DEFAULT_INDIAN_STATES)
 
+  // OTP Verification state
+  const [otpCode, setOtpCode] = useState('')
+  const [otpSent, setOtpSent] = useState(false)
+  const [otpSending, setOtpSending] = useState(false)
+  const [otpVerifying, setOtpVerifying] = useState(false)
+  const [emailVerified, setEmailVerified] = useState(false)
+  const [otpMsg, setOtpMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  const handleSendOtp = async () => {
+    if (!formData.email) return
+    setOtpSending(true)
+    setOtpMsg(null)
+    try {
+      const res = await fetch('/api/auth/otp/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email, purpose: 'MEMBER_REGISTRATION' }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to send OTP')
+      setOtpSent(true)
+      setOtpMsg({ type: 'success', text: data.message })
+    } catch (err: any) {
+      setOtpMsg({ type: 'error', text: err.message })
+    } finally {
+      setOtpSending(false)
+    }
+  }
+
+  const handleVerifyOtp = async () => {
+    if (!formData.email || !otpCode) return
+    setOtpVerifying(true)
+    setOtpMsg(null)
+    try {
+      const res = await fetch('/api/auth/otp/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email, code: otpCode, purpose: 'MEMBER_REGISTRATION' }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Invalid code')
+      setEmailVerified(true)
+      setOtpMsg({ type: 'success', text: 'Email verified successfully!' })
+    } catch (err: any) {
+      setOtpMsg({ type: 'error', text: err.message })
+    } finally {
+      setOtpVerifying(false)
+    }
+  }
+
+  const handleSendCardEmail = async (member: Member) => {
+    try {
+      const res = await fetch(`/api/members/${member.id}/card/email`, { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to send card email')
+      alert(data.message)
+    } catch (err: any) {
+      alert(err.message || 'Error sending card email')
+    }
+  }
+
   useEffect(() => {
     fetch('/api/public/form-options')
       .then(res => res.json())
@@ -174,6 +236,10 @@ export default function MembersClient() {
     setEditingMember(null)
     setFormData(emptyForm)
     setFormError('')
+    setOtpCode('')
+    setOtpSent(false)
+    setEmailVerified(false)
+    setOtpMsg(null)
     setDialogOpen(true)
   }
 
@@ -200,6 +266,10 @@ export default function MembersClient() {
 
   const handleSave = async () => {
     if (!formData.name.trim()) { setFormError('Name is required'); return }
+    if (!editingMember && formData.email && !emailVerified) {
+      setFormError('Please verify the email address using OTP before completing registration.')
+      return
+    }
     setSaving(true)
     setFormError('')
     try {
@@ -288,8 +358,8 @@ export default function MembersClient() {
     {
       field: 'actions',
       headerName: 'Actions',
-      minWidth: 130,
-      flex: 0.9,
+      minWidth: 180,
+      flex: 1.2,
       sortable: false,
       align: 'center',
       headerAlign: 'center',
@@ -300,6 +370,26 @@ export default function MembersClient() {
               <VisibilityIcon fontSize="small" />
             </IconButton>
           </Tooltip>
+          <Tooltip title="Download Membership Card">
+            <IconButton
+              size="small"
+              color="secondary"
+              onClick={() => window.open(`/api/members/${p.row.id}/card`, '_blank')}
+            >
+              <BadgeIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          {p.row.email && (
+            <Tooltip title="Send Card Email">
+              <IconButton
+                size="small"
+                color="success"
+                onClick={() => handleSendCardEmail(p.row as Member)}
+              >
+                <EmailIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
           {canUpdate && (
             <Tooltip title="Edit">
               <IconButton size="small" onClick={() => openEditDialog(p.row as Member)}>
@@ -686,6 +776,26 @@ export default function MembersClient() {
         <Divider />
         <DialogActions sx={{ p: 2.5, px: 3, bgcolor: '#F8FAFC', justifyContent: 'space-between' }}>
           <Stack direction="row" spacing={1.5}>
+            {viewingMember && (
+              <Button
+                variant="outlined"
+                color="secondary"
+                startIcon={<BadgeIcon />}
+                onClick={() => window.open(`/api/members/${viewingMember.id}/card`, '_blank')}
+              >
+                Download Card
+              </Button>
+            )}
+            {viewingMember?.email && (
+              <Button
+                variant="outlined"
+                color="success"
+                startIcon={<EmailIcon />}
+                onClick={() => handleSendCardEmail(viewingMember)}
+              >
+                Send Email Card
+              </Button>
+            )}
             {canUpdate && viewingMember && (
               <Button
                 variant="outlined"
@@ -743,9 +853,66 @@ export default function MembersClient() {
                 type="email"
                 fullWidth
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, email: e.target.value })
+                  if (!editingMember) setEmailVerified(false)
+                }}
               />
             </Grid>
+
+            {!editingMember && formData.email && (
+              <Grid item xs={12}>
+                <Box sx={{ p: 2, bgcolor: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 2 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#166534', mb: 1 }}>
+                    Email Verification (OTP)
+                  </Typography>
+                  {otpMsg && (
+                    <Alert severity={otpMsg.type} sx={{ mb: 1.5 }} onClose={() => setOtpMsg(null)}>
+                      {otpMsg.text}
+                    </Alert>
+                  )}
+                  {!emailVerified ? (
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      {!otpSent ? (
+                        <Button
+                          variant="outlined"
+                          color="success"
+                          size="small"
+                          onClick={handleSendOtp}
+                          disabled={otpSending}
+                        >
+                          {otpSending ? 'Sending OTP...' : 'Send Verification OTP'}
+                        </Button>
+                      ) : (
+                        <>
+                          <TextField
+                            size="small"
+                            label="Enter 6-Digit OTP"
+                            value={otpCode}
+                            onChange={(e) => setOtpCode(e.target.value)}
+                            sx={{ maxWidth: 180 }}
+                          />
+                          <Button
+                            variant="contained"
+                            color="success"
+                            size="small"
+                            onClick={handleVerifyOtp}
+                            disabled={otpVerifying || !otpCode}
+                          >
+                            {otpVerifying ? 'Verifying...' : 'Verify Code'}
+                          </Button>
+                          <Button size="small" onClick={handleSendOtp} disabled={otpSending}>
+                            Resend OTP
+                          </Button>
+                        </>
+                      )}
+                    </Stack>
+                  ) : (
+                    <Chip label="Email Verified ✓" color="success" size="small" sx={{ fontWeight: 700 }} />
+                  )}
+                </Box>
+              </Grid>
+            )}
             <Grid item xs={12} sm={6}>
               <TextField
                 label="Gender"

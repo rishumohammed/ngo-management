@@ -58,6 +58,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import EventIcon from '@mui/icons-material/Event'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import VisibilityIcon from '@mui/icons-material/Visibility'
+import BadgeIcon from '@mui/icons-material/Badge'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import AddIcon from '@mui/icons-material/Add'
 import BlockIcon from '@mui/icons-material/Block'
@@ -546,6 +547,37 @@ export default function VolunteerDetailClient({ id }: VolunteerDetailClientProps
               mt: { xs: 1, xl: 0 },
             }}
           >
+            {isApproved && (
+              <>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  startIcon={<BadgeIcon />}
+                  onClick={() => window.open(`/api/volunteers/${id}/card`, '_blank')}
+                  sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2, px: 2, py: 0.75, height: 38 }}
+                >
+                  Download ID Card
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="success"
+                  startIcon={<EmailIcon />}
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(`/api/volunteers/${id}/card/email`, { method: 'POST' })
+                      const data = await res.json()
+                      if (!res.ok) throw new Error(data.error || 'Failed to send card email')
+                      setToastMessage(data.message)
+                    } catch (err: any) {
+                      setToastMessage(err.message || 'Error sending card email')
+                    }
+                  }}
+                  sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2, px: 2, py: 0.75, height: 38 }}
+                >
+                  Send Email Card
+                </Button>
+              </>
+            )}
             {canUpdate && (
               <>
                 <Button

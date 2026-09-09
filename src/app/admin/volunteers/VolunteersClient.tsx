@@ -40,6 +40,8 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 import RestartAltIcon from '@mui/icons-material/RestartAlt'
+import BadgeIcon from '@mui/icons-material/Badge'
+import EmailIcon from '@mui/icons-material/Email'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import { can } from '@/lib/permissions'
 import { formatDate } from '@/lib/utils'
@@ -315,6 +317,17 @@ export default function VolunteersClient() {
     }
   }
 
+  const handleSendVolunteerCardEmail = async (volunteerId: string) => {
+    try {
+      const res = await fetch(`/api/volunteers/${volunteerId}/card/email`, { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to send volunteer card email')
+      setToastMessage(data.message)
+    } catch (err: any) {
+      setToastMessage(err.message || 'Error sending volunteer card email')
+    }
+  }
+
   const columns: GridColDef[] = [
     {
       field: 'name',
@@ -384,8 +397,8 @@ export default function VolunteersClient() {
     {
       field: 'actions',
       headerName: 'Actions',
-      minWidth: 160,
-      flex: 0.9,
+      minWidth: 200,
+      flex: 1.2,
       sortable: false,
       align: 'center',
       headerAlign: 'center',
@@ -401,6 +414,30 @@ export default function VolunteersClient() {
               <VisibilityIcon fontSize="small" />
             </IconButton>
           </Tooltip>
+
+          {p.row.currentStage === 'APPROVED' && (
+            <>
+              <Tooltip title="Download Volunteer ID Card">
+                <IconButton
+                  size="small"
+                  color="secondary"
+                  onClick={() => window.open(`/api/volunteers/${p.row.id}/card`, '_blank')}
+                >
+                  <BadgeIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+
+              <Tooltip title="Resend Card Email">
+                <IconButton
+                  size="small"
+                  color="success"
+                  onClick={() => handleSendVolunteerCardEmail(p.row.id)}
+                >
+                  <EmailIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
 
           {canUpdate && (
             <>
