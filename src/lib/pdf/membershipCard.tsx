@@ -1,4 +1,4 @@
-import { renderToBuffer, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
+import { renderToBuffer, Document, Page, Text, View, StyleSheet, Image, Svg, Path } from '@react-pdf/renderer'
 import { formatDate } from '@/lib/utils'
 import { join } from 'path'
 import { existsSync } from 'fs'
@@ -296,15 +296,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 36,
   },
   footerName: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  footerLeftText: {
     fontSize: 7,
     letterSpacing: 1.5,
     color: '#ffffff',
   },
   footerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  footerRightText: {
     fontSize: 7,
     letterSpacing: 1.5,
     color: '#ffffff',
-    textAlign: 'right',
+  },
+  footerIcon: {
+    width: 9,
+    height: 9,
+    marginRight: 4,
   },
 })
 
@@ -432,8 +444,18 @@ export async function generateMembershipCardPdf({ member, orgData }: MembershipC
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerName}>freemindfoundation.org.in</Text>
-          <Text style={styles.footerRight}>+91-7306445994</Text>
+          <View style={styles.footerName}>
+            <Svg viewBox="0 0 24 24" style={styles.footerIcon}>
+              <Path fill="#ffffff" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+            </Svg>
+            <Text style={styles.footerLeftText}>freemindfoundation.org.in</Text>
+          </View>
+          <View style={styles.footerRight}>
+            <Svg viewBox="0 0 24 24" style={styles.footerIcon}>
+              <Path fill="#ffffff" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+            </Svg>
+            <Text style={styles.footerRightText}>+91-7306445994</Text>
+          </View>
         </View>
       </Page>
     </Document>
