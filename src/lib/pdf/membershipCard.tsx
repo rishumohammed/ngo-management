@@ -295,13 +295,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 36,
   },
+  footerLeftBox: {
+    justifyContent: 'center',
+  },
   footerName: {
-    fontSize: 7,
-    letterSpacing: 3,
+    fontSize: 6.5,
+    letterSpacing: 2,
     color: '#ffffff',
     textTransform: 'uppercase',
   },
+  footerContact: {
+    marginTop: 2,
+    fontSize: 4.8,
+    letterSpacing: 0.8,
+    color: 'rgba(255, 255, 255, 0.75)',
+  },
   footerRight: {
+    alignItems: 'flex-end',
     textAlign: 'right',
   },
   footerMessageLine: {
@@ -438,7 +448,10 @@ export async function generateMembershipCardPdf({ member, orgData }: MembershipC
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerName}>{orgData.orgName || 'FREE MIND FOUNDATION'}</Text>
+          <View style={styles.footerLeftBox}>
+            <Text style={styles.footerName}>{orgData.orgName || 'FREE MIND FOUNDATION'}</Text>
+            <Text style={styles.footerContact}>PH: +91-7306445994  •  freemindfoundation.org.in/</Text>
+          </View>
           <View style={styles.footerRight}>
             <Text style={styles.footerMessageLine}>MIND</Text>
             <Text style={styles.footerMessageLine}>PEOPLE</Text>

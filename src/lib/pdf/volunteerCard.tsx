@@ -350,11 +350,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
   },
+  footerLeftBox: {
+    justifyContent: 'center',
+  },
   footerLeft: {
     fontSize: 6,
-    letterSpacing: 2,
+    letterSpacing: 1.8,
     color: '#ffffff',
     textTransform: 'uppercase',
+  },
+  footerContact: {
+    marginTop: 2,
+    fontSize: 4.8,
+    letterSpacing: 0.8,
+    color: 'rgba(255, 255, 255, 0.75)',
   },
   footerRight: {
     alignItems: 'flex-end',
@@ -512,7 +521,10 @@ export async function generateVolunteerCardPdf({ volunteer, orgData }: Volunteer
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerLeft}>{orgData.orgName || 'FREE MIND FOUNDATION'}</Text>
+          <View style={styles.footerLeftBox}>
+            <Text style={styles.footerLeft}>{orgData.orgName || 'FREE MIND FOUNDATION'}</Text>
+            <Text style={styles.footerContact}>PH: +91-7306445994  •  freemindfoundation.org.in/</Text>
+          </View>
           <View style={styles.footerRight}>
             <Text style={styles.footerMessageLine}>MIND</Text>
             <Text style={styles.footerMessageLine}>PEOPLE</Text>
