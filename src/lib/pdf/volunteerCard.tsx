@@ -350,32 +350,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
   },
-  footerLeftBox: {
-    justifyContent: 'center',
-  },
   footerLeft: {
-    fontSize: 6,
-    letterSpacing: 1.8,
+    fontSize: 6.5,
+    letterSpacing: 1.2,
     color: '#ffffff',
-    textTransform: 'uppercase',
-  },
-  footerContact: {
-    marginTop: 2,
-    fontSize: 4.8,
-    letterSpacing: 0.8,
-    color: 'rgba(255, 255, 255, 0.75)',
   },
   footerRight: {
-    alignItems: 'flex-end',
+    fontSize: 6.5,
+    letterSpacing: 1.2,
+    color: '#ffffff',
     textAlign: 'right',
-  },
-  footerMessageLine: {
-    fontSize: 5,
-    lineHeight: 1.6,
-    letterSpacing: 1.8,
-    color: 'rgba(255,255,255,0.65)',
-    textAlign: 'right',
-    textTransform: 'uppercase',
   },
 })
 
@@ -521,15 +505,8 @@ export async function generateVolunteerCardPdf({ volunteer, orgData }: Volunteer
 
         {/* Footer */}
         <View style={styles.footer}>
-          <View style={styles.footerLeftBox}>
-            <Text style={styles.footerLeft}>{orgData.orgName || 'FREE MIND FOUNDATION'}</Text>
-            <Text style={styles.footerContact}>PH: +91-7306445994  •  freemindfoundation.org.in/</Text>
-          </View>
-          <View style={styles.footerRight}>
-            <Text style={styles.footerMessageLine}>MIND</Text>
-            <Text style={styles.footerMessageLine}>PEOPLE</Text>
-            <Text style={styles.footerMessageLine}>POSSIBILITIES</Text>
-          </View>
+          <Text style={styles.footerLeft}>freemindfoundation.org.in</Text>
+          <Text style={styles.footerRight}>+91-7306445994</Text>
         </View>
       </Page>
     </Document>
