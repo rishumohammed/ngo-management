@@ -411,10 +411,10 @@ export async function generateVolunteerCardPdf({ volunteer, orgData }: Volunteer
         {/* Left Brand Panel */}
         <View style={styles.brandPanel}>
           <View style={styles.panelTop}>
-            <Text style={styles.panelTopLineText}>PEOPLE</Text>
-            <Text style={styles.panelTopLineText}>MINDS</Text>
-            <Text style={styles.panelTopLineText}>BRIGHTER</Text>
-            <Text style={styles.panelTopLineText}>TOMORROWS</Text>
+            <Text style={styles.panelTopLineText}>AWARENESS</Text>
+            <Text style={styles.panelTopLineText}>EDUCATION</Text>
+            <Text style={styles.panelTopLineText}>EMPOWERMENT</Text>
+            <Text style={styles.panelTopLineText}>IMPACT</Text>
             <View style={styles.panelTopGoldLine} />
           </View>
           <View style={styles.panelMiddle}>
