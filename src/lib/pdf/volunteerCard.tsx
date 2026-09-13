@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
   panelTop: {
     position: 'absolute',
     left: 18,
-    top: 48,
+    top: 45,
   },
   panelTopLineText: {
     fontSize: 6.5,
@@ -55,13 +55,13 @@ const styles = StyleSheet.create({
   panelTopGoldLine: {
     width: 25,
     height: 2,
-    marginTop: 12,
+    marginTop: 10,
     backgroundColor: '#C9A24A',
   },
   panelMiddle: {
     position: 'absolute',
     left: 18,
-    top: 250,
+    top: 240,
   },
   panelMiddleLineText: {
     fontSize: 6.5,
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   panelBottomGoldLine: {
     width: 25,
     height: 1,
-    marginTop: 10,
+    marginTop: 8,
     backgroundColor: '#C9A24A',
   },
   content: {
@@ -94,26 +94,28 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
-    paddingTop: 30,
+    paddingTop: 28,
     paddingHorizontal: 28,
   },
   top: {
+    position: 'absolute',
+    top: 28,
+    left: 28,
+    right: 28,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
   logoBox: {
     width: 90,
-    height: 50,
+    height: 48,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#8EA0B2',
-    borderStyle: 'dashed',
+    backgroundColor: '#ffffff',
   },
   logoImage: {
     width: 85,
-    height: 46,
+    height: 44,
     objectFit: 'contain',
   },
   logoText: {
@@ -127,9 +129,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   topRightLine: {
-    fontSize: 6,
+    fontSize: 6.5,
     lineHeight: 1.6,
-    letterSpacing: 2.2,
+    letterSpacing: 2.5,
     color: '#718297',
     textAlign: 'right',
     textTransform: 'uppercase',
@@ -141,21 +143,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#C9A24A',
   },
   foundationSection: {
-    marginTop: 14,
+    position: 'absolute',
+    top: 110,
+    left: 28,
+    right: 28,
     alignItems: 'center',
   },
   foundationName: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: 'Helvetica-Bold',
-    letterSpacing: 4,
+    letterSpacing: 4.5,
     color: '#08284D',
     textAlign: 'center',
     textTransform: 'uppercase',
   },
   foundationTagline: {
     marginTop: 5,
-    fontSize: 6,
-    letterSpacing: 2.2,
+    fontSize: 6.5,
+    letterSpacing: 2.5,
     color: '#718297',
     textAlign: 'center',
     textTransform: 'uppercase',
@@ -167,22 +172,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#08284D',
   },
   identitySection: {
-    marginTop: 22,
+    position: 'absolute',
+    top: 188,
+    left: 28,
+    right: 28,
     alignItems: 'center',
   },
   designationText: {
-    fontSize: 10.5,
+    fontSize: 11,
     fontFamily: 'Helvetica-Bold',
-    letterSpacing: 4.5,
+    letterSpacing: 5,
     color: '#155487',
     textAlign: 'center',
     textTransform: 'uppercase',
   },
   volunteerName: {
     marginTop: 8,
-    fontSize: 34,
+    fontSize: 25,
     fontFamily: 'Helvetica-Bold',
-    letterSpacing: 3,
+    letterSpacing: 2,
     color: '#08284D',
     textAlign: 'center',
     textTransform: 'uppercase',
@@ -194,7 +202,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#C9A24A',
   },
   identityMessage: {
-    marginTop: 8,
+    marginTop: 10,
     fontSize: 7,
     letterSpacing: 2.5,
     color: '#526A82',
@@ -202,7 +210,10 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   infoContainer: {
-    marginTop: 18,
+    position: 'absolute',
+    top: 306,
+    left: 28,
+    right: 28,
     paddingVertical: 12,
     paddingHorizontal: 10,
     flexDirection: 'row',
@@ -210,7 +221,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(8,40,77,0.06)',
+    borderColor: '#D8E1E9',
   },
   infoCol: {
     flex: 1,
@@ -225,7 +236,7 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     marginTop: 4,
-    fontSize: 11,
+    fontSize: 11.5,
     fontFamily: 'Helvetica-Bold',
     letterSpacing: 1.5,
     color: '#10263E',
@@ -236,19 +247,33 @@ const styles = StyleSheet.create({
     height: 28,
     backgroundColor: '#D8E1E9',
   },
+  purposeBand: {
+    position: 'absolute',
+    top: 380,
+    left: 28,
+    right: 28,
+    alignItems: 'center',
+  },
   purposeText: {
-    marginTop: 12,
     fontSize: 7,
     lineHeight: 1.7,
     letterSpacing: 2.5,
-    color: '#62758A',
+    color: '#526B88',
+    textAlign: 'center',
+    textTransform: 'uppercase',
+  },
+  purposeSubText: {
+    marginTop: 2,
+    fontSize: 6,
+    letterSpacing: 2,
+    color: '#8AA0B5',
     textAlign: 'center',
     textTransform: 'uppercase',
   },
   signatureSection: {
     position: 'absolute',
     left: 28,
-    bottom: 62,
+    bottom: 72,
   },
   signatureBox: {
     width: 135,
@@ -284,7 +309,7 @@ const styles = StyleSheet.create({
   qrSection: {
     position: 'absolute',
     right: 28,
-    bottom: 62,
+    bottom: 72,
     alignItems: 'flex-end',
   },
   qrBox: {
@@ -323,15 +348,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 28,
+    paddingHorizontal: 24,
   },
   footerLeft: {
     fontSize: 6,
-    letterSpacing: 2.5,
+    letterSpacing: 2,
     color: '#ffffff',
     textTransform: 'uppercase',
   },
   footerRight: {
+    alignItems: 'flex-end',
     textAlign: 'right',
   },
   footerMessageLine: {
@@ -451,8 +477,10 @@ export async function generateVolunteerCardPdf({ volunteer, orgData }: Volunteer
           </View>
 
           {/* Purpose Statement */}
-          <Text style={styles.purposeText}>TOGETHER FOR</Text>
-          <Text style={styles.purposeText}>A BRIGHTER TOMORROW</Text>
+          <View style={styles.purposeBand}>
+            <Text style={styles.purposeText}>TOGETHER FOR A BRIGHTER TOMORROW</Text>
+            <Text style={styles.purposeSubText}>COMMUNITY OUTREACH & MENTAL WELLNESS</Text>
+          </View>
 
           {/* Signature Block */}
           <View style={styles.signatureSection}>

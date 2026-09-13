@@ -43,10 +43,15 @@ const styles = StyleSheet.create({
   },
   sideMessage: {
     position: 'absolute',
-    left: 14,
-    top: 245,
-    fontSize: 6.5,
-    letterSpacing: 2.5,
+    left: 16,
+    top: 240,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
+  sideMessageLine: {
+    fontSize: 5.5,
+    lineHeight: 1.6,
+    letterSpacing: 2,
     color: '#a0adbc',
     textTransform: 'uppercase',
   },
@@ -56,7 +61,7 @@ const styles = StyleSheet.create({
     left: 36,
     right: 36,
     flexDirection: 'row',
-    justify: 'space-between',
+    justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
   logoBox: {
@@ -64,9 +69,7 @@ const styles = StyleSheet.create({
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#9baabd',
-    borderStyle: 'dashed',
+    backgroundColor: '#ffffff',
   },
   logoImage: {
     width: 95,
@@ -92,7 +95,7 @@ const styles = StyleSheet.create({
   },
   foundationSection: {
     position: 'absolute',
-    top: 98,
+    top: 96,
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -106,7 +109,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   foundationTagline: {
-    marginTop: 6,
+    marginTop: 5,
     fontSize: 7.5,
     letterSpacing: 2.5,
     color: '#718198',
@@ -116,7 +119,7 @@ const styles = StyleSheet.create({
   foundationDivider: {
     width: 30,
     height: 1,
-    marginTop: 12,
+    marginTop: 10,
     backgroundColor: '#102d54',
   },
   memberSection: {
@@ -125,11 +128,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
+    paddingHorizontal: 40,
   },
   memberName: {
-    fontSize: 34,
+    fontSize: 28,
     fontFamily: 'Helvetica-Bold',
-    letterSpacing: 3,
+    letterSpacing: 2.5,
     color: '#102d54',
     textAlign: 'center',
     textTransform: 'uppercase',
@@ -138,7 +142,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontSize: 10.5,
     fontFamily: 'Helvetica-Bold',
-    letterSpacing: 4.5,
+    letterSpacing: 4,
     color: '#718198',
     textAlign: 'center',
     textTransform: 'uppercase',
@@ -146,11 +150,11 @@ const styles = StyleSheet.create({
   memberLine: {
     width: 30,
     height: 1,
-    marginVertical: 12,
+    marginVertical: 10,
     backgroundColor: '#102d54',
   },
   memberMessageLine: {
-    fontSize: 8.5,
+    fontSize: 8,
     lineHeight: 1.7,
     letterSpacing: 3,
     color: '#405776',
@@ -159,17 +163,17 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     position: 'absolute',
-    top: 300,
+    top: 320,
     left: 36,
     right: 36,
     paddingVertical: 12,
-    paddingHorizontal: 10,
+    paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f4f7fa',
+    backgroundColor: '#f8fafc',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(16,45,84,0.06)',
+    borderColor: '#dce4ed',
   },
   infoCol: {
     flex: 1,
@@ -186,23 +190,39 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 12,
     fontFamily: 'Helvetica-Bold',
-    letterSpacing: 2,
+    letterSpacing: 1.5,
     color: '#14243b',
     textAlign: 'center',
   },
   infoDivider: {
     width: 1,
-    height: 30,
+    height: 28,
     backgroundColor: '#dce4ed',
+  },
+  mottoBand: {
+    position: 'absolute',
+    top: 388,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mottoBandText: {
+    fontSize: 6.5,
+    letterSpacing: 2.5,
+    color: '#526B88',
+    textTransform: 'uppercase',
+    textAlign: 'center',
   },
   signatureSection: {
     position: 'absolute',
     left: 36,
-    bottom: 66,
+    bottom: 85,
   },
   signatureBox: {
-    width: 140,
-    height: 40,
+    width: 135,
+    height: 38,
     justifyContent: 'flex-end',
   },
   signatureImage: {
@@ -212,7 +232,7 @@ const styles = StyleSheet.create({
   },
   signaturePlaceholder: {
     width: 135,
-    height: 34,
+    height: 32,
     borderBottomWidth: 1,
     borderBottomColor: '#718198',
     justifyContent: 'flex-end',
@@ -226,15 +246,15 @@ const styles = StyleSheet.create({
   },
   signatureLabel: {
     marginTop: 5,
-    fontSize: 7,
-    letterSpacing: 2.5,
+    fontSize: 6.5,
+    letterSpacing: 2,
     color: '#718198',
     textTransform: 'uppercase',
   },
   qrSection: {
     position: 'absolute',
     right: 36,
-    bottom: 64,
+    bottom: 85,
     alignItems: 'flex-end',
   },
   qrBox: {
@@ -268,7 +288,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: 58,
+    height: 55,
     backgroundColor: '#102d54',
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -285,7 +305,7 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   footerMessageLine: {
-    fontSize: 6,
+    fontSize: 5.5,
     lineHeight: 1.6,
     letterSpacing: 2,
     color: 'rgba(255,255,255,0.7)',
@@ -321,6 +341,7 @@ export async function generateMembershipCardPdf({ member, orgData }: MembershipC
   const qrPath = resolveImagePath(orgData.orgQrCode)
 
   const roleText = member.membershipType ? `${member.membershipType.toUpperCase()} MEMBER` : 'COMMUNITY MEMBER'
+  const locationText = member.district && member.state ? `${member.district.toUpperCase()}, ${member.state.toUpperCase()}` : 'KERALA, INDIA'
 
   const doc = (
     <Document title={`Membership Card — ${member.memberNumber}`} author={orgData.orgName}>
@@ -330,7 +351,11 @@ export async function generateMembershipCardPdf({ member, orgData }: MembershipC
 
         {/* Side vertical text message */}
         <View style={styles.sideMessage}>
-          <Text>A KINDER  BRIGHTER  STRONGER YOU</Text>
+          <Text style={styles.sideMessageLine}>A</Text>
+          <Text style={styles.sideMessageLine}>KINDER</Text>
+          <Text style={styles.sideMessageLine}>BRIGHTER</Text>
+          <Text style={styles.sideMessageLine}>STRONGER</Text>
+          <Text style={styles.sideMessageLine}>YOU</Text>
         </View>
 
         {/* Top Header */}
@@ -377,6 +402,11 @@ export async function generateMembershipCardPdf({ member, orgData }: MembershipC
             <Text style={styles.infoLabel}>JOINED DATE</Text>
             <Text style={styles.infoValue}>{formatDate(member.joinDate).toUpperCase()}</Text>
           </View>
+        </View>
+
+        {/* Motto / Location Band */}
+        <View style={styles.mottoBand}>
+          <Text style={styles.mottoBandText}>PREVENTIVE MENTAL WELLNESS  •  {locationText}</Text>
         </View>
 
         {/* Signature */}

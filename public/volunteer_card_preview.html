@@ -1,1627 +1,637 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Free Mind Foundation - Volunteer Card</title>
 
-
-    <!-- =====================================================
-         FONTS
-    ====================================================== -->
-
-    <link
-        rel="preconnect"
-        href="https://fonts.googleapis.com"
-    >
-
-    <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossorigin
-    >
-
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap"
-        rel="stylesheet"
-    >
-
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700&display=swap" rel="stylesheet">
 
     <style>
-
-        /* =====================================================
-           BRAND COLORS
-        ====================================================== */
-
         :root {
-
             --fmf-navy: #08284D;
-
             --fmf-blue: #155487;
-
             --fmf-light-blue: #DCEAF5;
-
             --fmf-pale-blue: #F3F7FA;
-
             --fmf-gold: #C9A24A;
-
             --fmf-gold-light: #E8D7A5;
-
             --text: #10263E;
-
             --muted: #718297;
-
             --line: #D8E1E9;
-
             --white: #FFFFFF;
-
         }
-
-
-        /* =====================================================
-           RESET
-        ====================================================== */
 
         * {
-
             box-sizing: border-box;
-
             margin: 0;
-
             padding: 0;
-
         }
-
-
-        /* =====================================================
-           BODY
-        ====================================================== */
 
         body {
-
             min-height: 100vh;
-
             display: flex;
-
             justify-content: center;
-
             align-items: center;
-
             padding: 40px;
-
             font-family: "Inter", sans-serif;
-
             background:
-
-                radial-gradient(
-                    circle at 15% 20%,
-                    rgba(21,84,135,0.12),
-                    transparent 32%
-                ),
-
-                radial-gradient(
-                    circle at 90% 85%,
-                    rgba(201,162,74,0.08),
-                    transparent 30%
-                ),
-
+                radial-gradient(circle at 15% 20%, rgba(21,84,135,0.12), transparent 32%),
+                radial-gradient(circle at 90% 85%, rgba(201,162,74,0.08), transparent 30%),
                 #EEF3F7;
-
         }
-
-
-        /* =====================================================
-           CARD
-        ====================================================== */
 
         .volunteer-card {
-
             width: 450px;
-
             height: 600px;
-
             position: relative;
-
             overflow: hidden;
-
             background: var(--white);
-
             border-radius: 28px;
-
             box-shadow:
-
-                0 35px 80px
-                rgba(8,40,77,0.16),
-
-                0 10px 25px
-                rgba(8,40,77,0.06);
-
+                0 35px 80px rgba(8,40,77,0.16),
+                0 10px 25px rgba(8,40,77,0.06);
         }
 
-
-        /* =====================================================
-           LEFT BRAND PANEL
-        ====================================================== */
-
+        /* LEFT BRAND PANEL */
         .brand-panel {
-
             position: absolute;
-
             left: 0;
-
             top: 0;
-
             bottom: 0;
-
             width: 92px;
-
-            background:
-
-                linear-gradient(
-                    165deg,
-                    var(--fmf-navy),
-                    #0B416C 65%,
-                    #08233F
-                );
-
+            background: linear-gradient(165deg, var(--fmf-navy), #0B416C 65%, #08233F);
             z-index: 1;
-
         }
-
-
-        /* =====================================================
-           LEFT PANEL GEOMETRY
-        ====================================================== */
 
         .panel-shape {
-
             position: absolute;
-
             width: 150px;
-
             height: 230px;
-
             left: -60px;
-
             bottom: 75px;
-
-            background:
-
-                linear-gradient(
-                    145deg,
-                    rgba(21,84,135,0.15),
-                    rgba(201,162,74,0.90)
-                );
-
+            background: linear-gradient(145deg, rgba(21,84,135,0.15), rgba(201,162,74,0.90));
             transform: rotate(-28deg);
-
             opacity: 0.9;
-
         }
-
 
         .panel-shape-two {
-
             position: absolute;
-
             width: 100px;
-
             height: 180px;
-
             left: 40px;
-
             bottom: -20px;
-
-            background:
-
-                linear-gradient(
-                    145deg,
-                    rgba(21,84,135,0.9),
-                    rgba(8,40,77,0.2)
-                );
-
+            background: linear-gradient(145deg, rgba(21,84,135,0.9), rgba(8,40,77,0.2));
             transform: rotate(22deg);
-
         }
-
-
-        /* =====================================================
-           LEFT PANEL TEXT
-        ====================================================== */
 
         .panel-top {
-
             position: absolute;
-
-            left: 20px;
-
-            top: 48px;
-
+            left: 18px;
+            top: 45px;
             color: rgba(255,255,255,0.78);
-
-            font-size: 7px;
-
-            line-height: 2.3;
-
-            letter-spacing: 3px;
-
+            font-size: 6.5px;
+            line-height: 2.2;
+            letter-spacing: 2.5px;
             text-transform: uppercase;
-
         }
-
 
         .panel-top-line {
-
             width: 25px;
-
             height: 2px;
-
-            margin-top: 14px;
-
+            margin-top: 10px;
             background: var(--fmf-gold);
-
         }
-
 
         .panel-middle {
-
             position: absolute;
-
-            left: 20px;
-
-            top: 255px;
-
+            left: 18px;
+            top: 240px;
             color: rgba(255,255,255,0.70);
-
-            font-size: 7px;
-
-            line-height: 2.4;
-
+            font-size: 6.5px;
+            line-height: 2.2;
             letter-spacing: 2px;
-
             text-transform: uppercase;
-
         }
-
 
         .panel-bottom {
-
             position: absolute;
-
-            left: 20px;
-
+            left: 18px;
             bottom: 28px;
-
             color: rgba(255,255,255,0.80);
-
-            font-size: 7px;
-
-            line-height: 2.3;
-
-            letter-spacing: 2.5px;
-
+            font-size: 6.5px;
+            line-height: 2.2;
+            letter-spacing: 2px;
             text-transform: uppercase;
-
         }
-
 
         .panel-bottom-line {
-
             width: 25px;
-
             height: 1px;
-
-            margin-top: 12px;
-
+            margin-top: 8px;
             background: var(--fmf-gold);
-
         }
 
-
-        /* =====================================================
-           MAIN CONTENT
-        ====================================================== */
-
+        /* MAIN CONTENT AREA */
         .content {
-
             position: relative;
-
             z-index: 3;
-
             margin-left: 92px;
-
             width: calc(100% - 92px);
-
             height: 100%;
-
-            padding: 30px 28px;
-
+            padding: 28px;
         }
 
-
-        /* =====================================================
-           TOP
-        ====================================================== */
-
+        /* TOP HEADER - Absolute right alignment for header message */
         .top {
-
+            position: absolute;
+            top: 28px;
+            left: 28px;
+            right: 28px;
             display: flex;
-
             justify-content: space-between;
-
             align-items: flex-start;
-
         }
-
-
-        /* =====================================================
-           LOGO
-        ====================================================== */
 
         .logo {
-
             width: 90px;
-
-            height: 50px;
-
+            height: 48px;
             display: flex;
-
             justify-content: center;
-
             align-items: center;
-
             overflow: hidden;
-
-            border: 1px dashed #8EA0B2;
-
+            border: none;
             color: var(--muted);
-
             font-size: 7px;
-
             letter-spacing: 2px;
-
             text-transform: uppercase;
-
+            flex-shrink: 0;
+            background: #ffffff;
         }
-
 
         .logo img {
-
-            width: 100%;
-
-            height: 100%;
-
+            max-width: 100%;
+            max-height: 100%;
             object-fit: contain;
-
         }
-
-
-        /* =====================================================
-           TOP RIGHT
-        ====================================================== */
 
         .top-message {
-
             text-align: right;
-
             color: var(--muted);
-
-            font-size: 6px;
-
-            line-height: 2.0;
-
+            font-size: 6.5px;
+            line-height: 1.8;
             letter-spacing: 2.5px;
-
             text-transform: uppercase;
-
+            flex-shrink: 0;
         }
-
 
         .gold-line {
-
             width: 25px;
-
             height: 2px;
-
-            margin-top: 8px;
-
+            margin-top: 6px;
             margin-left: auto;
-
             background: var(--fmf-gold);
-
         }
 
-
-        /* =====================================================
-           FOUNDATION
-        ====================================================== */
-
+        /* FOUNDATION SECTION */
         .foundation {
-
-            margin-top: 14px;
-
+            position: absolute;
+            top: 110px;
+            left: 28px;
+            right: 28px;
             text-align: center;
-
         }
-
 
         .foundation-name {
-
             color: var(--fmf-navy);
-
             font-family: "Manrope", sans-serif;
-
-            font-size: 12px;
-
+            font-size: 13px;
             font-weight: 600;
-
-            letter-spacing: 4px;
-
+            letter-spacing: 4.5px;
+            text-transform: uppercase;
         }
-
 
         .foundation-tagline {
-
             margin-top: 5px;
-
             color: var(--muted);
-
-            font-size: 6px;
-
-            letter-spacing: 2.2px;
-
+            font-size: 6.5px;
+            letter-spacing: 2.5px;
             text-transform: uppercase;
-
         }
-
 
         .foundation-line {
-
             width: 30px;
-
             height: 1px;
-
             margin: 10px auto 0;
-
             background: var(--fmf-navy);
-
         }
 
-
-        /* =====================================================
-           IDENTITY SECTION
-        ====================================================== */
-
+        /* IDENTITY SECTION */
         .identity {
-
-            margin-top: 24px;
-
+            position: absolute;
+            top: 188px;
+            left: 28px;
+            right: 28px;
             text-align: center;
-
         }
-
 
         .designation {
-
             display: inline-flex;
-
             align-items: center;
-
             gap: 10px;
-
             color: var(--fmf-blue);
-
             font-size: 11px;
-
             font-weight: 700;
-
             letter-spacing: 5px;
-
             text-transform: uppercase;
-
         }
-
 
         .designation::before,
-
         .designation::after {
-
             content: "";
-
             width: 18px;
-
             height: 1px;
-
             background: var(--fmf-gold);
-
         }
-
-
-        /* HERO NAME */
 
         .member-name {
-
-            margin-top: 10px;
-
+            margin-top: 8px;
             color: var(--fmf-navy);
-
             font-family: "Manrope", sans-serif;
-
-            font-size: 38px;
-
+            font-size: 25px;
             font-weight: 700;
-
-            letter-spacing: 4px;
-
-            line-height: 1;
-
+            letter-spacing: 2px;
+            line-height: 1.2;
             text-transform: uppercase;
-
+            word-break: normal;
+            overflow-wrap: normal;
+            hyphens: none;
         }
-
 
         .name-underline {
-
             width: 35px;
-
             height: 2px;
-
-            margin: 12px auto 0;
-
+            margin: 10px auto 0;
             background: var(--fmf-gold);
-
         }
-
 
         .identity-message {
-
             margin-top: 10px;
-
             color: #526A82;
-
             font-size: 7px;
-
-            line-height: 1.8;
-
+            line-height: 1.7;
             letter-spacing: 2.5px;
-
             text-transform: uppercase;
-
         }
 
-
-        /* =====================================================
-           INFORMATION BOX
-        ====================================================== */
-
+        /* INFORMATION BOX */
         .information {
-
-            margin-top: 20px;
-
+            position: absolute;
+            top: 306px;
+            left: 28px;
+            right: 28px;
             padding: 12px 10px;
-
             display: grid;
-
-            grid-template-columns:
-
-                1fr
-                1px
-                1fr;
-
+            grid-template-columns: 1fr 1px 1fr;
             align-items: center;
-
-            background:
-
-                linear-gradient(
-                    135deg,
-                    #F8FAFC,
-                    #EDF3F7
-                );
-
-            border:
-
-                1px solid
-                rgba(8,40,77,0.06);
-
+            background: linear-gradient(135deg, #F8FAFC, #EDF3F7);
+            border: 1px solid #D8E1E9;
             border-radius: 14px;
-
+            outline: none;
+            box-shadow: none;
         }
-
 
         .info {
-
             text-align: center;
-
         }
-
 
         .info-label {
-
             color: var(--muted);
-
             font-size: 6px;
-
             letter-spacing: 2.5px;
-
             text-transform: uppercase;
-
         }
-
 
         .info-value {
-
-            margin-top: 5px;
-
+            margin-top: 4px;
             color: var(--text);
-
-            font-size: 11px;
-
+            font-size: 11.5px;
             font-weight: 600;
-
             letter-spacing: 1.5px;
-
         }
-
 
         .info-divider {
-
             width: 1px;
-
             height: 28px;
-
             background: var(--line);
-
         }
 
-
-        /* =====================================================
-           PURPOSE STATEMENT
-        ====================================================== */
-
-        .purpose {
-
-            margin-top: 14px;
-
-            text-align: center;
-
-            color: #62758A;
-
-            font-size: 7px;
-
-            line-height: 1.8;
-
-            letter-spacing: 2.5px;
-
-            text-transform: uppercase;
-
-        }
-
-
-        /* =====================================================
-           DECORATION
-        ====================================================== */
-
-        .leaf {
-
+        /* PURPOSE BAND */
+        .purpose-band {
             position: absolute;
-
-            right: -35px;
-
-            bottom: 100px;
-
-            width: 125px;
-
-            height: 70px;
-
-            border-radius: 100% 0 100% 0;
-
-            border:
-
-                1px solid
-                rgba(21,84,135,0.10);
-
-            transform: rotate(-32deg);
-
-            opacity: 0.75;
-
-            pointer-events: none;
-
-        }
-
-
-        .leaf-two {
-
-            position: absolute;
-
-            right: -10px;
-
-            bottom: 75px;
-
-            width: 80px;
-
-            height: 45px;
-
-            border-radius: 100% 0 100% 0;
-
-            border:
-
-                1px solid
-                rgba(201,162,74,0.20);
-
-            transform: rotate(35deg);
-
-            pointer-events: none;
-
-        }
-
-
-        /* =====================================================
-           SIGNATURE
-        ====================================================== */
-
-        .signature-section {
-
-            position: absolute;
-
+            top: 380px;
             left: 28px;
-
-            bottom: 62px;
-
-            z-index: 5;
-
+            right: 28px;
+            text-align: center;
+            color: #526B88;
+            font-size: 7px;
+            line-height: 1.7;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
         }
 
+        .purpose-sub {
+            font-size: 6px;
+            color: #8AA0B5;
+            letter-spacing: 2px;
+            margin-top: 2px;
+        }
+
+        /* SIGNATURE BLOCK */
+        .signature-section {
+            position: absolute;
+            left: 28px;
+            bottom: 72px;
+            z-index: 5;
+        }
 
         .signature-box {
-
             width: 135px;
-
             height: 38px;
-
             display: flex;
-
             align-items: flex-end;
-
+            justify-content: flex-start;
         }
-
-
-        .signature-placeholder {
-
-            width: 135px;
-
-            height: 32px;
-
-            display: flex;
-
-            align-items: flex-end;
-
-            justify-content: center;
-
-            padding-bottom: 5px;
-
-            border-bottom:
-
-                1px solid
-                #72859A;
-
-            color: #9BA8B6;
-
-            font-size: 6px;
-
-            letter-spacing: 2px;
-
-        }
-
 
         .signature-box img {
-
-            max-width: 135px;
-
-            max-height: 38px;
-
+            max-width: 130px;
+            max-height: 36px;
             object-fit: contain;
-
         }
 
+        .signature-placeholder {
+            width: 130px;
+            height: 32px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            padding-bottom: 3px;
+            border-bottom: 1px solid #72859A;
+            color: #9BA8B6;
+            font-size: 6px;
+            letter-spacing: 2px;
+        }
 
         .signature-label {
-
             margin-top: 5px;
-
-            color: var(--muted);
-
             font-size: 6px;
-
             letter-spacing: 2.5px;
-
+            color: var(--muted);
             text-transform: uppercase;
-
+            text-align: left;
         }
 
-
-        /* =====================================================
-           QR CODE
-        ====================================================== */
-
+        /* QR CODE BLOCK */
         .qr-section {
-
             position: absolute;
-
             right: 28px;
-
-            bottom: 62px;
-
+            bottom: 72px;
             z-index: 5;
-
             display: flex;
-
             flex-direction: column;
-
             align-items: flex-end;
-
         }
-
 
         .qr-box {
-
             width: 60px;
-
             height: 60px;
-
             display: flex;
-
             justify-content: center;
-
             align-items: center;
-
         }
-
 
         .qr-box img {
-
             width: 60px;
-
             height: 60px;
-
             object-fit: contain;
-
             border-radius: 4px;
-
         }
-
 
         .qr-placeholder {
-
             width: 60px;
-
             height: 60px;
-
             border: 1px dashed #72859A;
-
-            border-radius: 6px;
-
+            border-radius: 4px;
             display: flex;
-
             justify-content: center;
-
             align-items: center;
-
             color: #9BA8B6;
-
             font-size: 7px;
-
             letter-spacing: 1px;
-
             text-align: center;
-
+            background: #ffffff;
         }
 
-
-        /* =====================================================
-           FOOTER
-        ====================================================== */
-
+        /* FOOTER */
         .footer {
-
             position: absolute;
-
             left: 92px;
-
             right: 0;
-
             bottom: 0;
-
             height: 48px;
-
-            background:
-
-                linear-gradient(
-                    110deg,
-                    var(--fmf-navy),
-                    var(--fmf-blue)
-                );
-
-            clip-path:
-
-                polygon(
-                    0 35%,
-                    55% 35%,
-                    67% 0,
-                    100% 0,
-                    100% 100%,
-                    0 100%
-                );
-
-            z-index: 5;
-
+            background: var(--fmf-navy);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 24px;
+            z-index: 4;
         }
-
 
         .footer-left {
-
-            position: absolute;
-
-            left: 28px;
-
-            bottom: 12px;
-
-            color: white;
-
             font-size: 6px;
-
-            letter-spacing: 2.5px;
-
+            letter-spacing: 2px;
+            color: #ffffff;
             text-transform: uppercase;
-
         }
 
-
-        .footer-right {
-
-            position: absolute;
-
-            right: 20px;
-
-            bottom: 9px;
-
-            color:
-
-                rgba(
-                    255,
-                    255,
-                    255,
-                    0.65
-                );
-
-            font-size: 5px;
-
-            line-height: 1.8;
-
-            letter-spacing: 1.8px;
-
+        .footer-message {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
             text-align: right;
-
+            font-size: 5px;
+            line-height: 1.6;
+            letter-spacing: 1.8px;
+            color: rgba(255,255,255,0.65);
             text-transform: uppercase;
-
         }
-
-
-        /* =====================================================
-           PRINT
-        ====================================================== */
 
         @media print {
-
             body {
-
                 padding: 0;
-
                 background: white;
-
             }
-
-
             .volunteer-card {
-
                 box-shadow: none;
-
+                border: none;
             }
-
         }
-
-
-        /* =====================================================
-           RESPONSIVE
-        ====================================================== */
-
-        @media(max-width:520px) {
-
-            body {
-
-                padding: 15px;
-
-            }
-
-
-            .volunteer-card {
-
-                width: 100%;
-
-                max-width: 450px;
-
-                height: auto;
-
-                aspect-ratio: 3 / 4;
-
-            }
-
-        }
-
     </style>
-
 </head>
-
-
 <body>
 
-
-<!-- =========================================================
-     VOLUNTEER CARD
-========================================================== -->
-
 <div class="volunteer-card">
-
-
-    <!-- =====================================================
-         LEFT BRAND PANEL
-    ====================================================== -->
-
+    <!-- LEFT BRAND PANEL -->
     <div class="brand-panel">
-
-
-        <div class="panel-top">
-
-            PEOPLE<br>
-
-            MINDS<br>
-
-            BRIGHTER<br>
-
-            TOMORROWS
-
-            <div class="panel-top-line"></div>
-
-        </div>
-
-
-        <div class="panel-middle">
-
-            GIVE<br>
-
-            YOUR TIME<br>
-
-            CREATE<br>
-
-            POSITIVE<br>
-
-            CHANGE
-
-        </div>
-
-
         <div class="panel-shape"></div>
-
         <div class="panel-shape-two"></div>
-
-
-        <div class="panel-bottom">
-
-            KINDER<br>
-
+        <div class="panel-top">
+            PEOPLE<br>
             MINDS<br>
-
-            STRONGER<br>
-
-            COMMUNITIES
-
-            <div class="panel-bottom-line"></div>
-
+            BRIGHTER<br>
+            TOMORROWS
+            <div class="panel-top-line"></div>
         </div>
-
-
+        <div class="panel-middle">
+            GIVE<br>
+            YOUR TIME<br>
+            CREATE<br>
+            POSITIVE<br>
+            CHANGE
+        </div>
+        <div class="panel-bottom">
+            KINDER<br>
+            MINDS<br>
+            STRONGER<br>
+            COMMUNITIES
+            <div class="panel-bottom-line"></div>
+        </div>
     </div>
 
-
-
-    <!-- =====================================================
-         MAIN CONTENT
-    ====================================================== -->
-
+    <!-- MAIN CONTENT -->
     <div class="content">
-
-
-        <!-- TOP -->
-
         <div class="top">
-
-
-            <!-- LOGO -->
-
-            <div
-                class="logo"
-                id="logoArea"
-            >
-
-                LOGO HERE
-
+            <div class="logo" id="logoArea">
+                <span>LOGO HERE</span>
             </div>
-
-
-            <!-- MESSAGE -->
-
             <div class="top-message">
-
                 SUPPORT<br>
-
                 AWARENESS<br>
-
                 COMMUNITY<br>
-
                 CHANGE
-
                 <div class="gold-line"></div>
-
             </div>
-
-
         </div>
-
-
-
-        <!-- FOUNDATION -->
 
         <div class="foundation">
-
-
-            <div class="foundation-name">
-
-                FREE MIND FOUNDATION
-
-            </div>
-
-
-            <div class="foundation-tagline">
-
-                FREEING MINDS THROUGH AWARENESS
-
-            </div>
-
-
+            <div class="foundation-name" id="foundationName">FREE MIND FOUNDATION</div>
+            <div class="foundation-tagline">FREEING MINDS THROUGH AWARENESS</div>
             <div class="foundation-line"></div>
-
-
         </div>
-
-
-
-        <!-- =================================================
-             IDENTITY
-        ================================================== -->
 
         <div class="identity">
-
-
-            <!-- DESIGNATION -->
-
-            <div class="designation">
-
-                VOLUNTEER
-
-            </div>
-
-
-            <!-- NAME -->
-
-            <div
-                class="member-name"
-                id="memberName"
-            >
-
-                RISHU
-
-            </div>
-
-
+            <div class="designation">VOLUNTEER</div>
+            <div class="member-name" id="volunteerName">RISHU MOHAMMED</div>
             <div class="name-underline"></div>
-
-
-            <div class="identity-message">
-
-                PEOPLE · PURPOSE · POSITIVE CHANGE
-
-            </div>
-
-
+            <div class="identity-message">PEOPLE · PURPOSE · POSITIVE CHANGE</div>
         </div>
-
-
-
-        <!-- =================================================
-             INFORMATION
-        ================================================== -->
 
         <div class="information">
-
-
-            <!-- VOLUNTEER ID -->
-
             <div class="info">
-
-
-                <div class="info-label">
-
-                    VOLUNTEER ID
-
-                </div>
-
-
-                <div
-                    class="info-value"
-                    id="volunteerId"
-                >
-
-                    FMFV0001
-
-                </div>
-
-
+                <div class="info-label">VOLUNTEER ID</div>
+                <div class="info-value" id="volunteerId">FMFV0001</div>
             </div>
-
-
-
             <div class="info-divider"></div>
-
-
-
-            <!-- JOINED DATE -->
-
             <div class="info">
-
-
-                <div class="info-label">
-
-                    JOINED ON
-
-                </div>
-
-
-                <div
-                    class="info-value"
-                    id="joinedDate"
-                >
-
-                    07 SEP 2026
-
-                </div>
-
-
+                <div class="info-label">JOINED ON</div>
+                <div class="info-value" id="joinedDate">07 SEP 2026</div>
             </div>
-
-
         </div>
 
-
-
-        <!-- PURPOSE -->
-
-        <div class="purpose">
-
-            TOGETHER FOR<br>
-
-            A BRIGHTER TOMORROW
-
+        <div class="purpose-band">
+            <div>TOGETHER FOR A BRIGHTER TOMORROW</div>
+            <div class="purpose-sub">COMMUNITY OUTREACH & MENTAL WELLNESS</div>
         </div>
-
-
-
-        <!-- DECORATION -->
-
-        <div class="leaf"></div>
-
-        <div class="leaf-two"></div>
-
-
-
-        <!-- =================================================
-             SIGNATURE
-        ================================================== -->
 
         <div class="signature-section">
-
-
-            <div
-                class="signature-box"
-                id="signatureArea"
-            >
-
-                <div class="signature-placeholder">
-
-                    SIGNATURE
-
-                </div>
-
+            <div class="signature-box" id="signatureArea">
+                <div class="signature-placeholder">SIGNATURE</div>
             </div>
-
-
-            <div class="signature-label">
-
-                AUTHORIZED SIGNATURE
-
-            </div>
-
-
+            <div class="signature-label">AUTHORIZED SIGNATURE</div>
         </div>
-
-
-        <!-- =================================================
-             QR CODE
-        ================================================== -->
 
         <div class="qr-section">
-
-
-            <div
-                class="qr-box"
-                id="qrArea"
-            >
-
-                <div class="qr-placeholder">
-
-                    QR CODE
-
-                </div>
-
+            <div class="qr-box" id="qrArea">
+                <div class="qr-placeholder">QR CODE</div>
             </div>
-
-
         </div>
-
-
     </div>
 
-
-
-    <!-- =====================================================
-         FOOTER
-    ====================================================== -->
-
+    <!-- FOOTER -->
     <div class="footer">
-
-
-        <div class="footer-left">
-
-            FREE MIND FOUNDATION
-
-        </div>
-
-
-        <div class="footer-right">
-
+        <div class="footer-left">FREE MIND FOUNDATION</div>
+        <div class="footer-message">
             MIND<br>
-
             PEOPLE<br>
-
             POSSIBILITIES
-
         </div>
-
-
     </div>
-
-
 </div>
 
-
-
 <script>
-
-
-/* =========================================================
-   VOLUNTEER DATA
-========================================================= */
-
 const params = new URLSearchParams(window.location.search);
-
 const volunteer = {
-
-    name: params.get("name") || "RISHU",
-
+    name: params.get("name") || "RISHU MOHAMMED",
     id: params.get("id") || "FMFV0001",
-
     joinedDate: params.get("date") || "07 SEP 2026",
-
     logo: params.get("logo") || "",
-
     signature: params.get("signature") || "",
-
     qrCode: params.get("qrcode") || params.get("qr") || ""
-
 };
 
-
-
-/* =========================================================
-   LOAD DATA
-========================================================= */
-
 function loadVolunteer(data) {
+    if (data.name) document.getElementById("volunteerName").textContent = data.name;
+    if (data.id) document.getElementById("volunteerId").textContent = data.id;
+    if (data.joinedDate) document.getElementById("joinedDate").textContent = data.joinedDate;
 
-
-    document
-        .getElementById("memberName")
-        .textContent = data.name;
-
-
-    document
-        .getElementById("volunteerId")
-        .textContent = data.id;
-
-
-    document
-        .getElementById("joinedDate")
-        .textContent = data.joinedDate;
-
-
-
-    /* LOGO */
-
-    if (data.logo) {
-
-        setLogo(data.logo);
-
-    }
-
-
-
-    /* SIGNATURE */
-
-    if (data.signature) {
-
-        setSignature(data.signature);
-
-    }
-
-
-
-    /* QR CODE */
-
-    if (data.qrCode) {
-
-        setQrCode(data.qrCode);
-
-    }
-
+    if (data.logo) setLogo(data.logo);
+    if (data.signature) setSignature(data.signature);
+    if (data.qrCode) setQrCode(data.qrCode);
 }
-
-
-
-/* =========================================================
-   SET LOGO
-========================================================= */
 
 function setLogo(imagePath) {
-
-
-    const logoArea =
-        document.getElementById(
-            "logoArea"
-        );
-
-
+    const logoArea = document.getElementById("logoArea");
     logoArea.innerHTML = "";
     logoArea.style.border = "none";
-
-
-    const image =
-        document.createElement("img");
-
-
+    logoArea.style.background = "transparent";
+    const image = document.createElement("img");
     image.src = imagePath;
-
-
-    image.alt =
-        "Free Mind Foundation";
-
-
+    image.alt = "Free Mind Foundation";
     logoArea.appendChild(image);
-
 }
-
-
-
-/* =========================================================
-   SET SIGNATURE
-========================================================= */
 
 function setSignature(imagePath) {
-
-
-    const signatureArea =
-        document.getElementById(
-            "signatureArea"
-        );
-
-
+    const signatureArea = document.getElementById("signatureArea");
     signatureArea.innerHTML = "";
-
-
-    const image =
-        document.createElement("img");
-
-
+    const image = document.createElement("img");
     image.src = imagePath;
-
-
-    image.alt =
-        "Authorized Signature";
-
-
+    image.alt = "Authorized Signature";
     signatureArea.appendChild(image);
-
 }
-
-
-
-/* =========================================================
-   SET QR CODE
-========================================================= */
 
 function setQrCode(imagePath) {
-
-
-    const qrArea =
-        document.getElementById(
-            "qrArea"
-        );
-
-
+    const qrArea = document.getElementById("qrArea");
     qrArea.innerHTML = "";
-
-
-    const image =
-        document.createElement("img");
-
-
+    const image = document.createElement("img");
     image.src = imagePath;
-
-
-    image.alt =
-        "Verification QR Code";
-
-
+    image.alt = "Verification QR Code";
     qrArea.appendChild(image);
-
 }
 
-
-
-/* =========================================================
-   INITIALIZE CARD
-========================================================= */
-
 loadVolunteer(volunteer);
-
-
 </script>
 
-
 </body>
-
 </html>
